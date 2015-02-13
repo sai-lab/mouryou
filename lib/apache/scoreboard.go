@@ -7,6 +7,8 @@ import (
 )
 
 func Scoreboard(ipAddress string) string {
+	var board string
+
 	url := "http://" + ipAddress + "/server-status?auto"
 	request, _ := http.NewRequest("GET", url, nil)
 
@@ -17,9 +19,16 @@ func Scoreboard(ipAddress string) string {
 		return ""
 	} else {
 		body, _ := ioutil.ReadAll(response.Body)
-		line := strings.Split(string(body), "\n")[9]
+
+		for _, line := range strings.Split(string(body), "\n") {
+			if strings.Contains(line, "Scoreboard") {
+				board = line[12:]
+				break
+			}
+		}
+
 		defer response.Body.Close()
-		return line[12:]
+		return board
 	}
 }
 

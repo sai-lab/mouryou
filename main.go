@@ -1,11 +1,19 @@
 package main
 
 import (
-	"./lib/apache"
+	"./lib/tenbin"
 	"fmt"
+	"strconv"
 )
 
 func main() {
-	board := apache.Scoreboard("192.168.11.21")
-	fmt.Println(apache.OperatingRatio(board))
+	var hypervisor tenbin.Hypervisor
+
+	for i := 1; i < 10; i++ {
+		num := strconv.Itoa(i)
+		hypervisor.AddVM("web-server-"+num, "192.168.11.2"+num)
+	}
+
+	fmt.Printf("%+v\n", hypervisor)
+	fmt.Printf("%+v\n", hypervisor.AVGOR())
 }
