@@ -3,12 +3,11 @@ package apache
 import (
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
-func GetScoreboard(ipAddress string, port int) string {
-	url := "http://" + ipAddress + ":" + strconv.Itoa(port) + "/server-status?auto"
+func Scoreboard(ipAddress string) string {
+	url := "http://" + ipAddress + "/server-status?auto"
 	request, _ := http.NewRequest("GET", url, nil)
 
 	client := &http.Client{}
