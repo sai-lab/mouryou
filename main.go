@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./lib/apache"
 	"./lib/tenbin"
 	"fmt"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 func main() {
 	var hypervisor tenbin.Hypervisor
+	apache.Timeout = 1
 
 	for i := 1; i < 10; i++ {
 		num := strconv.Itoa(i)
