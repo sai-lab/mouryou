@@ -10,6 +10,16 @@ type virtualMachine struct {
 }
 
 func (vm virtualMachine) operatingRatio() float64 {
-	board := apache.Scoreboard(vm.ipAddress)
+	board, err := apache.Scoreboard(vm.ipAddress)
+
+	if err != nil {
+		switch err.Error() {
+		case "apache: no response":
+			return 0.0
+		case "apache: request timeout":
+			return 1.0
+		}
+	}
+
 	return apache.OperatingRatio(board)
 }

@@ -1,6 +1,7 @@
 package apache
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -9,19 +10,19 @@ import (
 
 var Timeout = 3
 
-func Scoreboard(ipAddress string) string {
+func Scoreboard(ipAddress string) (string, error) {
 	var board string
 
 	url := "http://" + ipAddress + "/server-status?auto"
 	request, _ := http.NewRequest("GET", url, nil)
 
 	client := &http.Client{Timeout: time.Duration(Timeout) * time.Second}
-	response, error := client.Do(request)
+	response, err := client.Do(request)
 
 	if response == nil {
-		return "NIL"
-	} else if error != nil {
-		return "ERROR"
+		return board, errors.New("apache: no response")
+	} else if err != nil {
+		return board, errors.New("apache: request timeout")
 	}
 
 	body, _ := ioutil.ReadAll(response.Body)
@@ -34,16 +35,10 @@ func Scoreboard(ipAddress string) string {
 	}
 
 	defer response.Body.Close()
-	return board
+	return board, nil
 }
 
 func OperatingRatio(board string) float64 {
-	if board == "NIL" {
-		return 0.0
-	} else if board == "ERROR" {
-		return 1.0
-	}
-
 	all := len(strings.Split(board, ""))
 	idles := strings.Count(board, "_") + strings.Count(board, ".")
 
