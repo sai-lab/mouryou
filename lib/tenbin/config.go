@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-func LoadConfig() Hypervisor {
-	var hypervisor Hypervisor
+func LoadConfig() cluster {
+	var c cluster
 	contents, _ := ioutil.ReadFile(os.Getenv("HOME") + "/.tenbin.json")
 
 	if contents == nil {
@@ -16,6 +16,6 @@ func LoadConfig() Hypervisor {
 		os.Exit(1)
 	}
 
-	json.Unmarshal(contents, &hypervisor)
-	return hypervisor
+	json.Unmarshal(contents, &c)
+	return c
 }

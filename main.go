@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	hypervisor := tenbin.LoadConfig()
+	cluster := tenbin.LoadConfig()
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
@@ -19,7 +19,7 @@ func main() {
 	}()
 
 	for {
-		hypervisor.PrintLoads()
+		cluster.Log()
 		time.Sleep(time.Second)
 	}
 }

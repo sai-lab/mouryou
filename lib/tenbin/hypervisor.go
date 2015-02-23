@@ -2,22 +2,19 @@ package tenbin
 
 import (
 	"../math"
-	"fmt"
-	"log"
-	"strings"
 	"sync"
 )
 
-type Hypervisor struct {
+type hypervisor struct {
 	Host string
-	Vms  []virtualMachine
+	VMs  []virtualMachine
 }
 
-func (h Hypervisor) operatingRatios() []float64 {
+func (h hypervisor) operatingRatios() []float64 {
 	var wg sync.WaitGroup
-	ors := make([]float64, len(h.Vms))
+	ors := make([]float64, len(h.VMs))
 
-	for i, vm := range h.Vms {
+	for i, vm := range h.VMs {
 		wg.Add(1)
 		go func(i int, vm virtualMachine) {
 			ors[i] = vm.operatingRatio()
@@ -29,18 +26,7 @@ func (h Hypervisor) operatingRatios() []float64 {
 	return ors
 }
 
-func (h Hypervisor) AVGOR() float64 {
+func (h hypervisor) avgor() float64 {
 	ors := h.operatingRatios()
 	return math.Average(ors)
-}
-
-func (h Hypervisor) PrintLoads() {
-	ors := h.operatingRatios()
-	loads := make([]string, len(h.Vms))
-
-	for i := range ors {
-		loads[i] = fmt.Sprintf("%.5f", ors[i])
-	}
-
-	log.Println(strings.Join(loads, ", "))
 }
