@@ -5,12 +5,12 @@ import (
 )
 
 type virtualMachine struct {
-	name      string
-	ipAddress string
+	Name string
+	Host string
 }
 
 func (vm virtualMachine) operatingRatio() float64 {
-	board, err := apache.Scoreboard(vm.ipAddress)
+	board, err := apache.Scoreboard(vm.Host)
 
 	if err != nil {
 		switch err.Error() {

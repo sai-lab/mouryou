@@ -9,19 +9,15 @@ import (
 )
 
 type Hypervisor struct {
-	vms []virtualMachine
-}
-
-func (h *Hypervisor) AddVM(name string, ipAddress string) {
-	var vm virtualMachine = virtualMachine{name, ipAddress}
-	h.vms = append(h.vms, vm)
+	Host string
+	Vms  []virtualMachine
 }
 
 func (h Hypervisor) operatingRatios() []float64 {
 	var wg sync.WaitGroup
-	ors := make([]float64, len(h.vms))
+	ors := make([]float64, len(h.Vms))
 
-	for i, vm := range h.vms {
+	for i, vm := range h.Vms {
 		wg.Add(1)
 		go func(i int, vm virtualMachine) {
 			ors[i] = vm.operatingRatio()
@@ -40,7 +36,7 @@ func (h Hypervisor) AVGOR() float64 {
 
 func (h Hypervisor) PrintLoads() {
 	ors := h.operatingRatios()
-	loads := make([]string, len(h.vms))
+	loads := make([]string, len(h.Vms))
 
 	for i := range ors {
 		loads[i] = fmt.Sprintf("%.5f", ors[i])

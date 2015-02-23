@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var Timeout = 3
+var Timeout = 1
 
 func Scoreboard(ipAddress string) (string, error) {
 	var board string
