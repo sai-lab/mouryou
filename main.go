@@ -3,7 +3,6 @@ package main
 import (
 	"./lib/apache"
 	"./lib/tenbin"
-	"log"
 	"os"
 	"os/signal"
 	"strconv"
@@ -28,7 +27,7 @@ func main() {
 	}
 
 	for {
-		log.Printf("%+v\n", hypervisor.AVGOR())
+		hypervisor.PrintLoads()
 		time.Sleep(time.Second)
 	}
 }

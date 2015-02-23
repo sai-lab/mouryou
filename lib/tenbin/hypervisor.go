@@ -2,6 +2,9 @@ package tenbin
 
 import (
 	"../math"
+	"fmt"
+	"log"
+	"strings"
 	"sync"
 )
 
@@ -33,4 +36,15 @@ func (h Hypervisor) operatingRatios() []float64 {
 func (h Hypervisor) AVGOR() float64 {
 	ors := h.operatingRatios()
 	return math.Average(ors)
+}
+
+func (h Hypervisor) PrintLoads() {
+	ors := h.operatingRatios()
+	loads := make([]string, len(h.vms))
+
+	for i := range ors {
+		loads[i] = fmt.Sprintf("%.5f", ors[i])
+	}
+
+	log.Println(strings.Join(loads, ", "))
 }
