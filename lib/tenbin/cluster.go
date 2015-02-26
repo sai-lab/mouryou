@@ -8,6 +8,7 @@ import (
 
 type cluster struct {
 	Threshold float64
+	Timeout   int64
 	LB        loadBalancer
 	HVs       []hypervisor
 }

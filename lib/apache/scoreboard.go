@@ -5,19 +5,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 )
-
-var Timeout = 1
 
 func Scoreboard(ipAddress string) (string, error) {
 	var board string
 
 	url := "http://" + ipAddress + "/server-status?auto"
 	request, _ := http.NewRequest("GET", url, nil)
-
-	client := &http.Client{Timeout: time.Duration(Timeout) * time.Second}
-	response, err := client.Do(request)
+	response, err := http.DefaultClient.Do(request)
 
 	if response == nil {
 		return board, errors.New("apache: no response")

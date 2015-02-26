@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 )
 
 func LoadConfig() cluster {
@@ -17,5 +19,7 @@ func LoadConfig() cluster {
 	}
 
 	json.Unmarshal(contents, &c)
+	http.DefaultClient.Timeout = time.Duration(c.Timeout) * time.Second
+
 	return c
 }
