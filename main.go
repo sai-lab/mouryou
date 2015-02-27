@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	cluster := tenbin.LoadConfig()
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
@@ -17,6 +16,9 @@ func main() {
 			os.Exit(0)
 		}
 	}()
+
+	cluster := tenbin.LoadConfig()
+	cluster.InitVMs()
 
 	for {
 		cluster.Log()

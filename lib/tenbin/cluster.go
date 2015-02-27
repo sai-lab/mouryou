@@ -11,18 +11,25 @@ type cluster struct {
 	Timeout   int64
 	LB        loadBalancer
 	HVs       []hypervisor
+	VMs       []virtualMachine
+}
+
+func (c *cluster) InitVMs() {
+	for _, hv := range c.HVs {
+		c.VMs = append(c.VMs, hv.VMs...)
+	}
 }
 
 func (c cluster) operatingRatios() []float64 {
 	var wg sync.WaitGroup
-	ors := make([]float64, len(c.HVs))
+	ors := make([]float64, len(c.VMs))
 
-	for i, hv := range c.HVs {
+	for i, vm := range c.VMs {
 		wg.Add(1)
-		go func(i int, hv hypervisor) {
-			ors[i] = hv.avgor()
+		go func(i int, vm virtualMachine) {
+			ors[i] = vm.operatingRatio()
 			wg.Done()
-		}(i, hv)
+		}(i, vm)
 	}
 
 	wg.Wait()
@@ -31,6 +38,7 @@ func (c cluster) operatingRatios() []float64 {
 
 func (c cluster) avgor() float64 {
 	ors := c.operatingRatios()
+	log.Printf("%+v\n", ors)
 	return math.Average(ors)
 }
 
