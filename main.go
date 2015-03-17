@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./lib/tenbin"
+	"./lib/mouryou"
 	"os"
 	"os/signal"
 	"time"
@@ -17,7 +17,7 @@ func main() {
 		}
 	}()
 
-	cluster := tenbin.LoadConfig()
+	cluster := mouryou.LoadConfig()
 	cluster.InitVMs()
 
 	for {

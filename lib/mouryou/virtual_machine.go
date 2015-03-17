@@ -1,4 +1,4 @@
-package tenbin
+package mouryou
 
 import (
 	"../apache"

@@ -1,4 +1,4 @@
-package tenbin
+package mouryou
 
 import (
 	"encoding/json"
@@ -11,10 +11,10 @@ import (
 
 func LoadConfig() cluster {
 	var c cluster
-	contents, _ := ioutil.ReadFile(os.Getenv("HOME") + "/.tenbin.json")
+	contents, _ := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
 
 	if contents == nil {
-		fmt.Println("Cannot open ~/.tenbin.json")
+		fmt.Println("Cannot open ~/.mouryou.json")
 		os.Exit(1)
 	}
 

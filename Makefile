@@ -7,13 +7,13 @@ fmt:
 	go fmt ./...
 
 build: fmt
-	go build $(GO_BUILDOPT) -o bin/tenbin main.go
+	go build $(GO_BUILDOPT) -o bin/mouryou main.go
 
 clean:
-	rm -f bin/tenbin
+	rm -f bin/mouryou
 
 install: build
-	cp bin/tenbin /usr/local/bin/
+	cp bin/mouryou /usr/local/bin/
 
 uninstall: clean
-	rm -f /usr/local/bin/tenbin
+	rm -f /usr/local/bin/mouryou

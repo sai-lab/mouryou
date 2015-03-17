@@ -1,4 +1,4 @@
-package tenbin
+package mouryou
 
 type loadBalancer struct {
 	VIP        string
