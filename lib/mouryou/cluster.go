@@ -14,8 +14,9 @@ type cluster struct {
 	VMs       []virtualMachine
 }
 
-func (c *cluster) InitVMs() {
+func (c *cluster) init() {
 	for _, hv := range c.HVs {
+		hv.assignVMs()
 		c.VMs = append(c.VMs, hv.VMs...)
 	}
 }
@@ -43,5 +44,6 @@ func (c cluster) avgor() float64 {
 }
 
 func (c cluster) Log() {
-	log.Printf("%.5f\n", c.avgor())
+	// log.Printf("%.5f\n", c.avgor())
+	c.avgor()
 }

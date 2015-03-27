@@ -7,6 +7,7 @@ import (
 type virtualMachine struct {
 	Name string
 	Host string
+	HV   *hypervisor
 }
 
 func (vm virtualMachine) operatingRatio() float64 {

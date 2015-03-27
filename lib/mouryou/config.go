@@ -2,7 +2,6 @@ package mouryou
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,15 +9,13 @@ import (
 )
 
 func LoadConfig() cluster {
+	contents, err := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
+	checkError(err)
+
 	var c cluster
-	contents, _ := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
-
-	if contents == nil {
-		fmt.Println("Cannot open ~/.mouryou.json")
-		os.Exit(1)
-	}
-
 	json.Unmarshal(contents, &c)
+	c.init()
+
 	http.DefaultClient.Timeout = time.Duration(c.Timeout) * time.Second
 
 	return c

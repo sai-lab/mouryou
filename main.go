@@ -18,7 +18,6 @@ func main() {
 	}()
 
 	cluster := mouryou.LoadConfig()
-	cluster.InitVMs()
 
 	for {
 		cluster.Log()
