@@ -32,8 +32,8 @@ func (c cluster) operatingRatios() []float64 {
 			wg.Done()
 		}(i, vm)
 	}
-
 	wg.Wait()
+
 	return ors
 }
 
