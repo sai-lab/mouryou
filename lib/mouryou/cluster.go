@@ -23,13 +23,18 @@ func (c *cluster) init() {
 
 func (c cluster) operatingRatios() []float64 {
 	var wg sync.WaitGroup
+	var m sync.Mutex
 	ors := make([]float64, len(c.VMs))
 
 	for i, vm := range c.VMs {
 		wg.Add(1)
 		go func(i int, vm virtualMachine) {
-			ors[i] = vm.operatingRatio()
-			wg.Done()
+			defer wg.Done()
+			or := vm.operatingRatio()
+
+			m.Lock()
+			ors[i] = or
+			m.Unlock()
 		}(i, vm)
 	}
 	wg.Wait()
