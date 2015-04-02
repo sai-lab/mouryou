@@ -4,14 +4,15 @@ import (
 	"../math"
 	"log"
 	"sync"
+	"time"
 )
 
 type cluster struct {
-	Threshold float64
-	Timeout   int64
-	LB        loadBalancer
-	HVs       []hypervisor
-	VMs       []virtualMachine
+	Timeout int64
+	Working int
+	LB      loadBalancer
+	HVs     []hypervisor
+	VMs     []virtualMachine
 }
 
 func (c *cluster) init() {
@@ -19,14 +20,15 @@ func (c *cluster) init() {
 		hv.assignVMs()
 		c.VMs = append(c.VMs, hv.VMs...)
 	}
+	c.Working = 1
 }
 
 func (c cluster) operatingRatios() []float64 {
 	var wg sync.WaitGroup
 	var m sync.Mutex
-	ors := make([]float64, len(c.VMs))
+	ors := make([]float64, c.Working)
 
-	for i, vm := range c.VMs {
+	for i := 0; i < c.Working; i++ {
 		wg.Add(1)
 		go func(i int, vm virtualMachine) {
 			defer wg.Done()
@@ -35,7 +37,7 @@ func (c cluster) operatingRatios() []float64 {
 			m.Lock()
 			ors[i] = or
 			m.Unlock()
-		}(i, vm)
+		}(i, c.VMs[i])
 	}
 	wg.Wait()
 
@@ -48,7 +50,9 @@ func (c cluster) avgor() float64 {
 	return math.Average(ors)
 }
 
-func (c cluster) Log() {
-	// log.Printf("%.5f\n", c.avgor())
-	c.avgor()
+func (c cluster) Run() {
+	for {
+		c.avgor()
+		time.Sleep(time.Second)
+	}
 }

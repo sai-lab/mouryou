@@ -4,7 +4,6 @@ import (
 	"./lib/mouryou"
 	"os"
 	"os/signal"
-	"time"
 )
 
 func main() {
@@ -18,9 +17,5 @@ func main() {
 	}()
 
 	cluster := mouryou.LoadConfig()
-
-	for {
-		cluster.Log()
-		time.Sleep(time.Second)
-	}
+	cluster.Run()
 }
