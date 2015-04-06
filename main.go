@@ -17,5 +17,5 @@ func main() {
 	}()
 
 	cluster := mouryou.LoadConfig()
-	cluster.Run()
+	mouryou.LoadMonitoringFunction(cluster)
 }

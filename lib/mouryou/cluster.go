@@ -1,10 +1,7 @@
 package mouryou
 
 import (
-	"../math"
-	"log"
 	"sync"
-	"time"
 )
 
 type cluster struct {
@@ -42,17 +39,4 @@ func (c cluster) operatingRatios() []float64 {
 	wg.Wait()
 
 	return ors
-}
-
-func (c cluster) avgor() float64 {
-	ors := c.operatingRatios()
-	log.Printf("%+v\n", ors)
-	return math.Average(ors)
-}
-
-func (c cluster) Run() {
-	for {
-		c.avgor()
-		time.Sleep(time.Second)
-	}
 }
