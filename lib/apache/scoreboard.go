@@ -21,15 +21,9 @@ func Scoreboard(ipAddress string) (string, error) {
 	}
 
 	body, _ := ioutil.ReadAll(response.Body)
-
-	for _, line := range strings.Split(string(body), "\n") {
-		if strings.Contains(line, "Scoreboard") {
-			board = line[12:]
-			break
-		}
-	}
-
 	defer response.Body.Close()
+
+	board = strings.Split(string(body), "\n")[9][12:]
 	return board, nil
 }
 
