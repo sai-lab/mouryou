@@ -18,23 +18,25 @@
 `~/.mouryou.json`
 
     {
-      "timeout": 1,
-      "threshold": 0.8,
-      "lb": {
-        "vip": "192.168.11.11",
-        "algorithem": "wlc"
+      "cluster": {
+        "lb": {
+          "vip": "192.168.11.11",
+          "algorithem": "wlc",
+          "threshold": 0.8
+        },
+        "hvs": [
+          {
+            "host": "192.168.11.20",
+            "vms": [
+              {
+                "name": "web-server-1",
+                "host": "192.168.11.21"
+              }
+            ]
+          }
+        ]
       },
-      "hvs": [
-        {
-          "host": "192.168.11.20",
-          "vms": [
-            {
-              "name": "web-server-1",
-              "host": "192.168.11.21"
-            }
-          ]
-        }
-      ]
+      "timeout": 1
     }
     
 #### License
