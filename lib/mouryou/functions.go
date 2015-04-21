@@ -2,6 +2,7 @@ package mouryou
 
 import (
 	"../math"
+	"fmt"
 	"log"
 	"time"
 )
@@ -14,7 +15,10 @@ func LoadMonitoringFunction(c cluster) {
 		w := readWorking()
 		ors := c.operatingRatios(w)
 
-		log.Printf("%+v\n", ors)
+		str := sliceToCsv(ors)
+		fmt.Println(str)
+		log.Println(str)
+
 		avgorCh <- math.Average(ors)
 		time.Sleep(time.Second)
 	}
