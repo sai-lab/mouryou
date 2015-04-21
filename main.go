@@ -7,15 +7,16 @@ import (
 )
 
 func main() {
+	cluster := mouryou.LoadConfig()
+
+	go mouryou.LoadMonitoringFunction(cluster)
+	go mouryou.ServerManagementFunctin(cluster)
+	go mouryou.DestinationSettingFunctin(cluster)
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
-	go func() {
-		for range sig {
-			os.Exit(0)
-		}
-	}()
-
-	cluster := mouryou.LoadConfig()
-	mouryou.LoadMonitoringFunction(cluster)
+	for range sig {
+		os.Exit(0)
+	}
 }

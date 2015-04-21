@@ -8,15 +8,20 @@ import (
 	"time"
 )
 
+type config struct {
+	Cluster cluster
+	Timeout int
+}
+
 func LoadConfig() cluster {
 	contents, err := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
 	checkError(err)
 
-	var c cluster
+	var c config
 	json.Unmarshal(contents, &c)
-	c.init()
 
+	c.Cluster.init()
 	http.DefaultClient.Timeout = time.Duration(c.Timeout) * time.Second
 
-	return c
+	return c.Cluster
 }
