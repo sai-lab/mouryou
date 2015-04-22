@@ -8,6 +8,8 @@ type loadBalancer struct {
 	VIP        string
 	Algorithem string
 	Threshold  float64
+	ScaleOut   int
+	ScaleIn    int
 }
 
 func (lb loadBalancer) thHigh() float64 {

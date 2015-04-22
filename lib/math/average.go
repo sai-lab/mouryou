@@ -9,3 +9,11 @@ func Average(xs []float64) float64 {
 
 	return total / float64(len(xs))
 }
+
+func MovingAverage(xs []float64, n int) float64 {
+	if len(xs) < n {
+		return Average(xs)
+	} else {
+		return Average(xs[len(xs)-n:])
+	}
+}

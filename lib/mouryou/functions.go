@@ -2,10 +2,13 @@ package mouryou
 
 import (
 	"../math"
+	"container/ring"
 	"fmt"
 	"log"
 	"time"
 )
+
+const MaxLingSize = 10
 
 var avgorCh = make(chan float64, 1)
 var powerCh = make(chan string, 1)
@@ -25,15 +28,24 @@ func LoadMonitoringFunction(c cluster) {
 }
 
 func ServerManagementFunctin(c cluster) {
+	r := ring.New(MaxLingSize)
+
 	for avgor := range avgorCh {
+		r.Value = avgor
+		r = r.Next()
+		avgors := rtoa(r)
+
+		outAvgor := math.MovingAverage(avgors, c.LB.ScaleOut)
+		inAvgor := math.MovingAverage(avgors, c.LB.ScaleIn)
+
 		w := readWorking()
 		thHigh := c.LB.thHigh()
 		thLow := c.LB.thLow(w)
 
 		switch {
-		case w < len(c.VMs) && avgor > thHigh:
+		case w < len(c.VMs) && outAvgor > thHigh:
 			powerCh <- "start"
-		case w > 1 && avgor > thLow:
+		case w > 1 && inAvgor < thLow:
 			powerCh <- "shutdown"
 		}
 	}
