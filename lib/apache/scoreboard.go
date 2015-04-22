@@ -23,7 +23,8 @@ func Scoreboard(ipAddress string) (string, error) {
 	body, _ := ioutil.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	board = strings.Split(string(body), "\n")[9][12:]
+	lines := strings.Split(strings.TrimRight(string(body), "\n"), "\n")
+	board = lines[len(lines)-1][12:]
 	return board, nil
 }
 
