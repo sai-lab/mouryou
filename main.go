@@ -5,11 +5,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 )
 
 func main() {
-	cluster := mouryou.LoadConfig()
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	cluster := mouryou.LoadConfig()
 	f := mouryou.CreateLog()
 	log.SetOutput(f)
 
