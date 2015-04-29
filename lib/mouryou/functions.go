@@ -31,6 +31,10 @@ func ServerManagementFunctin(c cluster) {
 	r := ring.New(MaxLingSize)
 
 	for avgor := range avgorCh {
+		if readOperating() {
+			continue
+		}
+
 		r.Value = avgor
 		r = r.Next()
 		avgors := rtoa(r)
@@ -44,7 +48,7 @@ func ServerManagementFunctin(c cluster) {
 
 		switch {
 		case w < len(c.VMs) && outAvgor > thHigh:
-			powerCh <- "start"
+			powerCh <- "create"
 		case w > 1 && inAvgor < thLow:
 			powerCh <- "shutdown"
 		}
@@ -54,14 +58,23 @@ func ServerManagementFunctin(c cluster) {
 func DestinationSettingFunctin(c cluster) {
 	for power := range powerCh {
 		switch power {
-		case "start":
+		case "create":
+			w := readWorking()
+			go c.VMs[w].create(30, true)
+			writeOperating(true)
+		case "created":
 			w := readWorking()
 			c.LB.active(c.VMs[w].Host)
 			writeWorking(w + 1)
+			writeOperating(false)
 		case "shutdown":
 			w := readWorking()
 			writeWorking(w - 1)
 			c.LB.inactive(c.VMs[w-1].Host)
+			go c.VMs[w-1].shutdown(30, true)
+			writeOperating(true)
+		case "shutdowned":
+			writeOperating(false)
 		}
 	}
 }

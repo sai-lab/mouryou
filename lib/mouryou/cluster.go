@@ -12,7 +12,7 @@ type cluster struct {
 
 func (c *cluster) init() {
 	for _, hv := range c.HVs {
-		hv.assignVMs()
+		hv.init()
 		c.VMs = append(c.VMs, hv.VMs...)
 	}
 
