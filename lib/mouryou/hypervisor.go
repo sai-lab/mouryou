@@ -13,7 +13,7 @@ func (hv *hypervisor) init() {
 	for i := range hv.VMs {
 		hv.VMs[i].HV = hv
 		if i != 0 {
-			hv.VMs[i].shutdown(0, false)
+			hv.VMs[i].shutdown(0)
 		}
 	}
 }

@@ -48,33 +48,26 @@ func ServerManagementFunctin(c cluster) {
 
 		switch {
 		case w < len(c.VMs) && outAvgor > thHigh:
-			powerCh <- "create"
+			go c.VMs[w].create(30)
+			writeOperating(true)
 		case w > 1 && inAvgor < thLow:
-			powerCh <- "shutdown"
+			powerCh <- "shutdowning"
+			go c.VMs[w-1].shutdown(30)
+			writeOperating(true)
 		}
 	}
 }
 
 func DestinationSettingFunctin(c cluster) {
 	for power := range powerCh {
+		w := readWorking()
 		switch power {
-		case "create":
-			w := readWorking()
-			go c.VMs[w].create(30, true)
-			writeOperating(true)
 		case "created":
-			w := readWorking()
 			c.LB.active(c.VMs[w].Host)
 			writeWorking(w + 1)
-			writeOperating(false)
-		case "shutdown":
-			w := readWorking()
+		case "shutdowning":
 			writeWorking(w - 1)
 			c.LB.inactive(c.VMs[w-1].Host)
-			go c.VMs[w-1].shutdown(30, true)
-			writeOperating(true)
-		case "shutdowned":
-			writeOperating(false)
 		}
 	}
 }

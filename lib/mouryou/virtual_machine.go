@@ -26,7 +26,7 @@ func (vm virtualMachine) operatingRatio() float64 {
 	return apache.OperatingRatio(board)
 }
 
-func (vm virtualMachine) create(sleep time.Duration, ch bool) {
+func (vm virtualMachine) create(sleep time.Duration) {
 	conn, err := vm.HV.connect()
 	checkError(err)
 	defer conn.CloseConnection()
@@ -36,14 +36,12 @@ func (vm virtualMachine) create(sleep time.Duration, ch bool) {
 
 	dom.Create()
 	time.Sleep(sleep * time.Second)
-	if ch {
-		powerCh <- "created"
-	}
+
+	writeOperating(false)
+	powerCh <- "created"
 }
 
-func (vm virtualMachine) shutdown(sleep time.Duration, ch bool) {
-	time.Sleep(sleep * time.Second)
-
+func (vm virtualMachine) shutdown(sleep time.Duration) {
 	conn, err := vm.HV.connect()
 	checkError(err)
 	defer conn.CloseConnection()
@@ -51,8 +49,8 @@ func (vm virtualMachine) shutdown(sleep time.Duration, ch bool) {
 	dom, err := conn.LookupDomainByName(vm.Name)
 	checkError(err)
 
+	time.Sleep(sleep * time.Second)
 	dom.Shutdown()
-	if ch {
-		powerCh <- "shutdowned"
-	}
+
+	writeOperating(false)
 }
