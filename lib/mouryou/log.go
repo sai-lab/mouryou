@@ -2,6 +2,7 @@ package mouryou
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -9,17 +10,24 @@ import (
 
 func CreateLog() *os.File {
 	now := time.Now().Format("20060102150405")
-	f, err := os.OpenFile("./log/"+now+".csv", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("./log/"+now+".csv", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	checkError(err)
+
 	return f
 }
 
-func sliceToCsv(arr []float64) string {
-	str := fmt.Sprintf("%+v", arr)
+func logging(ors []float64) {
+	arr := formatOrs(ors)
+	fmt.Println(strings.Join(arr, "  "))
+	log.Println("," + strings.Join(arr, ","))
+}
 
-	str = strings.TrimLeft(str, "[")
-	str = strings.TrimRight(str, "]")
-	str = strings.Replace(str, " ", ",", -1)
+func formatOrs(ors []float64) []string {
+	arr := make([]string, len(ors))
 
-	return str
+	for i, v := range ors {
+		arr[i] = fmt.Sprintf("%.5f", v)
+	}
+
+	return arr
 }

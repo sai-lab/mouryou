@@ -10,10 +10,11 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	cluster := mouryou.LoadConfig()
+
 	f := mouryou.CreateLog()
 	log.SetOutput(f)
+	log.SetFlags(log.Ltime)
 
 	go mouryou.LoadMonitoringFunction(cluster)
 	go mouryou.ServerManagementFunctin(cluster)
