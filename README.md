@@ -38,7 +38,8 @@
           }
         ]
       },
-      "timeout": 1
+      "timeout": 1,
+      "wait": 30
     }
     
 #### License

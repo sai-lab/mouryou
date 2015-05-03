@@ -43,11 +43,11 @@ func ServerManagementFunctin(c cluster) {
 
 		switch {
 		case w < len(c.VMs) && outAvgor > thHigh:
-			go c.VMs[w].create(30)
+			go c.VMs[w].create(wait)
 			writeOperating(true)
 		case w > 1 && inAvgor < thLow:
 			powerCh <- "shutdowning"
-			go c.VMs[w-1].shutdown(30)
+			go c.VMs[w-1].shutdown(wait)
 			writeOperating(true)
 		}
 	}

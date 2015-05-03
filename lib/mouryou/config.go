@@ -11,7 +11,10 @@ import (
 type config struct {
 	Cluster cluster
 	Timeout int
+	Wait    int
 }
+
+var wait time.Duration
 
 func LoadConfig() cluster {
 	contents, err := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
@@ -22,6 +25,7 @@ func LoadConfig() cluster {
 
 	c.Cluster.init()
 	http.DefaultClient.Timeout = time.Duration(c.Timeout) * time.Second
+	wait = time.Duration(c.Wait)
 
 	return c.Cluster
 }
