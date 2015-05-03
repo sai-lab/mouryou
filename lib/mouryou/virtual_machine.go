@@ -37,7 +37,9 @@ func (vm virtualMachine) create(sleep time.Duration) {
 	dom.Create()
 	time.Sleep(sleep * time.Second)
 
-	writeOperating(0)
+	o := readOperating()
+	writeOperating(o - 1)
+
 	powerCh <- "created"
 }
 
@@ -52,5 +54,6 @@ func (vm virtualMachine) shutdown(sleep time.Duration) {
 	time.Sleep(sleep * time.Second)
 	dom.Shutdown()
 
-	writeOperating(0)
+	o := readOperating()
+	writeOperating(o - 1)
 }

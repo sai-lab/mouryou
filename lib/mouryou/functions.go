@@ -2,6 +2,7 @@ package mouryou
 
 import (
 	"../average"
+	"../rate"
 	"container/ring"
 	"time"
 )
@@ -43,12 +44,16 @@ func ServerManagementFunctin(c cluster) {
 
 		switch {
 		case w < len(c.VMs) && outAvgor > thHigh:
-			go c.VMs[w].create(wait)
-			writeOperating(1)
+			ri := rate.Increase(avgors)
+			writeOperating(ri)
+
+			for i := 0; i < ri; i++ {
+				go c.VMs[w+i].create(wait)
+			}
 		case w > 1 && inAvgor < thLow:
 			powerCh <- "shutdowning"
-			go c.VMs[w-1].shutdown(wait)
 			writeOperating(1)
+			go c.VMs[w-1].shutdown(wait)
 		}
 	}
 }
