@@ -7,6 +7,9 @@ import (
 var working int = 1
 var workM sync.RWMutex
 
+var operating int = 0
+var operateM sync.RWMutex
+
 func readWorking() int {
 	workM.RLock()
 	defer workM.RUnlock()
@@ -19,16 +22,13 @@ func writeWorking(w int) {
 	defer workM.Unlock()
 }
 
-var operating bool = false
-var operateM sync.RWMutex
-
-func readOperating() bool {
+func readOperating() int {
 	operateM.RLock()
 	defer operateM.RUnlock()
 	return operating
 }
 
-func writeOperating(o bool) {
+func writeOperating(o int) {
 	operateM.Lock()
 	operating = o
 	defer operateM.Unlock()

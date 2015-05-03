@@ -26,7 +26,7 @@ func ServerManagementFunctin(c cluster) {
 	r := ring.New(MaxLingSize)
 
 	for avgor := range avgorCh {
-		if readOperating() {
+		if readOperating() > 0 {
 			continue
 		}
 
@@ -44,11 +44,11 @@ func ServerManagementFunctin(c cluster) {
 		switch {
 		case w < len(c.VMs) && outAvgor > thHigh:
 			go c.VMs[w].create(wait)
-			writeOperating(true)
+			writeOperating(1)
 		case w > 1 && inAvgor < thLow:
 			powerCh <- "shutdowning"
 			go c.VMs[w-1].shutdown(wait)
-			writeOperating(true)
+			writeOperating(1)
 		}
 	}
 }
