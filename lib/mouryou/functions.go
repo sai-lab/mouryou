@@ -1,7 +1,7 @@
 package mouryou
 
 import (
-	"../math"
+	"../average"
 	"container/ring"
 	"time"
 )
@@ -17,7 +17,7 @@ func LoadMonitoringFunction(c cluster) {
 		ors := c.operatingRatios(w)
 		logging(ors)
 
-		avgorCh <- math.Average(ors)
+		avgorCh <- average.Average(ors)
 		time.Sleep(time.Second)
 	}
 }
@@ -34,8 +34,8 @@ func ServerManagementFunctin(c cluster) {
 		r = r.Next()
 		avgors := rtoa(r)
 
-		outAvgor := math.MovingAverage(avgors, c.LB.ScaleOut)
-		inAvgor := math.MovingAverage(avgors, c.LB.ScaleIn)
+		outAvgor := average.MovingAverage(avgors, c.LB.ScaleOut)
+		inAvgor := average.MovingAverage(avgors, c.LB.ScaleIn)
 
 		w := readWorking()
 		thHigh := c.LB.thHigh()

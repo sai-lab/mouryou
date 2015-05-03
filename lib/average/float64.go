@@ -1,4 +1,4 @@
-package math
+package average
 
 func Average(xs []float64) float64 {
 	total := float64(0)
