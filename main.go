@@ -1,11 +1,12 @@
 package main
 
 import (
-	"./lib/mouryou"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
+
+	"./lib/mouryou"
 )
 
 func main() {

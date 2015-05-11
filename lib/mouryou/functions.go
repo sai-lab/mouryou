@@ -1,10 +1,11 @@
 package mouryou
 
 import (
-	"../average"
-	"../rate"
 	"container/ring"
 	"time"
+
+	"../average"
+	"../rate"
 )
 
 const MaxLingSize = 10

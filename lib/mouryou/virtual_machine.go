@@ -1,8 +1,9 @@
 package mouryou
 
 import (
-	"../apache"
 	"time"
+
+	"../apache"
 )
 
 type virtualMachine struct {
