@@ -1,13 +1,17 @@
 GO_BUILDOPT := -ldflags '-s -w'
 
+gom:
+	go get github.com/mattn/gom
+	gom install
+
 run:
-	go run main.go ${ARGS}
+	gom run main.go ${ARGS}
 
 fmt:
-	go fmt ./...
+	gom exec goimports -w *.go lib/*/*.go
 
 build: fmt
-	go build $(GO_BUILDOPT) -o bin/mouryou main.go
+	gom build $(GO_BUILDOPT) -o bin/mouryou main.go
 
 clean:
 	rm -f bin/mouryou

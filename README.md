@@ -8,9 +8,9 @@
 
 #### Installation
 
-    $ git clone git://github.com/hico-horiuchi/ohgi.git
-    $ cd ohgi
-    $ go get ./...
+    $ git clone git://github.com/hico-horiuchi/mouryou.git
+    $ cd mouryou
+    $ make gom
     $ sudo make install
 
 #### Configuration
