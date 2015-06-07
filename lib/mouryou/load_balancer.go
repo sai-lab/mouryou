@@ -8,8 +8,9 @@ type loadBalancer struct {
 	VIP        string
 	Algorithem string
 	ThHigh     float64 `json:th_high`
-	ScaleOut   int     `json:scale_out`
-	ScaleIn    int     `json:scale_in`
+	Margin     float64
+	ScaleOut   int `json:scale_out`
+	ScaleIn    int `json:scale_in`
 }
 
 func (lb loadBalancer) thHigh() float64 {
@@ -17,7 +18,7 @@ func (lb loadBalancer) thHigh() float64 {
 }
 
 func (lb loadBalancer) thLow(working int) float64 {
-	return lb.thHigh()*float64(working-1)/float64(working) - 0.05
+	return lb.thHigh()*float64(working-1)/float64(working) - lb.Margin
 }
 
 func (lb loadBalancer) init() {

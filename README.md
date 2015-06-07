@@ -23,6 +23,7 @@
           "vip": "192.168.11.11",
           "algorithem": "wlc",
           "th_high": 0.8,
+          "margin": 0.05,
           "scale_out": 2,
           "scale_in": 8
         },
