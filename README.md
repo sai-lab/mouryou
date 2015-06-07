@@ -22,9 +22,9 @@
         "lb": {
           "vip": "192.168.11.11",
           "algorithem": "wlc",
-          "threshold": 0.8,
-          "scaleout": 2,
-          "scalein": 8
+          "th_high": 0.8,
+          "scale_out": 2,
+          "scale_in": 8
         },
         "hvs": [
           {

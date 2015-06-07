@@ -7,13 +7,13 @@ import (
 type loadBalancer struct {
 	VIP        string
 	Algorithem string
-	Threshold  float64
-	ScaleOut   int
-	ScaleIn    int
+	ThHigh     float64 `json:th_high`
+	ScaleOut   int     `json:scale_out`
+	ScaleIn    int     `json:scale_in`
 }
 
 func (lb loadBalancer) thHigh() float64 {
-	return lb.Threshold
+	return lb.ThHigh
 }
 
 func (lb loadBalancer) thLow(working int) float64 {
