@@ -3,29 +3,24 @@ package mouryou
 import (
 	"encoding/json"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"time"
 )
 
-type config struct {
-	Cluster cluster
-	Timeout int
-	Wait    int
+type configStruct struct {
+	Cluster ClusterStruct `json:"cluster"`
 }
 
 var wait time.Duration
 
-func LoadConfig() cluster {
-	contents, err := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
+func LoadConfig() *ClusterStruct {
+	var config configStruct
+
+	bytes, err := ioutil.ReadFile(os.Getenv("HOME") + "/.mouryou.json")
 	checkError(err)
 
-	var c config
-	json.Unmarshal(contents, &c)
+	err = json.Unmarshal(bytes, &config)
+	checkError(err)
 
-	c.Cluster.init()
-	http.DefaultClient.Timeout = time.Duration(c.Timeout) * time.Second
-	wait = time.Duration(c.Wait)
-
-	return c.Cluster
+	return &config.Cluster
 }

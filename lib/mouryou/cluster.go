@@ -4,43 +4,42 @@ import (
 	"sync"
 )
 
-type cluster struct {
-	LB  loadBalancer
-	HVs []hypervisor
-	VMs []virtualMachine
+type ClusterStruct struct {
+	LoadBalancer    LoadBalancerStruct `json:"load_balancer"`
+	Hypervisors     []HypervisorStruct `json:"hypervisors"`
+	VirtualMachines []VirtualMachineStruct
 }
 
-func (c *cluster) init() {
-	for _, hv := range c.HVs {
-		hv.init()
-		c.VMs = append(c.VMs, hv.VMs...)
+func (cluster *ClusterStruct) Initialize() {
+	for _, hypervisor := range cluster.Hypervisors {
+		hypervisor.Initialize()
+		cluster.VirtualMachines = append(cluster.VirtualMachines, hypervisor.VirtualMachines...)
 	}
 
-	c.LB.init()
-	for _, vm := range c.VMs {
-		c.LB.add(vm.Host)
+	cluster.LoadBalancer.Initialize()
+	for _, machine := range cluster.VirtualMachines {
+		cluster.LoadBalancer.Add(machine.Host)
 	}
 
-	c.LB.active(c.VMs[0].Host)
+	cluster.LoadBalancer.Active(cluster.VirtualMachines[0].Host)
 }
 
-func (c cluster) operatingRatios(working int) []float64 {
-	var wg sync.WaitGroup
-	var m sync.Mutex
-	ors := make([]float64, working)
+func (cluster ClusterStruct) OperatingRatios(n int) []float64 {
+	var group sync.WaitGroup
+	var mutex sync.Mutex
+	ratios := make([]float64, n)
 
-	for i := 0; i < working; i++ {
-		wg.Add(1)
-		go func(i int, vm virtualMachine) {
-			defer wg.Done()
-			or := vm.operatingRatio()
+	for i := 0; i < n; i++ {
+		group.Add(1)
+		go func(i int, machine *VirtualMachineStruct) {
+			defer group.Done()
 
-			m.Lock()
-			ors[i] = or
-			m.Unlock()
-		}(i, c.VMs[i])
+			mutex.Lock()
+			defer mutex.Unlock()
+			ratios[i] = machine.OperatingRatio()
+		}(i, &cluster.VirtualMachines[i])
 	}
-	wg.Wait()
+	group.Wait()
 
-	return ors
+	return ratios
 }

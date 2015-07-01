@@ -1,24 +1,25 @@
 package mouryou
 
 import (
-	"github.com/alexzorin/libvirt-go"
+	libvirt "github.com/alexzorin/libvirt-go"
 )
 
-type hypervisor struct {
-	Host string
-	VMs  []virtualMachine
+type HypervisorStruct struct {
+	Host            string                 `json:"host"`
+	VirtualMachines []VirtualMachineStruct `json:"virtual_machines"`
 }
 
-func (hv *hypervisor) init() {
-	for i := range hv.VMs {
-		hv.VMs[i].HV = hv
+func (hypervisor *HypervisorStruct) Initialize() {
+	for i := range hypervisor.VirtualMachines {
+		hypervisor.VirtualMachines[i].Hypervisor = hypervisor
+
 		if i != 0 {
-			hv.VMs[i].shutdown(0)
+			hypervisor.VirtualMachines[i].Shutdown(0)
 		}
 	}
 }
 
-func (hv hypervisor) connect() (libvirt.VirConnection, error) {
-	conn, err := libvirt.NewVirConnection("qemu+tcp://" + hv.Host + "/system")
-	return conn, err
+func (hypervisor HypervisorStruct) Connect() (libvirt.VirConnection, error) {
+	connection, err := libvirt.NewVirConnection("qemu+tcp://" + hypervisor.Host + "/system")
+	return connection, err
 }

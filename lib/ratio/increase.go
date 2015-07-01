@@ -1,4 +1,4 @@
-package rate
+package ratio
 
 import (
 	"math"

@@ -5,29 +5,35 @@ import (
 	"time"
 
 	"../average"
-	"../rate"
+	"../ratio"
 )
 
-const MaxLingSize = 10
+const (
+	LING_SIZE   = 10
+	TIMEOUT_SEC = 1
+	SLEEP_SEC   = 30
+)
 
-var avgorCh = make(chan float64, 1)
+var loadCh = make(chan float64, 1)
 var powerCh = make(chan string, 1)
 
-func LoadMonitoringFunction(c cluster) {
+func LoadMonitoringFunction(cluster *ClusterStruct) {
+	var n int
+
 	for {
-		w := readWorking()
-		ors := c.operatingRatios(w)
+		n = readWorking()
+		ors := cluster.OperatingRatios(n)
 		logging(ors)
 
-		avgorCh <- average.Average(ors)
+		loadCh <- average.Average(ors)
 		time.Sleep(time.Second)
 	}
 }
 
-func ServerManagementFunctin(c cluster) {
-	r := ring.New(MaxLingSize)
+func ServerManagementFunctin(cluster *ClusterStruct) {
+	r := ring.New(LING_SIZE)
 
-	for avgor := range avgorCh {
+	for avgor := range loadCh {
 		if readOperating() > 0 {
 			continue
 		}
@@ -36,39 +42,39 @@ func ServerManagementFunctin(c cluster) {
 		r = r.Next()
 		avgors := rtoa(r)
 
-		outAvgor := average.MovingAverage(avgors, c.LB.ScaleOut)
-		inAvgor := average.MovingAverage(avgors, c.LB.ScaleIn)
+		out := average.MovingAverage(avgors, cluster.LoadBalancer.ScaleOut)
+		in := average.MovingAverage(avgors, cluster.LoadBalancer.ScaleIn)
 
-		w := readWorking()
-		thHigh := c.LB.thHigh()
-		thLow := c.LB.thLow(w)
+		n := readWorking()
+		high := cluster.LoadBalancer.ThHigh()
+		low := cluster.LoadBalancer.ThLow(n)
 
 		switch {
-		case w < len(c.VMs) && outAvgor > thHigh:
-			ri := rate.Increase(avgors)
-			writeOperating(ri)
+		case n < len(cluster.VirtualMachines) && out > high:
+			ir := ratio.Increase(avgors)
+			writeOperating(ir)
 
-			for i := 0; i < ri; i++ {
-				go c.VMs[w+i].create(wait)
+			for i := 0; i < ir; i++ {
+				go cluster.VirtualMachines[n+i].Bootup(SLEEP_SEC)
 			}
-		case w > 1 && inAvgor < thLow:
-			powerCh <- "shutdowning"
+		case n > 1 && in < low:
 			writeOperating(1)
-			go c.VMs[w-1].shutdown(wait)
+			go cluster.VirtualMachines[n-1].Shutdown(SLEEP_SEC)
 		}
 	}
 }
 
-func DestinationSettingFunctin(c cluster) {
+func DestinationSettingFunctin(cluster *ClusterStruct) {
 	for power := range powerCh {
-		w := readWorking()
+		n := readWorking()
+
 		switch power {
-		case "created":
-			c.LB.active(c.VMs[w].Host)
-			writeWorking(w + 1)
-		case "shutdowning":
-			writeWorking(w - 1)
-			c.LB.inactive(c.VMs[w-1].Host)
+		case "bootup":
+			cluster.LoadBalancer.Active(cluster.VirtualMachines[n].Host)
+			writeWorking(n + 1)
+		case "shutdown":
+			writeWorking(n - 1)
+			cluster.LoadBalancer.Inactive(cluster.VirtualMachines[n].Host)
 		}
 	}
 }

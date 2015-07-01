@@ -6,82 +6,66 @@ import (
 	"../apache"
 )
 
-type virtualMachine struct {
-	Name string
-	Host string
-	HV   *hypervisor
+type VirtualMachineStruct struct {
+	Name       string `json:"name"`
+	Host       string `json:"host"`
+	Hypervisor *HypervisorStruct
 }
 
-func (vm virtualMachine) operatingRatio() float64 {
-	board, err := apache.Scoreboard(vm.Host)
-
+func (machine VirtualMachineStruct) OperatingRatio() float64 {
+	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		switch err.Error() {
-		case "apache: no response":
-			return 1.0
-		case "apache: request timeout":
-			return 1.0
-		}
+		return 1.0
 	}
 
 	return apache.OperatingRatio(board)
 }
 
-func (vm virtualMachine) create(sleep time.Duration) {
-	conn, err := vm.HV.connect()
-	checkError(err)
-	defer conn.CloseConnection()
-
-	dom, err := conn.LookupDomainByName(vm.Name)
-	checkError(err)
-
-	if sleep > 0 {
-		for {
-			err = dom.Create()
-			if err == nil {
-				break
-			} else {
-				time.Sleep(time.Second)
-			}
-		}
+func (machine VirtualMachineStruct) Bootup(sleep int) {
+	connection, err := machine.Hypervisor.Connect()
+	if err != nil {
+		powerCh <- err.Error()
+		return
 	}
-	time.Sleep(sleep * time.Second)
+	defer connection.CloseConnection()
 
-	for {
-		_, err := apache.Scoreboard(vm.Host)
-		if err == nil {
-			break
-		} else {
-			time.Sleep(time.Second)
-		}
+	domain, err := connection.LookupDomainByName(machine.Name)
+	if err != nil {
+		powerCh <- err.Error()
+		return
 	}
 
-	o := readOperating()
-	writeOperating(o - 1)
+	err = domain.Create()
+	if err != nil {
+		powerCh <- err.Error()
+		return
+	}
 
-	powerCh <- "created"
+	time.Sleep(time.Duration(sleep) * time.Second)
+	powerCh <- "bootup"
 }
 
-func (vm virtualMachine) shutdown(sleep time.Duration) {
-	conn, err := vm.HV.connect()
-	checkError(err)
-	defer conn.CloseConnection()
+func (machine VirtualMachineStruct) Shutdown(sleep int) {
+	powerCh <- "shutdown"
 
-	dom, err := conn.LookupDomainByName(vm.Name)
-	checkError(err)
+	connection, err := machine.Hypervisor.Connect()
+	if err != nil {
+		powerCh <- err.Error()
+		return
+	}
+	defer connection.CloseConnection()
 
-	time.Sleep(sleep * time.Second)
-	if sleep > 0 {
-		for {
-			err = dom.Shutdown()
-			if err == nil {
-				break
-			} else {
-				time.Sleep(time.Second)
-			}
-		}
+	domain, err := connection.LookupDomainByName(machine.Name)
+	if err != nil {
+		powerCh <- err.Error()
+		return
 	}
 
-	o := readOperating()
-	writeOperating(o - 1)
+	time.Sleep(time.Duration(sleep) * time.Second)
+
+	err = domain.Shutdown()
+	if err != nil {
+		powerCh <- err.Error()
+		return
+	}
 }

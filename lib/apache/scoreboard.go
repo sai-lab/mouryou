@@ -1,30 +1,34 @@
 package apache
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-func Scoreboard(ipAddress string) (string, error) {
+func Scoreboard(host string) (string, error) {
 	var board string
+	url := "http://" + host + "/server-status?auto"
 
-	url := "http://" + ipAddress + "/server-status?auto"
-	request, _ := http.NewRequest("GET", url, nil)
-	response, err := http.DefaultClient.Do(request)
-
-	if response == nil {
-		return board, errors.New("apache: no response")
-	} else if err != nil {
-		return board, errors.New("apache: request timeout")
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return board, err
 	}
 
-	body, _ := ioutil.ReadAll(response.Body)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return board, err
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return board, err
+	}
 	defer response.Body.Close()
 
 	lines := strings.Split(strings.TrimRight(string(body), "\n"), "\n")
 	board = lines[len(lines)-1][12:]
+
 	return board, nil
 }
 

@@ -19,18 +19,18 @@
 
     {
       "cluster": {
-        "lb": {
-          "vip": "192.168.11.11",
-          "algorithem": "wlc",
-          "th_high": 0.8,
+        "load_balancer": {
+          "virtual_ip": "192.168.11.11",
+          "algorithm": "wlc",
+          "threshold": 0.8,
           "margin": 0.05,
           "scale_out": 2,
           "scale_in": 8
         },
-        "hvs": [
+        "hypervisors": [
           {
             "host": "192.168.11.20",
-            "vms": [
+            "virtual_machines": [
               {
                 "name": "web-server-1",
                 "host": "192.168.11.21"
@@ -38,9 +38,7 @@
             ]
           }
         ]
-      },
-      "timeout": 1,
-      "wait": 30
+      }
     }
     
 #### License

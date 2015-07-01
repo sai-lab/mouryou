@@ -5,31 +5,31 @@ import (
 )
 
 var working int = 1
-var workM sync.RWMutex
+var workMutex sync.RWMutex
 
 var operating int = 0
-var operateM sync.RWMutex
+var operateMutex sync.RWMutex
 
 func readWorking() int {
-	workM.RLock()
-	defer workM.RUnlock()
+	workMutex.RLock()
+	defer workMutex.RUnlock()
 	return working
 }
 
-func writeWorking(w int) {
-	workM.Lock()
-	working = w
-	defer workM.Unlock()
+func writeWorking(x int) {
+	workMutex.Lock()
+	defer workMutex.Unlock()
+	working = x
 }
 
 func readOperating() int {
-	operateM.RLock()
-	defer operateM.RUnlock()
+	operateMutex.RLock()
+	defer operateMutex.RUnlock()
 	return operating
 }
 
-func writeOperating(o int) {
-	operateM.Lock()
-	operating = o
-	defer operateM.Unlock()
+func writeOperating(x int) {
+	operateMutex.Lock()
+	defer operateMutex.Unlock()
+	operating = x
 }
