@@ -4,7 +4,7 @@
 
   - [Golang](https://golang.org/) >= 1
   - [Apache HTTP Server](http://httpd.apache.org/) with [mod_status](http://httpd.apache.org/docs/2.4/mod/mod_status.html)
-  - [IPVS](http://www.linuxvirtualserver.org/software/ipvs.html)
+  - [IP Virtual Server](http://www.linuxvirtualserver.org/software/ipvs.html)
 
 #### Installation
 
