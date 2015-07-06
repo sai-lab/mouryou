@@ -21,7 +21,11 @@ func (machine VirtualMachineStruct) OperatingRatio() float64 {
 	return apache.OperatingRatio(board)
 }
 
-func (machine VirtualMachineStruct) Bootup(sleep int) {
+func (machine VirtualMachineStruct) Bootup(sleep int, power chan string) {
+	if power != nil {
+		power <- "booting up"
+	}
+
 	connection, err := machine.Hypervisor.Connect()
 	if err != nil {
 		powerCh <- err.Error()
@@ -42,11 +46,16 @@ func (machine VirtualMachineStruct) Bootup(sleep int) {
 	}
 
 	time.Sleep(time.Duration(sleep) * time.Second)
-	powerCh <- "bootup"
+
+	if power != nil {
+		power <- "booted up"
+	}
 }
 
-func (machine VirtualMachineStruct) Shutdown(sleep int) {
-	powerCh <- "shutdown"
+func (machine VirtualMachineStruct) Shutdown(sleep int, power chan string) {
+	if power != nil {
+		power <- "shutting down"
+	}
 
 	connection, err := machine.Hypervisor.Connect()
 	if err != nil {
@@ -67,5 +76,9 @@ func (machine VirtualMachineStruct) Shutdown(sleep int) {
 	if err != nil {
 		powerCh <- err.Error()
 		return
+	}
+
+	if power != nil {
+		power <- "shutted down"
 	}
 }

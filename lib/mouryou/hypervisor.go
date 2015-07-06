@@ -14,7 +14,7 @@ func (hypervisor *HypervisorStruct) Initialize() {
 		hypervisor.VirtualMachines[i].Hypervisor = hypervisor
 
 		if i != 0 {
-			hypervisor.VirtualMachines[i].Shutdown(0)
+			hypervisor.VirtualMachines[i].Shutdown(0, nil)
 		}
 	}
 }

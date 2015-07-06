@@ -11,7 +11,9 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	cluster := mouryou.LoadConfig()
+	cluster.Initialize()
 
 	file := mouryou.CreateLog()
 	log.SetOutput(file)
