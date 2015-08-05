@@ -65,6 +65,7 @@ func ServerManagementFunctin(cluster *ClusterStruct) {
 		switch {
 		case w < len(cluster.VirtualMachines) && out > high:
 			ir = ratio.Increase(avgors)
+
 			for i = 0; i < ir; i++ {
 				go cluster.VirtualMachines[w+i].Bootup(SLEEP_SEC, powerCh)
 			}
