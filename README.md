@@ -8,7 +8,7 @@
 
 #### Installation
 
-    $ git clone git://github.com/hico-horiuchi/mouryou.git
+    $ git clone git://github.com/sai-lab/mouryou.git
     $ cd mouryou
     $ make gom
     $ sudo make install
