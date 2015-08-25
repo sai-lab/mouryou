@@ -10,8 +10,8 @@
 
     $ git clone git://github.com/sai-lab/mouryou.git
     $ cd mouryou
-    $ make gom
-    $ sudo make install
+    $ make gom build
+    $ bin/mouryou
 
 #### Configuration
 

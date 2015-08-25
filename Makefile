@@ -15,9 +15,3 @@ build: fmt
 
 clean:
 	rm -f bin/mouryou
-
-install: build
-	cp bin/mouryou /usr/local/bin/
-
-uninstall: clean
-	rm -f /usr/local/bin/mouryou
