@@ -15,3 +15,11 @@ build: fmt
 
 clean:
 	rm -f bin/mouryou
+
+link:
+	mkdir -p $(GOPATH)/src/github.com/sai-lab
+	ln -s $(CURDIR) $(GOPATH)/src/github.com/sai-lab/mouryou
+
+unlink:
+	rm $(GOPATH)/src/github.com/sai-lab/mouryou
+	rmdir $(GOPATH)/src/github.com/sai-lab

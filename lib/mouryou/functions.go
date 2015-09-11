@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"../average"
-	"../ratio"
+	"github.com/sai-lab/mouryou/lib/average"
+	"github.com/sai-lab/mouryou/lib/ratio"
 )
 
 const (

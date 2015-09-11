@@ -3,7 +3,7 @@ package mouryou
 import (
 	"time"
 
-	"../apache"
+	"github.com/sai-lab/mouryou/lib/apache"
 )
 
 type VirtualMachineStruct struct {

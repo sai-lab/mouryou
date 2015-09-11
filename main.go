@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 
-	"./lib/mouryou"
+	"github.com/sai-lab/mouryou/lib/mouryou"
 )
 
 func main() {
