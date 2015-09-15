@@ -53,7 +53,7 @@ func ServerManagementFunctin(cluster *ClusterStruct) {
 
 		r.Value = avgor
 		r = r.Next()
-		avgors := RingToArray(r)
+		avgors := ringToArray(r)
 
 		out = average.MovingAverage(avgors, cluster.LoadBalancer.ScaleOut)
 		in = average.MovingAverage(avgors, cluster.LoadBalancer.ScaleIn)

@@ -17,7 +17,7 @@ func CreateLog() *os.File {
 }
 
 func logging(xs []float64) {
-	arr := FloatsToStrings(xs)
+	arr := floatsToStrings(xs)
 	fmt.Println(strings.Join(arr, "  "))
 	log.Println("," + strings.Join(arr, ","))
 }

@@ -28,7 +28,7 @@ func writeWithMutex(x *int, y int, mutex *sync.RWMutex) {
 	*x = y
 }
 
-func RingToArray(r *ring.Ring) []float64 {
+func ringToArray(r *ring.Ring) []float64 {
 	arr := make([]float64, r.Len())
 	i := 0
 
@@ -42,7 +42,7 @@ func RingToArray(r *ring.Ring) []float64 {
 	return arr[:i]
 }
 
-func FloatsToStrings(xs []float64) []string {
+func floatsToStrings(xs []float64) []string {
 	arr := make([]string, len(xs))
 
 	for i, x := range xs {
