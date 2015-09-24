@@ -41,32 +41,33 @@ func LoadMonitoringFunction(cluster *ClusterStruct) {
 }
 
 func ServerManagementFunctin(cluster *ClusterStruct) {
-	var avgor, out, in, high, low float64
-	var w, i, ir int
+	var avgor, in, high, low, n float64
+	var o, w, i int
 
 	r := ring.New(LING_SIZE)
+	avgors := make([]float64, LING_SIZE)
 
 	for avgor = range loadCh {
-		if readWithMutex(&operating, &operateMutex) > 0 {
+		r.Value = avgor
+		r = r.Next()
+
+		o = readWithMutex(&operating, &operateMutex)
+		if o > 0 {
 			continue
 		}
 
-		r.Value = avgor
-		r = r.Next()
-		avgors := ringToArray(r)
-
-		out = average.MovingAverage(avgors, cluster.LoadBalancer.ScaleOut)
+		avgors = ringToArray(r)
 		in = average.MovingAverage(avgors, cluster.LoadBalancer.ScaleIn)
 
 		w = readWithMutex(&working, &workMutex)
 		high = cluster.LoadBalancer.ThHigh()
 		low = cluster.LoadBalancer.ThLow(w)
 
-		switch {
-		case w < len(cluster.VirtualMachines) && out > high:
-			ir = ratio.Increase(avgors)
+		n = (ratio.Increase(avgors)*float64(SLEEP_SEC)+avgors[len(avgors)-1])/high - float64(o-1)
 
-			for i = 0; i < ir; i++ {
+		switch {
+		case w < len(cluster.VirtualMachines) && int(n) > 0:
+			for i = 0; i < int(n); i++ {
 				go cluster.VirtualMachines[w+i].Bootup(SLEEP_SEC, powerCh)
 			}
 		case w > 1 && in < low:
