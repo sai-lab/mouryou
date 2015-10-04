@@ -1,4 +1,4 @@
-package mouryou
+package models
 
 import (
 	libvirt "github.com/alexzorin/libvirt-go"

@@ -1,7 +1,9 @@
-package mouryou
+package models
 
 import (
 	"os/exec"
+
+	"github.com/sai-lab/mouryou/lib/check"
 )
 
 type LoadBalancerStruct struct {
@@ -17,10 +19,10 @@ func (balancer LoadBalancerStruct) Initialize() {
 	exec.Command("ip", "addr", "add", balancer.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
 
 	err := exec.Command("ipvsadm", "-C").Run()
-	checkError(err)
+	check.Error(err)
 
 	err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
-	checkError(err)
+	check.Error(err)
 }
 
 func (balancer LoadBalancerStruct) ThHigh() float64 {

@@ -1,4 +1,4 @@
-package mouryou
+package models
 
 import (
 	"sync"

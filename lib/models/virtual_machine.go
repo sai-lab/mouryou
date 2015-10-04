@@ -1,4 +1,4 @@
-package mouryou
+package models
 
 import (
 	"time"
@@ -26,24 +26,24 @@ func (machine VirtualMachineStruct) Bootup(sleep int, power chan string) {
 		power <- "booting up"
 	}
 
-	connection, err := machine.Hypervisor.Connect()
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
-	defer connection.CloseConnection()
+	// connection, err := machine.Hypervisor.Connect()
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
+	// defer connection.CloseConnection()
 
-	domain, err := connection.LookupDomainByName(machine.Name)
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
+	// domain, err := connection.LookupDomainByName(machine.Name)
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
 
-	err = domain.Create()
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
+	// err = domain.Create()
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
 
 	time.Sleep(time.Duration(sleep) * time.Second)
 
@@ -57,26 +57,26 @@ func (machine VirtualMachineStruct) Shutdown(sleep int, power chan string) {
 		power <- "shutting down"
 	}
 
-	connection, err := machine.Hypervisor.Connect()
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
-	defer connection.CloseConnection()
+	// connection, err := machine.Hypervisor.Connect()
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
+	// defer connection.CloseConnection()
 
-	domain, err := connection.LookupDomainByName(machine.Name)
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
+	// domain, err := connection.LookupDomainByName(machine.Name)
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
 
 	time.Sleep(time.Duration(sleep) * time.Second)
 
-	err = domain.Shutdown()
-	if err != nil {
-		powerCh <- err.Error()
-		return
-	}
+	// err = domain.Shutdown()
+	// if err != nil {
+	// 	powerCh <- err.Error()
+	// 	return
+	// }
 
 	if power != nil {
 		power <- "shutted down"
