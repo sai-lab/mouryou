@@ -3,9 +3,10 @@ package functions
 import "sync"
 
 const (
-	LING_SIZE   = 10
-	TIMEOUT_SEC = 1
-	SLEEP_SEC   = 30
+	LING_SIZE    = 10
+	TIMEOUT_SEC  = 1
+	SLEEP_SEC    = 30
+	RATIO_MARGIN = 0.007
 )
 
 var (

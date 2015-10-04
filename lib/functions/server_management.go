@@ -33,14 +33,14 @@ func ServerManagement(cluster *models.ClusterStruct) {
 		high = cluster.LoadBalancer.ThHigh()
 		low = cluster.LoadBalancer.ThLow(w)
 
-		n = (ratio.Increase(avgors)*float64(SLEEP_SEC)+avgors[len(avgors)-1])/high - float64(o-1)
+		n = (ratio.Increase(avgors)*float64(SLEEP_SEC)+avgors[len(avgors)-1])/high - float64(o-1) - RATIO_MARGIN
 
 		switch {
 		case w < len(cluster.VirtualMachines) && int(n) > 0:
 			for i = 0; i < int(n); i++ {
 				go cluster.VirtualMachines[w+i].Bootup(SLEEP_SEC, powerCh)
 			}
-		case w > 1 && in < low && mutex.Read(&working, &workMutex) != 1:
+		case w > 1 && in < low && mutex.Read(&waiting, &waitMutex) == 0:
 			go cluster.VirtualMachines[w-1].Shutdown(SLEEP_SEC, powerCh)
 		}
 	}
