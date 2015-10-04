@@ -8,6 +8,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/ratio"
+	"github.com/sai-lab/mouryou/lib/timer"
 )
 
 func ServerManagement(cluster *models.ClusterStruct) {
@@ -40,7 +41,8 @@ func ServerManagement(cluster *models.ClusterStruct) {
 			for i = 0; i < int(n); i++ {
 				go cluster.VirtualMachines[w+i].Bootup(SLEEP_SEC, powerCh)
 			}
-		case w > 1 && in < low:
+			go timer.Set(&waiting, &waitMutex, SLEEP_SEC)
+		case w > 1 && in < low && mutex.Read(&working, &workMutex) > 0:
 			go cluster.VirtualMachines[w-1].Shutdown(SLEEP_SEC, powerCh)
 		}
 	}

@@ -13,6 +13,8 @@ var (
 	powerCh          = make(chan string, 1)
 	working      int = 1
 	operating    int = 0
+	waiting      int = 0
 	workMutex    sync.RWMutex
 	operateMutex sync.RWMutex
+	waitMutex    sync.RWMutex
 )
