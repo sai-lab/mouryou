@@ -9,7 +9,7 @@ func Read(x *int, mutex *sync.RWMutex) int {
 	return *x
 }
 
-func Write(x *int, y int, mutex *sync.RWMutex) {
+func Write(x *int, mutex *sync.RWMutex, y int) {
 	mutex.Lock()
 	defer mutex.Unlock()
 

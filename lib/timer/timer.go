@@ -8,7 +8,7 @@ import (
 )
 
 func Set(flag *int, flagMutex *sync.RWMutex, sleep int) {
-	mutex.Write(flag, 1, flagMutex)
+	mutex.Write(flag, flagMutex, 1)
 	time.Sleep(time.Duration(sleep) * time.Second)
-	mutex.Write(flag, 0, flagMutex)
+	mutex.Write(flag, flagMutex, 0)
 }
