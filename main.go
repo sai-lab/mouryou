@@ -14,16 +14,16 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	cluster := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
-	cluster.Initialize()
+	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
+	config.Cluster.Initialize()
 
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)
 
-	go functions.LoadMonitoring(cluster)
-	go functions.ServerManagement(cluster)
-	go functions.DestinationSetting(cluster)
+	go functions.LoadMonitoring(config)
+	go functions.ServerManagement(config)
+	go functions.DestinationSetting(config)
 
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt)

@@ -6,7 +6,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/timer"
 )
 
-func DestinationSetting(cluster *models.ClusterStruct) {
+func DestinationSetting(config *models.ConfigStruct) {
 	var power string
 	var w, o int
 
@@ -18,14 +18,14 @@ func DestinationSetting(cluster *models.ClusterStruct) {
 		case "booting up":
 			mutex.Write(&operating, &operateMutex, o+1)
 		case "booted up":
-			cluster.LoadBalancer.Active(cluster.VirtualMachines[w].Host)
+			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Host)
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&operating, &operateMutex, o-1)
-			go timer.Set(&waiting, &waitMutex, SLEEP_SEC)
+			go timer.Set(&waiting, &waitMutex, config.Sleep)
 		case "shutting down":
 			mutex.Write(&operating, &operateMutex, o+1)
 			mutex.Write(&working, &workMutex, w-1)
-			cluster.LoadBalancer.Inactive(cluster.VirtualMachines[w-1].Host)
+			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Host)
 		case "shutted down":
 			mutex.Write(&operating, &operateMutex, o-1)
 		}

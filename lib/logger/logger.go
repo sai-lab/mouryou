@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/websocket"
+
 	"github.com/sai-lab/mouryou/lib/check"
-	"github.com/sai-lab/mouryou/lib/convert"
 )
 
 func Create() *os.File {
@@ -19,12 +20,14 @@ func Create() *os.File {
 	return file
 }
 
-func Print(xs []float64) {
-	arr := convert.FloatsToStrings(xs)
+func Print(arr []string) {
 	fmt.Println(strings.Join(arr, "  "))
 }
 
-func Write(xs []float64) {
-	arr := convert.FloatsToStrings(xs)
+func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
+}
+
+func Send(ws *websocket.Conn, arr []string) {
+	websocket.Message.Send(ws, strings.Join(arr, ","))
 }

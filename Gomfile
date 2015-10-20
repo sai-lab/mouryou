@@ -1,4 +1,5 @@
 gom 'github.com/alexzorin/libvirt-go'
+gom 'golang.org/x/net/websocket'
 
 group :development do
   gom 'golang.org/x/tools/cmd/goimports'

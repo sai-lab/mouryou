@@ -10,7 +10,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/ratio"
 )
 
-func ServerManagement(cluster *models.ClusterStruct) {
+func ServerManagement(config *models.ConfigStruct) {
 	var avgor, in, high, low, n float64
 	var o, w, i int
 
@@ -27,21 +27,21 @@ func ServerManagement(cluster *models.ClusterStruct) {
 		}
 
 		avgors = convert.RingToArray(r)
-		in = average.MovingAverage(avgors, cluster.LoadBalancer.ScaleIn)
+		in = average.MovingAverage(avgors, config.Cluster.LoadBalancer.ScaleIn)
 
 		w = mutex.Read(&working, &workMutex)
-		high = cluster.LoadBalancer.ThHigh()
-		low = cluster.LoadBalancer.ThLow(w)
+		high = config.Cluster.LoadBalancer.ThHigh()
+		low = config.Cluster.LoadBalancer.ThLow(w)
 
-		n = (ratio.Increase(avgors)*float64(SLEEP_SEC)+avgors[len(avgors)-1])/high - float64(o-1) - RATIO_MARGIN
+		n = (ratio.Increase(avgors)*float64(config.Sleep)+avgors[len(avgors)-1])/high - float64(o-1) - config.Margin
 
 		switch {
-		case w < len(cluster.VirtualMachines) && int(n) > 0:
+		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:
 			for i = 0; i < int(n); i++ {
-				go cluster.VirtualMachines[w+i].Bootup(SLEEP_SEC, powerCh)
+				go config.Cluster.VirtualMachines[w+i].Bootup(config.Sleep, powerCh)
 			}
 		case w > 1 && in < low && mutex.Read(&waiting, &waitMutex) == 0:
-			go cluster.VirtualMachines[w-1].Shutdown(SLEEP_SEC, powerCh)
+			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
 		}
 	}
 }

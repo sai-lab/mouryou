@@ -2,12 +2,7 @@ package functions
 
 import "sync"
 
-const (
-	LING_SIZE    = 10
-	TIMEOUT_SEC  = 1
-	SLEEP_SEC    = 30
-	RATIO_MARGIN = 0.007
-)
+const LING_SIZE = 10
 
 var (
 	loadCh           = make(chan float64, 1)

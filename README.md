@@ -39,9 +39,16 @@
             ]
           }
         ]
+      },
+      "timeout": 1,
+      "sleep": 30,
+      "margin": 0.007,
+      "web_socket": {
+        "origin": "http://localhost/",
+        "url": "ws://localhost:8000/ws"
       }
     }
-    
+
 #### License
 
 mouryou is released under the [MIT license](https://raw.githubusercontent.com/hico-horiuchi/mouryou/master/LICENSE).

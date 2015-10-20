@@ -3,16 +3,21 @@ package models
 import (
 	"encoding/json"
 	"io/ioutil"
+	"time"
 
 	"github.com/sai-lab/mouryou/lib/check"
 )
 
-type configStruct struct {
-	Cluster ClusterStruct `json:"cluster"`
+type ConfigStruct struct {
+	Cluster   ClusterStruct   `json:"cluster"`
+	Timeout   time.Duration   `json:"timeout"`
+	Sleep     time.Duration   `json:"sleep"`
+	Margin    float64         `json:"margin"`
+	WebSocket WebSocketStruct `json:"web_socket"`
 }
 
-func LoadConfig(path string) *ClusterStruct {
-	var config configStruct
+func LoadConfig(path string) *ConfigStruct {
+	var config ConfigStruct
 
 	bytes, err := ioutil.ReadFile(path)
 	check.Error(err)
@@ -20,5 +25,5 @@ func LoadConfig(path string) *ClusterStruct {
 	err = json.Unmarshal(bytes, &config)
 	check.Error(err)
 
-	return &config.Cluster
+	return &config
 }
