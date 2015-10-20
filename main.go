@@ -14,7 +14,7 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	cluster := models.LoadConfig()
+	cluster := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
 	cluster.Initialize()
 
 	file := logger.Create()
