@@ -5,9 +5,9 @@ import (
 )
 
 type ClusterStruct struct {
-	LoadBalancer    LoadBalancerStruct `json:"load_balancer"`
-	Hypervisors     []HypervisorStruct `json:"hypervisors"`
-	VirtualMachines []VirtualMachineStruct
+	LoadBalancer    LoadBalancerStruct     `json:"load_balancer"`
+	Hypervisors     []HypervisorStruct     `json:"hypervisors"`
+	VirtualMachines []VirtualMachineStruct `json:"-"`
 }
 
 func (cluster *ClusterStruct) Initialize() {

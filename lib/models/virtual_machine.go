@@ -7,9 +7,9 @@ import (
 )
 
 type VirtualMachineStruct struct {
-	Name       string `json:"name"`
-	Host       string `json:"host"`
-	Hypervisor *HypervisorStruct
+	Name       string            `json:"name"`
+	Host       string            `json:"host"`
+	Hypervisor *HypervisorStruct `json:"-"`
 }
 
 func (machine VirtualMachineStruct) OperatingRatio() float64 {
