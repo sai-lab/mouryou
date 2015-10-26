@@ -29,5 +29,5 @@ func Write(arr []string) {
 }
 
 func Send(ws *websocket.Conn, arr []string) {
-	websocket.Message.Send(ws, strings.Join(arr, ","))
+	websocket.Message.Send(ws, "Loads: "+strings.Join(arr, ","))
 }

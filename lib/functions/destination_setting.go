@@ -1,12 +1,15 @@
 package functions
 
 import (
+	"strconv"
+
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/timer"
+	"golang.org/x/net/websocket"
 )
 
-func DestinationSetting(config *models.ConfigStruct) {
+func DestinationSetting(config *models.ConfigStruct, ws *websocket.Conn) {
 	var power string
 	var w, o int
 
@@ -17,8 +20,10 @@ func DestinationSetting(config *models.ConfigStruct) {
 		switch power {
 		case "booting up":
 			mutex.Write(&operating, &operateMutex, o+1)
+			websocket.Message.Send(ws, "Booting up: "+strconv.Itoa(w))
 		case "booted up":
 			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Host)
+			websocket.Message.Send(ws, "Booted up: "+strconv.Itoa(w))
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&operating, &operateMutex, o-1)
 			go timer.Set(&waiting, &waitMutex, config.Sleep)
@@ -26,8 +31,10 @@ func DestinationSetting(config *models.ConfigStruct) {
 			mutex.Write(&operating, &operateMutex, o+1)
 			mutex.Write(&working, &workMutex, w-1)
 			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Host)
+			websocket.Message.Send(ws, "Shutting down: "+strconv.Itoa(w-1))
 		case "shutted down":
 			mutex.Write(&operating, &operateMutex, o-1)
+			websocket.Message.Send(ws, "Shutted down: "+strconv.Itoa(w-1))
 		}
 	}
 }
