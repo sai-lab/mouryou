@@ -5,6 +5,7 @@ import (
 )
 
 type HypervisorStruct struct {
+	Name            string                 `json:"name"`
 	Host            string                 `json:"host"`
 	VirtualMachines []VirtualMachineStruct `json:"virtual_machines"`
 }
