@@ -9,9 +9,11 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func DestinationSetting(config *models.ConfigStruct, ws *websocket.Conn) {
+func DestinationSetting(config *models.ConfigStruct) {
 	var power string
 	var w, o int
+
+	connection, err := config.WebSocket.Dial()
 
 	for power = range powerCh {
 		w = mutex.Read(&working, &workMutex)
@@ -20,21 +22,34 @@ func DestinationSetting(config *models.ConfigStruct, ws *websocket.Conn) {
 		switch power {
 		case "booting up":
 			mutex.Write(&operating, &operateMutex, o+1)
-			websocket.Message.Send(ws, "Booting up: "+strconv.Itoa(w))
+
+			if err == nil {
+				websocket.Message.Send(connection, "Booting up: "+strconv.Itoa(w))
+			}
 		case "booted up":
 			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Host)
-			websocket.Message.Send(ws, "Booted up: "+strconv.Itoa(w))
+			if err == nil {
+				websocket.Message.Send(connection, "Booted up: "+strconv.Itoa(w))
+			}
+
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&operating, &operateMutex, o-1)
+
 			go timer.Set(&waiting, &waitMutex, config.Sleep)
 		case "shutting down":
 			mutex.Write(&operating, &operateMutex, o+1)
 			mutex.Write(&working, &workMutex, w-1)
+
 			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Host)
-			websocket.Message.Send(ws, "Shutting down: "+strconv.Itoa(w-1))
+			if err == nil {
+				websocket.Message.Send(connection, "Shutting down: "+strconv.Itoa(w-1))
+			}
 		case "shutted down":
 			mutex.Write(&operating, &operateMutex, o-1)
-			websocket.Message.Send(ws, "Shutted down: "+strconv.Itoa(w-1))
+
+			if err == nil {
+				websocket.Message.Send(connection, "Shutted down: "+strconv.Itoa(w-1))
+			}
 		}
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/websocket"
-
 	"github.com/sai-lab/mouryou/lib/average"
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
@@ -13,10 +11,11 @@ import (
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
-func LoadMonitoring(config *models.ConfigStruct, ws *websocket.Conn) {
+func LoadMonitoring(config *models.ConfigStruct) {
 	var w int
 
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
+	connection, err := config.WebSocket.Dial()
 
 	for {
 		w = mutex.Read(&working, &workMutex)
@@ -25,8 +24,8 @@ func LoadMonitoring(config *models.ConfigStruct, ws *websocket.Conn) {
 
 		logger.Print(arr)
 		logger.Write(arr)
-		if ws != nil {
-			logger.Send(ws, arr)
+		if err == nil {
+			logger.Send(connection, arr)
 		}
 
 		loadCh <- average.Average(ors)

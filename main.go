@@ -17,15 +17,13 @@ func main() {
 	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
 	config.Cluster.Initialize()
 
-	connection, _ := config.WebSocket.Dial()
-
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)
 
-	go functions.LoadMonitoring(config, connection)
+	go functions.LoadMonitoring(config)
 	go functions.ServerManagement(config)
-	go functions.DestinationSetting(config, connection)
+	go functions.DestinationSetting(config)
 
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt)
