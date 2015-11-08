@@ -26,7 +26,7 @@
           "threshold": 0.8,
           "margin": 0.05,
           "scale_out": 2,
-          "scale_in": 8
+          "scale_in": 6
         },
         "hypervisors": [
           {
@@ -42,6 +42,7 @@
       },
       "timeout": 1,
       "sleep": 30,
+      "wait": 30,
       "margin": 0.007,
       "web_socket": {
         "origin": "http://localhost/",
