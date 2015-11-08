@@ -12,6 +12,7 @@ type ConfigStruct struct {
 	Cluster   ClusterStruct   `json:"cluster"`
 	Timeout   time.Duration   `json:"timeout"`
 	Sleep     time.Duration   `json:"sleep"`
+	Wait      time.Duration   `json:"wait"`
 	Margin    float64         `json:"margin"`
 	WebSocket WebSocketStruct `json:"web_socket"`
 }

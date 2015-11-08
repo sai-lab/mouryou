@@ -35,7 +35,7 @@ func DestinationSetting(config *models.ConfigStruct) {
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&operating, &operateMutex, o-1)
 
-			go timer.Set(&waiting, &waitMutex, config.Sleep)
+			go timer.Set(&waiting, &waitMutex, config.Wait)
 		case "shutting down":
 			mutex.Write(&operating, &operateMutex, o+1)
 			mutex.Write(&working, &workMutex, w-1)
