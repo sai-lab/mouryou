@@ -41,7 +41,9 @@ func ServerManagement(config *models.ConfigStruct) {
 		switch {
 		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:
 			for i = 0; i < int(n); i++ {
-				go config.Cluster.VirtualMachines[w+i].Bootup(config.Sleep, powerCh)
+				if w+i < len(config.Cluster.VirtualMachines) {
+					go config.Cluster.VirtualMachines[w+i].Bootup(config.Sleep, powerCh)
+				}
 			}
 		case w > 1 && in < low && mutex.Read(&waiting, &waitMutex) == 0:
 			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
