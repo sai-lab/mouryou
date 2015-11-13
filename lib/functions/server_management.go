@@ -35,7 +35,6 @@ func ServerManagement(config *models.ConfigStruct) {
 		low = config.Cluster.LoadBalancer.ThLow(w)
 
 		ir = ratio.Increase(avgors, config.Cluster.LoadBalancer.ScaleOut)
-
 		n = (ir*float64(config.Sleep)+out)/high - float64(o-1) - config.Margin
 
 		switch {

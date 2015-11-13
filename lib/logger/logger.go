@@ -28,6 +28,19 @@ func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
-func Send(ws *websocket.Conn, arr []string) {
-	websocket.Message.Send(ws, "Loads: "+strings.Join(arr, ","))
+func Send(connection *websocket.Conn, err error, data interface{}) {
+	if err != nil {
+		return
+	}
+
+	var message string
+
+	switch data.(type) {
+	case string:
+		message = data.(string)
+	case []string:
+		message = "Loads: " + strings.Join(data.([]string), ",")
+	}
+
+	websocket.Message.Send(connection, message)
 }

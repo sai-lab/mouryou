@@ -24,9 +24,7 @@ func LoadMonitoring(config *models.ConfigStruct) {
 
 		logger.Print(arr)
 		logger.Write(arr)
-		if err == nil {
-			logger.Send(connection, arr)
-		}
+		logger.Send(connection, err, arr)
 
 		loadCh <- average.Average(ors)
 		time.Sleep(time.Second)
