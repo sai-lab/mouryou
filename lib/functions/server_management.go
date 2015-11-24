@@ -31,11 +31,18 @@ func ServerManagement(config *models.ConfigStruct) {
 		in = average.MovingAverage(avgors, config.Cluster.LoadBalancer.ScaleIn)
 
 		w = mutex.Read(&working, &workMutex)
-		high = config.Cluster.LoadBalancer.ThHigh()
+		high = config.Cluster.LoadBalancer.ThHigh(w)
 		low = config.Cluster.LoadBalancer.ThLow(w)
 
 		ir = ratio.Increase(avgors, config.Cluster.LoadBalancer.ScaleOut)
-		n = (ir*float64(config.Sleep)+out)/high - float64(o-1) - config.Margin
+		switch {
+		case w > 4 && out > high:
+			n = 1.0
+		case w > 4:
+			n = 0.0
+		default:
+			n = (ir*float64(config.Sleep)+out)/high - float64(o-1) - config.Margin
+		}
 
 		switch {
 		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:

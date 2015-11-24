@@ -25,12 +25,15 @@ func (balancer LoadBalancerStruct) Initialize() {
 	check.Error(err)
 }
 
-func (balancer LoadBalancerStruct) ThHigh() float64 {
+func (balancer LoadBalancerStruct) ThHigh(n int) float64 {
+	if n < 3 {
+		return balancer.Threshold * 1.25
+	}
 	return balancer.Threshold
 }
 
 func (balancer LoadBalancerStruct) ThLow(n int) float64 {
-	return balancer.ThHigh()*float64(n-1)/float64(n) - balancer.Margin
+	return balancer.Threshold*float64(n-1)/float64(n) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {
