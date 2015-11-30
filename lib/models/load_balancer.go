@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"os/exec"
 
 	"github.com/sai-lab/mouryou/lib/check"
@@ -25,15 +26,16 @@ func (balancer LoadBalancerStruct) Initialize() {
 	check.Error(err)
 }
 
-func (balancer LoadBalancerStruct) ThHigh(n int) float64 {
-	if n < 3 {
+func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
+	th := int(math.Ceil(float64(n) * 0.2))
+	if w <= th {
 		return balancer.Threshold * 1.25
 	}
 	return balancer.Threshold
 }
 
-func (balancer LoadBalancerStruct) ThLow(n int) float64 {
-	return balancer.Threshold*float64(n-1)/float64(n) - balancer.Margin
+func (balancer LoadBalancerStruct) ThLow(w int) float64 {
+	return balancer.Threshold*float64(w-1)/float64(w) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {
