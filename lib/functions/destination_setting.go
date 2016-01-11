@@ -1,7 +1,9 @@
 package functions
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -37,6 +39,14 @@ func DestinationSetting(config *models.ConfigStruct) {
 		case "shutted down":
 			mutex.Write(&operating, &operateMutex, o-1)
 			logger.Send(connection, err, "Shutted down: "+strconv.Itoa(w-1))
+		default:
+			fmt.Println("Error:", power)
+			switch {
+			case strings.Index(power, "domain is already running") != -1:
+				mutex.Write(&operating, &operateMutex, o-1)
+			case strings.Index(power, "domain is not running") != -1:
+				mutex.Write(&operating, &operateMutex, o-1)
+			}
 		}
 	}
 }

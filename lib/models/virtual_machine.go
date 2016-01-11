@@ -26,24 +26,24 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 		power <- "booting up"
 	}
 
-	// connection, err := machine.Hypervisor.Connect()
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
-	// defer connection.CloseConnection()
+	connection, err := machine.Hypervisor.Connect()
+	if err != nil {
+		power <- err.Error()
+		return
+	}
+	defer connection.CloseConnection()
 
-	// domain, err := connection.LookupDomainByName(machine.Name)
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
+	domain, err := connection.LookupDomainByName(machine.Name)
+	if err != nil {
+		power <- err.Error()
+		return
+	}
 
-	// err = domain.Create()
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
+	err = domain.Create()
+	if err != nil {
+		power <- err.Error()
+		return
+	}
 
 	time.Sleep(sleep * time.Second)
 
@@ -57,26 +57,26 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan str
 		power <- "shutting down"
 	}
 
-	// connection, err := machine.Hypervisor.Connect()
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
-	// defer connection.CloseConnection()
+	connection, err := machine.Hypervisor.Connect()
+	if err != nil {
+		power <- err.Error()
+		return
+	}
+	defer connection.CloseConnection()
 
-	// domain, err := connection.LookupDomainByName(machine.Name)
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
+	domain, err := connection.LookupDomainByName(machine.Name)
+	if err != nil {
+		power <- err.Error()
+		return
+	}
 
 	time.Sleep(sleep * time.Second)
 
-	// err = domain.Shutdown()
-	// if err != nil {
-	// 	powerCh <- err.Error()
-	// 	return
-	// }
+	err = domain.Shutdown()
+	if err != nil {
+		power <- err.Error()
+		return
+	}
 
 	if power != nil {
 		power <- "shutted down"
