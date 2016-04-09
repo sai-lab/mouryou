@@ -2,7 +2,6 @@ package functions
 
 import (
 	"container/ring"
-	"math"
 
 	"github.com/sai-lab/mouryou/lib/average"
 	"github.com/sai-lab/mouryou/lib/convert"
@@ -13,7 +12,7 @@ import (
 
 func ServerManagement(config *models.ConfigStruct) {
 	var avgor, out, in, high, low, ir, n float64
-	var o, w, th, i int
+	var o, w, i int
 
 	r := ring.New(LING_SIZE)
 	avgors := make([]float64, LING_SIZE)
@@ -36,16 +35,7 @@ func ServerManagement(config *models.ConfigStruct) {
 		low = config.Cluster.LoadBalancer.ThLow(w)
 
 		ir = ratio.Increase(avgors, config.Cluster.LoadBalancer.ScaleOut)
-		th = int(math.Ceil(float64(len(config.Cluster.VirtualMachines)) * 0.4))
-
-		switch {
-		case w > th && out > high:
-			n = 1.0
-		case w > th:
-			n = 0.0
-		default:
-			n = (ir*float64(config.Sleep)+out)/high - float64(o-1) - config.Margin
-		}
+		n = ((ir*float64(config.Sleep)+out)/high - 1.0) * float64(w)
 
 		switch {
 		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:

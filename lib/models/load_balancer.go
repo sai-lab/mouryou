@@ -1,7 +1,6 @@
 package models
 
 import (
-	"math"
 	"os/exec"
 
 	"github.com/sai-lab/mouryou/lib/check"
@@ -27,10 +26,6 @@ func (balancer LoadBalancerStruct) Initialize() {
 }
 
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	th := int(math.Ceil(float64(n) * 0.2))
-	if w <= th {
-		return balancer.Threshold * 1.25
-	}
 	return balancer.Threshold
 }
 
