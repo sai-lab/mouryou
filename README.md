@@ -12,7 +12,7 @@
     $ cd mouryou
     $ make gom link
     $ make build
-    $ bin/mouryou
+    $ sudo bin/mouryou
 
 #### Configuration
 
