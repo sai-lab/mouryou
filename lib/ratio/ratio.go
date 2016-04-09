@@ -3,5 +3,8 @@ package ratio
 import "github.com/sai-lab/mouryou/lib/average"
 
 func Increase(xs []float64, n int) float64 {
-	return (average.MovingAverage(xs, n) - xs[0]) / float64(len(xs))
+	if len(xs) == 1 {
+		return average.MovingAverage(xs, n) - xs[0]
+	}
+	return (average.MovingAverage(xs, n) - xs[0]) / float64(len(xs)-1)
 }
