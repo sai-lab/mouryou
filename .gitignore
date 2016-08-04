@@ -5,5 +5,5 @@
 /_vendor
 /.vendor
 /bin/mouryou
-/log/*.log
-/log/*.csv
+/log/
+/vendor
