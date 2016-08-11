@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -26,6 +27,28 @@ func Print(arr []string) {
 
 func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
+}
+
+func PrintPlace(str string) {
+	var i int = 0
+	var path string
+
+	_, file, line, _ := runtime.Caller(1)
+	files := strings.Split(file, "/")
+
+	for i = 0; i < len(files); i++ {
+		if files[i] == "mouryou" {
+			break
+		}
+	}
+
+	if i+1 == len(files) {
+		path = file
+	} else {
+		path = strings.Join(files[i+1:], "/")
+	}
+
+	fmt.Println(path + " Line " + fmt.Sprint(line) + " " + str)
 }
 
 func Send(connection *websocket.Conn, err error, data interface{}) {
