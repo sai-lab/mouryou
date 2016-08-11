@@ -1,4 +1,4 @@
-gom 'github.com/alexzorin/libvirt-go'
+gom 'github.com/rgbkrk/libvirt-go'
 gom 'golang.org/x/net/websocket'
 
 group :development do
