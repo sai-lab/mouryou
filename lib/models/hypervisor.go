@@ -1,8 +1,6 @@
 package models
 
-import (
-	libvirt "github.com/alexzorin/libvirt-go"
-)
+import libvirt "github.com/rgbkrk/libvirt-go"
 
 type HypervisorStruct struct {
 	Name            string                 `json:"name"`
