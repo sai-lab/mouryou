@@ -3,7 +3,7 @@ package functions
 import (
 	"container/ring"
 
-	"github.com/sai-lab/mouryou/lib/average"
+	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
@@ -11,14 +11,14 @@ import (
 )
 
 func ServerManagement(config *models.ConfigStruct) {
-	var avgor, out, in, high, low, ir, n float64
+	var ttlor, out, in, ThHigh, ThLow, ir, n float64
 	var o, w, i int
 
 	r := ring.New(LING_SIZE)
-	avgors := make([]float64, LING_SIZE)
+	ttlors := make([]float64, LING_SIZE)
 
-	for avgor = range loadCh {
-		r.Value = avgor
+	for ttlor = range loadCh {
+		r.Value = ttlor
 		r = r.Next()
 
 		o = mutex.Read(&operating, &operateMutex)
@@ -26,16 +26,17 @@ func ServerManagement(config *models.ConfigStruct) {
 			continue
 		}
 
-		avgors = convert.RingToArray(r)
-		out = average.MovingAverage(avgors, config.Cluster.LoadBalancer.ScaleOut)
-		in = average.MovingAverage(avgors, config.Cluster.LoadBalancer.ScaleIn)
+		ttlors = convert.RingToArray(r)
+		// out = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleOut)
+		out = ttlors[len(ttlors)-1]
+		in = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleIn)
 
 		w = mutex.Read(&working, &workMutex)
-		high = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
-		low = config.Cluster.LoadBalancer.ThLow(w)
+		ThHigh = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
+		ThLow = config.Cluster.LoadBalancer.ThLow(w)
 
-		ir = ratio.Increase(avgors, config.Cluster.LoadBalancer.ScaleOut)
-		n = ((ir*float64(config.Sleep)+out)/high - 1.0) * float64(w)
+		ir = ratio.Increase(ttlors, config.Cluster.LoadBalancer.ScaleOut)
+		n = ((out + ir*float64(config.Sleep)) / ThHigh) - float64(w)
 
 		switch {
 		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:
@@ -44,7 +45,7 @@ func ServerManagement(config *models.ConfigStruct) {
 					go config.Cluster.VirtualMachines[w+i].Bootup(config.Sleep, powerCh)
 				}
 			}
-		case w > 1 && in < low && mutex.Read(&waiting, &waitMutex) == 0:
+		case w > 1 && in < ThLow*float64(w):
 			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
 		}
 	}

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sai-lab/mouryou/lib/average"
+	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -26,7 +26,8 @@ func LoadMonitoring(config *models.ConfigStruct) {
 		logger.Write(arr)
 		logger.Send(connection, err, arr)
 
-		loadCh <- average.Average(ors)
+		// loadCh <- average.Average(ors)
+		loadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
 	}
 }
