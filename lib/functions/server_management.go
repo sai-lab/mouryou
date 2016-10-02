@@ -5,6 +5,7 @@ import (
 
 	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/ratio"
@@ -12,7 +13,7 @@ import (
 
 func ServerManagement(config *models.ConfigStruct) {
 	var ttlor, out, in, ThHigh, ThLow, ir, n float64
-	var o, w, i int
+	var b, w, i int
 
 	r := ring.New(LING_SIZE)
 	ttlors := make([]float64, LING_SIZE)
@@ -21,13 +22,9 @@ func ServerManagement(config *models.ConfigStruct) {
 		r.Value = ttlor
 		r = r.Next()
 
-		o = mutex.Read(&operating, &operateMutex)
-		if o > 0 {
-			continue
-		}
+		b = mutex.Read(&booting, &bootMutex)
 
 		ttlors = convert.RingToArray(r)
-		// out = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleOut)
 		out = ttlors[len(ttlors)-1]
 		in = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleIn)
 
@@ -36,16 +33,18 @@ func ServerManagement(config *models.ConfigStruct) {
 		ThLow = config.Cluster.LoadBalancer.ThLow(w)
 
 		ir = ratio.Increase(ttlors, config.Cluster.LoadBalancer.ScaleOut)
-		n = ((out + ir*float64(config.Sleep)) / ThHigh) - float64(w)
+		n = ((out + ir*float64(config.Sleep)) / ThHigh) - float64(w+b)
 
 		switch {
-		case w < len(config.Cluster.VirtualMachines) && int(n) > 0:
+		case w+b < len(config.Cluster.VirtualMachines) && int(n) > 0:
 			for i = 0; i < int(n); i++ {
-				if w+i < len(config.Cluster.VirtualMachines) {
+				if w+b+i < len(config.Cluster.VirtualMachines) {
+					logger.PrintPlace("before Bootup")
 					go config.Cluster.VirtualMachines[w+i].Bootup(config.Sleep, powerCh)
+					logger.PrintPlace("after Bootup")
 				}
 			}
-		case w > 1 && in < ThLow*float64(w):
+		case w > 1 && in < ThLow*float64(w) && mutex.Read(&waiting, &waitMutex) == 0:
 			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
 		}
 	}

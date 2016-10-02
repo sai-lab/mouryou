@@ -45,7 +45,7 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	// 	return
 	// }
 
-	// time.Sleep(sleep * time.Second)
+	time.Sleep(sleep * time.Second)
 
 	if power != nil {
 		power <- "booted up"
