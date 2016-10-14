@@ -26,7 +26,7 @@ func ServerManagement(config *models.ConfigStruct) {
 
 		ttlors = convert.RingToArray(r)
 		out = ttlors[len(ttlors)-1]
-		in = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleIn)
+		in = calculate.Sum(ttlors)
 
 		w = mutex.Read(&working, &workMutex)
 		ThHigh = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
@@ -44,7 +44,7 @@ func ServerManagement(config *models.ConfigStruct) {
 					logger.PrintPlace("after Bootup")
 				}
 			}
-		case w > 1 && in < ThLow*float64(w) && mutex.Read(&waiting, &waitMutex) == 0:
+		case w > 1 && in < ThLow && mutex.Read(&waiting, &waitMutex) == 0:
 			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
 		}
 	}
