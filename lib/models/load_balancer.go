@@ -7,12 +7,13 @@ import (
 )
 
 type LoadBalancerStruct struct {
-	VirtualIP string  `json:"virtual_ip"`
-	Algorithm string  `json:"algorithm"`
-	Threshold float64 `json:"threshold"`
-	Margin    float64 `json:"margin"`
-	ScaleOut  int     `json:"scale_out"`
-	ScaleIn   int     `json:"scale_in"`
+	VirtualIP     string  `json:"virtual_ip"`
+	Algorithm     string  `json:"algorithm"`
+	Threshold_out float64 `json:"threshold_out"`
+	Threshold_in  float64 `json:"threshold_in"`
+	Margin        float64 `json:"margin"`
+	ScaleOut      int     `json:"scale_out"`
+	ScaleIn       int     `json:"scale_in"`
 }
 
 func (balancer LoadBalancerStruct) Initialize() {
@@ -26,11 +27,11 @@ func (balancer LoadBalancerStruct) Initialize() {
 }
 
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	return balancer.Threshold
+	return balancer.Threshold_out
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	return balancer.Threshold*float64(w-1) - balancer.Margin
+	return balancer.Threshold_in
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {

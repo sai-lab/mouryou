@@ -3,7 +3,6 @@ package functions
 import (
 	"container/ring"
 
-	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -12,7 +11,7 @@ import (
 )
 
 func ServerManagement(config *models.ConfigStruct) {
-	var ttlor, out, in, ThHigh, ThLow, ir, n float64
+	var ttlor, nowttl, in, ThHigh, ThLow, ir, n float64
 	var b, w, i int
 
 	r := ring.New(LING_SIZE)
@@ -25,15 +24,16 @@ func ServerManagement(config *models.ConfigStruct) {
 		b = mutex.Read(&booting, &bootMutex)
 
 		ttlors = convert.RingToArray(r)
-		out = ttlors[len(ttlors)-1]
-		in = calculate.Sum(ttlors)
+		nowttl = ttlors[len(ttlors)-1]
 
 		w = mutex.Read(&working, &workMutex)
 		ThHigh = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
 		ThLow = config.Cluster.LoadBalancer.ThLow(w)
 
 		ir = ratio.Increase(ttlors, config.Cluster.LoadBalancer.ScaleOut)
-		n = ((out + ir*float64(config.Sleep)) / ThHigh) - float64(w+b)
+		n = ((nowttl + ir*float64(config.Sleep)) / ThHigh) - float64(w+b)
+
+		in = nowttl / (ThLow * float64(w))
 
 		switch {
 		case w+b < len(config.Cluster.VirtualMachines) && int(n) > 0:
@@ -44,7 +44,7 @@ func ServerManagement(config *models.ConfigStruct) {
 					logger.PrintPlace("after Bootup")
 				}
 			}
-		case w > 1 && in < ThLow && mutex.Read(&waiting, &waitMutex) == 0:
+		case w > 1 && in < 1 && mutex.Read(&waiting, &waitMutex) == 0:
 			go config.Cluster.VirtualMachines[w-1].Shutdown(config.Sleep, powerCh)
 		}
 	}
