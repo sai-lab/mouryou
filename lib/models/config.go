@@ -26,5 +26,7 @@ func LoadConfig(path string) *ConfigStruct {
 	err = json.Unmarshal(bytes, &config)
 	check.Error(err)
 
+	threshold = config.Cluster.LoadBalancer.ThresholdOut
+
 	return &config
 }

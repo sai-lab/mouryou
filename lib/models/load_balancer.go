@@ -7,13 +7,13 @@ import (
 )
 
 type LoadBalancerStruct struct {
-	VirtualIP     string  `json:"virtual_ip"`
-	Algorithm     string  `json:"algorithm"`
-	Threshold_out float64 `json:"threshold_out"`
-	Threshold_in  float64 `json:"threshold_in"`
-	Margin        float64 `json:"margin"`
-	ScaleOut      int     `json:"scale_out"`
-	ScaleIn       int     `json:"scale_in"`
+	VirtualIP    string  `json:"virtual_ip"`
+	Algorithm    string  `json:"algorithm"`
+	ThresholdOut float64 `json:"threshold_out"`
+	ThresholdIn  float64 `json:"threshold_in"`
+	Margin       float64 `json:"margin"`
+	ScaleOut     int     `json:"scale_out"`
+	ScaleIn      int     `json:"scale_in"`
 }
 
 func (balancer LoadBalancerStruct) Initialize() {
@@ -26,12 +26,29 @@ func (balancer LoadBalancerStruct) Initialize() {
 	check.Error(err)
 }
 
+func (balancer LoadBalancerStruct) ChangeThresholdOut(w, n int) {
+	var ocRate float64
+	ocRate = float64(w) / float64(n)
+	switch {
+	case ocRate <= 0.3:
+		threshold = 0.5
+	case ocRate <= 0.5:
+		threshold = 0.6
+	case ocRate <= 0.7:
+		threshold = 0.7
+	case ocRate <= 0.9:
+		threshold = 0.8
+	case ocRate <= 1.0:
+		threshold = 0.9
+	}
+}
+
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	return balancer.Threshold_out
+	return threshold
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	return balancer.Threshold_in
+	return threshold*float64(w) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {
