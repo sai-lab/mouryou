@@ -48,7 +48,7 @@ func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	return threshold*float64(w) - balancer.Margin
+	return (threshold-0.2)*float64(w) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {
