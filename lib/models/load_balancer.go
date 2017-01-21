@@ -44,11 +44,13 @@ func (balancer LoadBalancerStruct) ChangeThresholdOut(w, n int) {
 }
 
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	return threshold
+	// return threshold
+	return balancer.ThresholdOut
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	return (threshold-0.2)*float64(w) - balancer.Margin
+	// return (threshold-0.2)*float64(w) - balancer.Margin
+	return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {
