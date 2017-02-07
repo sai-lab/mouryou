@@ -14,6 +14,7 @@ type LoadBalancerStruct struct {
 	Margin       float64 `json:"margin"`
 	ScaleOut     int     `json:"scale_out"`
 	ScaleIn      int     `json:"scale_in"`
+	Diff         float64 `json:"diff"`
 }
 
 func (balancer LoadBalancerStruct) Initialize() {
@@ -26,9 +27,9 @@ func (balancer LoadBalancerStruct) Initialize() {
 	check.Error(err)
 }
 
-func (balancer LoadBalancerStruct) ChangeThresholdOut(w, n int) {
+func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
 	var ocRate float64
-	ocRate = float64(w) / float64(n)
+	ocRate = float64(w+b+s) / float64(n)
 	switch {
 	case ocRate <= 0.3:
 		threshold = 0.5
@@ -44,13 +45,13 @@ func (balancer LoadBalancerStruct) ChangeThresholdOut(w, n int) {
 }
 
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	// return threshold
-	return balancer.ThresholdOut
+	return threshold
+	// return balancer.ThresholdOut
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	// return (threshold-0.2)*float64(w) - balancer.Margin
-	return balancer.ThresholdIn*float64(w) - balancer.Margin
+	return (threshold-balancer.Diff)*float64(w) - balancer.Margin
+	// return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
 func (balancer LoadBalancerStruct) Add(host string) error {

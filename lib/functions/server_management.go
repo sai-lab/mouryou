@@ -29,7 +29,7 @@ func ServerManagement(config *models.ConfigStruct) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
-		// config.Cluster.LoadBalancer.ChangeThresholdOut(w, len(config.Cluster.VirtualMachines))
+		config.Cluster.LoadBalancer.ChangeThresholdOut(w, b, s, len(config.Cluster.VirtualMachines))
 		ThHigh = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
 		ThLow = config.Cluster.LoadBalancer.ThLow(w)
 
