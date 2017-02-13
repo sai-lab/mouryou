@@ -10,6 +10,10 @@ type VirtualMachineStruct struct {
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
 	Hypervisor *HypervisorStruct `json:"-"`
+	UnitTime   int               `json:"unit_time"`
+	UnitCost   float64           `json:"unit_cost"`
+	CostCount  int
+	BootTime   time.Time
 }
 
 func (machine VirtualMachineStruct) OperatingRatio() float64 {
@@ -25,6 +29,7 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	if power != nil {
 		power <- "booting up"
 	}
+	machine.BootTime = time.Now()
 
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
@@ -32,13 +37,11 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	// 	return
 	// }
 	// defer connection.CloseConnection()
-
 	// domain, err := connection.LookupDomainByName(machine.Name)
 	// if err != nil {
 	// 	power <- err.Error()
 	// 	return
 	// }
-
 	// err = domain.Create()
 	// if err != nil {
 	// 	power <- err.Error()
@@ -58,19 +61,16 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan str
 	}
 
 	// connection, err :=  machine.Hypervisor.Connect() // here?
-
 	// if err != nil {
 	// 	power <- err.Error()
 	// 	return
 	// }
 	// defer connection.CloseConnection()
-
 	// domain, err := connection.LookupDomainByName(machine.Name)
 	// if err != nil {
 	// 	power <- err.Error()
 	// 	return
 	// }
-
 	// time.Sleep(sleep * time.Second)
 	// err = domain.Shutdown()
 	// if err != nil {
@@ -80,7 +80,6 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan str
 	// }
 
 	time.Sleep(sleep * time.Second)
-
 	if power != nil {
 		power <- "shutted down"
 	}

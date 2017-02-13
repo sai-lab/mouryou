@@ -21,12 +21,22 @@ func Create() *os.File {
 	return file
 }
 
-func Print(arr []string) {
-	fmt.Println(strings.Join(arr, "  "))
+func Print(arr interface{}) {
+	switch arr.(type) {
+	case string:
+		fmt.Println(arr.(string))
+	case []string:
+		fmt.Println(strings.Join(arr.([]string), "  "))
+	}
 }
 
-func Write(arr []string) {
-	log.Println("," + strings.Join(arr, ","))
+func Write(arr interface{}) {
+	switch arr.(type) {
+	case string:
+		log.Println(arr.(string))
+	case []string:
+		log.Println("," + strings.Join(arr.([]string), ","))
+	}
 }
 
 func PrintPlace(str string) {
