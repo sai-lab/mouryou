@@ -1,8 +1,6 @@
 package models
 
-import (
-	"sync"
-)
+import "sync"
 
 type ClusterStruct struct {
 	LoadBalancer    LoadBalancerStruct     `json:"load_balancer"`
@@ -15,7 +13,6 @@ func (cluster *ClusterStruct) Initialize() {
 		hypervisor.Initialize()
 		cluster.VirtualMachines = append(cluster.VirtualMachines, hypervisor.VirtualMachines...)
 	}
-
 	cluster.LoadBalancer.Initialize()
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Host)

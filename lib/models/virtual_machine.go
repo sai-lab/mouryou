@@ -1,16 +1,19 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 type VirtualMachineStruct struct {
+	Id         int               `json:"id"`
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
 	Hypervisor *HypervisorStruct `json:"-"`
-	UnitTime   int               `json:"unit_time"`
+	UnitTime   time.Duration     `json:"unit_time"`
 	UnitCost   float64           `json:"unit_cost"`
 	CostCount  int
 	BootTime   time.Time
@@ -30,6 +33,30 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 		power <- "booting up"
 	}
 	machine.BootTime = time.Now()
+	machine.CostCount = 0
+	select {
+	case vmQue[machine.Id] <- false:
+	default:
+	}
+
+	go func() {
+		t := time.NewTicker((machine.UnitTime + 1) * time.Second)
+		for {
+			select {
+			case <-t.C:
+				machine.CostCount++
+				logger.Write("CostInfo, " + fmt.Sprint(machine.UnitCost))
+				logger.Print("CostInfo, " + fmt.Sprint(machine.UnitCost))
+			case stop := <-vmQue[machine.Id]:
+				if stop {
+					logger.PrintPlace("stop ticker")
+					t.Stop()
+					vmQue[machine.Id] <- false
+				}
+			default:
+			}
+		}
+	}()
 
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
@@ -82,5 +109,9 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan str
 	time.Sleep(sleep * time.Second)
 	if power != nil {
 		power <- "shutted down"
+	}
+	select {
+	case vmQue[machine.Id] <- true:
+	default:
 	}
 }
