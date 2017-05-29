@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/sai-lab/mouryou/lib/logger"
@@ -15,7 +14,7 @@ func DestinationSetting(config *models.ConfigStruct) {
 	var power string
 	var b, s, w, o int
 
-	connection, err := config.WebSocket.Dial()
+	// connection, err := config.WebSocket.Dial()
 
 	for power = range powerCh {
 		w = mutex.Read(&working, &workMutex)
@@ -25,21 +24,22 @@ func DestinationSetting(config *models.ConfigStruct) {
 		switch power {
 		case "booting up":
 			mutex.Write(&booting, &bootMutex, b+1)
-			logger.Send(connection, err, "Booting up: "+strconv.Itoa(w))
+			// logger.Send(connection, err, "Booting up: "+strconv.Itoa(w))
 		case "booted up":
-			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Host)
-			logger.Send(connection, err, "Booted up: "+strconv.Itoa(w))
+			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Name)
+			// logger.Send(connection, err, "Booted up: "+strconv.Itoa(w))
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&booting, &bootMutex, b-1)
 			go timer.Set(&waiting, &waitMutex, config.Wait)
 		case "shutting down":
+			logger.PrintPlace("Virtual Machine Shutting down")
 			mutex.Write(&shuting, &shutMutex, s+1)
 			mutex.Write(&working, &workMutex, w-1)
-			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Host)
-			logger.Send(connection, err, "Shutting down: "+strconv.Itoa(w-1))
+			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Name)
+			// logger.Send(connection, err, "Shutting down: "+strconv.Itoa(w-1))
 		case "shutted down":
 			mutex.Write(&shuting, &shutMutex, s-1)
-			logger.Send(connection, err, "Shutted down: "+strconv.Itoa(w-1))
+			// logger.Send(connection, err, "Shutted down: "+strconv.Itoa(w-1))
 		default:
 			fmt.Println("Error:", power)
 			switch {

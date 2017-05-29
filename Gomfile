@@ -1,5 +1,5 @@
-gom 'github.com/rgbkrk/libvirt-go'
 gom 'golang.org/x/net/websocket'
+gom 'github.com/mattn/go-pipeline'
 
 group :development do
   gom 'golang.org/x/tools/cmd/goimports'

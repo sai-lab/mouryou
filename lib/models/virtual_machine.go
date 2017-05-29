@@ -4,12 +4,14 @@ import (
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 type VirtualMachineStruct struct {
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
 	Hypervisor *HypervisorStruct `json:"-"`
+	Vendor     *VendorStruct     `json:"-"`
 }
 
 func (machine VirtualMachineStruct) OperatingRatio() float64 {
@@ -25,6 +27,7 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	if power != nil {
 		power <- "booting up"
 	}
+	logger.PrintPlace("Booting up")
 
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
@@ -50,12 +53,14 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	if power != nil {
 		power <- "booted up"
 	}
+	logger.PrintPlace("Booted up")
 }
 
 func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan string) {
 	if power != nil {
 		power <- "shutting down"
 	}
+	logger.PrintPlace("Virtual Machine Shutdown")
 
 	// connection, err :=  machine.Hypervisor.Connect() // here?
 

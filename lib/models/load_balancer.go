@@ -1,9 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"os/exec"
 
+	pipeline "github.com/mattn/go-pipeline"
 	"github.com/sai-lab/mouryou/lib/check"
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 type LoadBalancerStruct struct {
@@ -18,12 +21,16 @@ type LoadBalancerStruct struct {
 }
 
 func (balancer LoadBalancerStruct) Initialize() {
+	logger.PrintPlace("Load Balancer Initialize")
 	exec.Command("ip", "addr", "add", balancer.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
 
-	err := exec.Command("ipvsadm", "-C").Run()
-	check.Error(err)
+	// err := exec.Command("ipvsadm", "-C").Run()
+	// check.Error(err)
+	// err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
+	// check.Error(err)
 
-	err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
+	logger.PrintPlace("reload haproxy")
+	err := exec.Command("systemctl", "reload", "haproxy").Run()
 	check.Error(err)
 }
 
@@ -54,36 +61,51 @@ func (balancer LoadBalancerStruct) ThLow(w int) float64 {
 	// return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
-func (balancer LoadBalancerStruct) Add(host string) error {
-	err := exec.Command("ipvsadm", "-a", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
+func (balancer LoadBalancerStruct) Add(name string) error {
+	// err := exec.Command("ipvsadm", "-a", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func (balancer LoadBalancerStruct) Remove(name string) error {
+	// err := exec.Command("ipvsadm", "-d", "-t", balancer.VirtualIP+":http", "-r", host+":http").Run()
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func (balancer LoadBalancerStruct) Active(name string) error {
+	// err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
+
+	logger.PrintPlace("enable server " + fmt.Sprint(name))
+	_, err := pipeline.Output(
+		[]string{"echo", "enable", "server", "backend_servers/" + name},
+		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
+	)
+
 	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
 		return err
 	}
 
 	return nil
 }
 
-func (balancer LoadBalancerStruct) Remove(host string) error {
-	err := exec.Command("ipvsadm", "-d", "-t", balancer.VirtualIP+":http", "-r", host+":http").Run()
+func (balancer LoadBalancerStruct) Inactive(name string) error {
+	//err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
+
+	logger.PrintPlace("disable server " + fmt.Sprint(name))
+	_, err := pipeline.Output(
+		[]string{"echo", "disable", "server", "backend_servers/" + name},
+		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
+	)
 	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (balancer LoadBalancerStruct) Active(host string) error {
-	err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (balancer LoadBalancerStruct) Inactive(host string) error {
-	err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
-	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
 		return err
 	}
 

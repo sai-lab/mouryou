@@ -15,7 +15,7 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	var w int
 
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
-	connection, err := config.WebSocket.Dial()
+	// connection, err := config.WebSocket.Dial()
 
 	for {
 		w = mutex.Read(&working, &workMutex)
@@ -24,7 +24,7 @@ func LoadMonitoring(config *models.ConfigStruct) {
 
 		logger.Print(arr)
 		logger.Write(arr)
-		logger.Send(connection, err, arr)
+		// logger.Send(connection, err, arr)
 
 		loadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
