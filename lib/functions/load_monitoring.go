@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sai-lab/mouryou/lib/apache"
 	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
@@ -19,7 +20,8 @@ func LoadMonitoring(config *models.ConfigStruct) {
 
 	for {
 		w = mutex.Read(&working, &workMutex)
-		ors := config.Cluster.OperatingRatios(w)
+		sts := config.Cluster.ServerStates(w)
+		ors := OperatingRatios(sts)
 		arr := convert.FloatsToStrings(ors)
 
 		logger.Print(arr)
@@ -29,4 +31,13 @@ func LoadMonitoring(config *models.ConfigStruct) {
 		loadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
 	}
+}
+
+func OperatingRatios(states []apache.ServerStat) []float64 {
+	ors := make([]float64, len(states))
+	for i, v := range states {
+		ors[i] = v.ApacheStat
+	}
+
+	return ors
 }

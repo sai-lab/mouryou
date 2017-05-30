@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
@@ -14,13 +15,20 @@ type VirtualMachineStruct struct {
 	Vendor     *VendorStruct     `json:"-"`
 }
 
-func (machine VirtualMachineStruct) OperatingRatio() float64 {
+func (machine VirtualMachineStruct) ServerState() *ServerStat {
+	var state ServerStat
+
 	board, err := apache.Scoreboard(machine.Host)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+	}
+
+	err := json.Unmarshal(board, &state)
 	if err != nil {
 		return 0
 	}
 
-	return apache.OperatingRatio(board)
+	return state
 }
 
 func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan string) {

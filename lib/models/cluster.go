@@ -3,6 +3,7 @@ package models
 import (
 	"sync"
 
+	"github.com/sai-lab/mouryou/lib/apache"
 	"github.com/sai-lab/mouryou/lib/logger"
 )
 
@@ -30,10 +31,10 @@ func (cluster *ClusterStruct) Initialize() {
 	cluster.LoadBalancer.Active(cluster.VirtualMachines[0].Name)
 }
 
-func (cluster ClusterStruct) OperatingRatios(n int) []float64 {
+func (cluster ClusterStruct) ServerStates(n int) []ServerStat {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
-	ratios := make([]float64, n)
+	states := make([]ServerStat, n)
 
 	for i := 0; i < n; i++ {
 		group.Add(1)
@@ -42,10 +43,10 @@ func (cluster ClusterStruct) OperatingRatios(n int) []float64 {
 
 			mutex.Lock()
 			defer mutex.Unlock()
-			ratios[i] = machine.OperatingRatio()
+			states[i] = machine.ServerState()
 		}(i, &cluster.VirtualMachines[i])
 	}
 	group.Wait()
 
-	return ratios
+	return states
 }
