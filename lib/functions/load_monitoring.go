@@ -36,7 +36,11 @@ func LoadMonitoring(config *models.ConfigStruct) {
 func OperatingRatios(states []apache.ServerStat) []float64 {
 	ors := make([]float64, len(states))
 	for i, v := range states {
-		ors[i] = v.ApacheStat
+		if v.ApacheStat == 0 {
+			ors[i] = 1
+		} else {
+			ors[i] = v.ApacheStat
+		}
 	}
 
 	return ors

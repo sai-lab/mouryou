@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -15,17 +16,18 @@ type VirtualMachineStruct struct {
 	Vendor     *VendorStruct     `json:"-"`
 }
 
-func (machine VirtualMachineStruct) ServerState() *ServerStat {
-	var state ServerStat
+func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
+	var state apache.ServerStat
 
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
-	}
-
-	err := json.Unmarshal(board, &state)
-	if err != nil {
-		return 0
+		logger.PrintPlace("Scoreboard error! : " + fmt.Sprint(err))
+		CriticalCh <- machine.Name
+	} else {
+		err = json.Unmarshal(board, &state)
+		if err != nil {
+			logger.PrintPlace(fmt.Sprint(err))
+		}
 	}
 
 	return state
@@ -35,7 +37,6 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	if power != nil {
 		power <- "booting up"
 	}
-	logger.PrintPlace("Booting up")
 
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
@@ -61,14 +62,12 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 	if power != nil {
 		power <- "booted up"
 	}
-	logger.PrintPlace("Booted up")
 }
 
 func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan string) {
 	if power != nil {
 		power <- "shutting down"
 	}
-	logger.PrintPlace("Virtual Machine Shutdown")
 
 	// connection, err :=  machine.Hypervisor.Connect() // here?
 

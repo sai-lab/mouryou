@@ -31,10 +31,10 @@ func (cluster *ClusterStruct) Initialize() {
 	cluster.LoadBalancer.Active(cluster.VirtualMachines[0].Name)
 }
 
-func (cluster ClusterStruct) ServerStates(n int) []ServerStat {
+func (cluster ClusterStruct) ServerStates(n int) []apache.ServerStat {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
-	states := make([]ServerStat, n)
+	states := make([]apache.ServerStat, n)
 
 	for i := 0; i < n; i++ {
 		group.Add(1)
