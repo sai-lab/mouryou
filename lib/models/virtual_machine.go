@@ -17,7 +17,7 @@ type VirtualMachineStruct struct {
 func (machine VirtualMachineStruct) OperatingRatio() float64 {
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		return 1.0
+		return 0
 	}
 
 	return apache.OperatingRatio(board)
