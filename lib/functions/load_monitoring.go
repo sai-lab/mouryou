@@ -2,6 +2,7 @@ package functions
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
@@ -21,11 +22,14 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	for {
 		w = mutex.Read(&working, &workMutex)
 		sts := config.Cluster.ServerStates(w)
-		ors := OperatingRatios(sts)
-		arr := convert.FloatsToStrings(ors)
+		ors, crs := Ratios(sts)
+		orArr := convert.FloatsToStrings(ors, "ors")
+		crArr := convert.FloatsToStrings(crs, "crs")
 
-		logger.Print(arr)
-		logger.Write(arr)
+		logger.Print(orArr)
+		logger.Write(orArr)
+		logger.Print(crArr)
+		logger.Write(crArr)
 		// logger.Send(connection, err, arr)
 
 		loadCh <- calculate.Sum(ors)
@@ -33,15 +37,34 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	}
 }
 
-func OperatingRatios(states []apache.ServerStat) []float64 {
-	ors := make([]float64, len(states))
-	for i, v := range states {
-		if v.ApacheStat == 0 {
-			ors[i] = 1
-		} else {
-			ors[i] = v.ApacheStat
-		}
-	}
+func Ratios(states []apache.ServerStat) ([]float64, []float64) {
+	var group sync.WaitGroup
+	var mutex sync.Mutex
 
-	return ors
+	ors := make([]float64, len(states))
+	crs := make([]float64, len(states))
+
+	for i, v := range states {
+		group.Add(1)
+		go func(i int, v apache.ServerStat) {
+			defer group.Done()
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			if v.Other != "" {
+				logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
+				ors[i] = 1
+				crs[i] = 0
+			} else {
+				ors[i] = v.ApacheStat
+				crs[i] = v.CpuUsedPercent[0]
+				if ors[i] == 1 && crs[i] == 100 {
+					models.CriticalCh <- v.HostName
+				}
+			}
+		}(i, v)
+	}
+	group.Wait()
+
+	return ors, crs
 }

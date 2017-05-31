@@ -2,7 +2,6 @@ package functions
 
 import (
 	"container/ring"
-	"fmt"
 
 	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
@@ -22,10 +21,6 @@ func ServerManagement(config *models.ConfigStruct) {
 	for ttlor = range loadCh {
 		r.Value = ttlor
 		r = r.Next()
-
-		if len(models.CriticalCh) > 0 {
-			logger.PrintPlace("Critical things is occured! " + fmt.Sprint(<-models.CriticalCh))
-		}
 
 		ttlors = convert.RingToArray(r)
 		out = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleOut)

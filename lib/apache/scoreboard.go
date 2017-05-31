@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 func Scoreboard(host string) ([]byte, error) {
@@ -16,8 +15,8 @@ func Scoreboard(host string) ([]byte, error) {
 	if err != nil {
 		return board, err
 	}
-	client := &http.Client{Timeout: time.Duration(2) * time.Second}
-	response, err := client.Do(request)
+
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return board, err
 	}

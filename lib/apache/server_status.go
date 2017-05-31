@@ -1,9 +1,5 @@
 package apache
 
-import (
-	"github.com/shirou/gopsutil/cpu"
-)
-
 type ServerStat struct {
 	// Host
 	HostName             string `json:"hostname"`
@@ -16,13 +12,15 @@ type ServerStat struct {
 	// DiskIO
 	DiskIO []DiskStat `json:"diskIO"`
 	// Cpu
-	Cpu []cpu.TimesStat `json:"cpu"`
+	CpuUsedPercent []float64 `json:"cpuUsedPercent"`
 	// Apache
 	ApacheStat float64 `json:"apacheStat"`
 	// Time
 	Time string `json:"time"`
 	// Error
 	ErrorInfo []error `json:"errorInfo"`
+	// Other Error
+	Other string `json:"other"`
 }
 
 type DiskStat struct {

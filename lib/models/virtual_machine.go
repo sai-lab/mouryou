@@ -22,7 +22,8 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
 		logger.PrintPlace("Scoreboard error! : " + fmt.Sprint(err))
-		CriticalCh <- machine.Name
+		state.HostName = machine.Name
+		state.Other = "Connection is timeout."
 	} else {
 		err = json.Unmarshal(board, &state)
 		if err != nil {
