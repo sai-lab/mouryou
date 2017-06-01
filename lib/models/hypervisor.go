@@ -20,7 +20,7 @@ func (hypervisor *HypervisorStruct) Initialize() {
 
 		logger.PrintPlace(fmt.Sprint(i))
 		if i != 0 {
-			hypervisor.VirtualMachines[i].Shutdown(0, nil)
+			hypervisor.VirtualMachines[i].Shutdown(0)
 		}
 	}
 }

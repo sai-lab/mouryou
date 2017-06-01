@@ -17,6 +17,7 @@ func main() {
 	logger.PrintPlace("mouryou start")
 	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
 	config.Cluster.Initialize()
+	functions.Initialize(config)
 
 	file := logger.Create()
 	log.SetOutput(file)
@@ -25,6 +26,7 @@ func main() {
 	go functions.LoadMonitoring(config)
 	go functions.ServerManagement(config)
 	go functions.DestinationSetting(config)
+	go functions.StatusManager()
 	go functions.MeasureServer(config)
 
 	channel := make(chan os.Signal, 1)

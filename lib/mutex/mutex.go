@@ -15,3 +15,17 @@ func Write(x *int, mutex *sync.RWMutex, y int) {
 
 	*x = y
 }
+
+func ReadFloat(x *float64, mutex *sync.RWMutex) float64 {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	return *x
+}
+
+func WriteFloat(x *float64, mutex *sync.RWMutex, y float64) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	*x = y
+}

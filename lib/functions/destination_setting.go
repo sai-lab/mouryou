@@ -11,7 +11,7 @@ import (
 )
 
 func DestinationSetting(config *models.ConfigStruct) {
-	var power string
+	var power PowerStruct
 	var b, s, w, o int
 
 	// connection, err := config.WebSocket.Dial()
@@ -21,12 +21,12 @@ func DestinationSetting(config *models.ConfigStruct) {
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
 
-		switch power {
+		switch power.Info {
 		case "booting up":
 			mutex.Write(&booting, &bootMutex, b+1)
 			// logger.Send(connection, err, "Booting up: "+strconv.Itoa(w))
 		case "booted up":
-			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[w].Name)
+			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[power.Name].Name)
 			// logger.Send(connection, err, "Booted up: "+strconv.Itoa(w))
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&booting, &bootMutex, b-1)
@@ -35,7 +35,7 @@ func DestinationSetting(config *models.ConfigStruct) {
 			logger.PrintPlace("Virtual Machine Shutting down")
 			mutex.Write(&shuting, &shutMutex, s+1)
 			mutex.Write(&working, &workMutex, w-1)
-			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[w-1].Name)
+			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
 			// logger.Send(connection, err, "Shutting down: "+strconv.Itoa(w-1))
 		case "shutted down":
 			mutex.Write(&shuting, &shutMutex, s-1)
@@ -43,9 +43,9 @@ func DestinationSetting(config *models.ConfigStruct) {
 		default:
 			fmt.Println("Error:", power)
 			switch {
-			case strings.Index(power, "domain is already running") != -1:
+			case strings.Index(power.Info, "domain is already running") != -1:
 				mutex.Write(&booting, &bootMutex, o-1)
-			case strings.Index(power, "domain is not running") != -1:
+			case strings.Index(power.Info, "domain is not running") != -1:
 				mutex.Write(&shuting, &shutMutex, s-1)
 			}
 		}

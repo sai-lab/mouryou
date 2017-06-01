@@ -76,6 +76,8 @@ func (balancer LoadBalancerStruct) Remove(name string) error {
 	// 	return err
 	// }
 
+	// TODO haproxy setting
+
 	return nil
 }
 

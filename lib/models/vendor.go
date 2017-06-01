@@ -7,14 +7,14 @@ import (
 )
 
 type VendorStruct struct {
-	Name            string                 `json:"name"`
-	VirtualMachines []VirtualMachineStruct `json:"virtual_machines"`
+	Name            string                          `json:"name"`
+	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
 }
 
 func (vendor *VendorStruct) Initialize() {
 	logger.PrintPlace("vendor Initialize")
-	for i := range vendor.VirtualMachines {
-		vendor.VirtualMachines[i].Vendor = vendor
+	for _, v := range vendor.VirtualMachines {
+		v.Vendor = vendor
 
 		// if i != 0 {
 		// 	vendor.VirtualMachines[i].Shutdown(0, nil)

@@ -10,6 +10,7 @@ import (
 )
 
 type VirtualMachineStruct struct {
+	Id         int               `json:"id"`
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
 	Hypervisor *HypervisorStruct `json:"-"`
@@ -21,7 +22,7 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
 
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		logger.PrintPlace("Scoreboard error! : " + fmt.Sprint(err))
+		//logger.PrintPlace("Scoreboard error! : " + fmt.Sprint(err))
 		state.HostName = machine.Name
 		state.Other = "Connection is timeout."
 	} else {
@@ -34,11 +35,7 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
 	return state
 }
 
-func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan string) {
-	if power != nil {
-		power <- "booting up"
-	}
-
+func (machine VirtualMachineStruct) Bootup(sleep time.Duration) string {
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
 	// 	power <- err.Error()
@@ -60,16 +57,10 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration, power chan strin
 
 	time.Sleep(sleep * time.Second)
 
-	if power != nil {
-		power <- "booted up"
-	}
+	return "booted up"
 }
 
-func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan string) {
-	if power != nil {
-		power <- "shutting down"
-	}
-
+func (machine VirtualMachineStruct) Shutdown(sleep time.Duration) string {
 	// connection, err :=  machine.Hypervisor.Connect() // here?
 
 	// if err != nil {
@@ -94,7 +85,17 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration, power chan str
 
 	time.Sleep(sleep * time.Second)
 
-	if power != nil {
-		power <- "shutted down"
-	}
+	return "shutted down"
 }
+
+// func (machine *VirtualMachineStruct) SetStatus(s string) {
+// 	logger.PrintPlace("name: " + machine.Name + ", status: " + machine.Status + ", s: " + s)
+// 	machine.Status = s
+// 	logger.PrintPlace("name: " + machine.Name + ", status: " + machine.Status + ", s: " + s)
+// }
+
+// func (machine VirtualMachineStruct) SetWeight(w float64) {
+// 	logger.PrintPlace("name: " + machine.Name + ", weight: " + fmt.Sprint(machine.Weight) + ", w: " + fmt.Sprint(w))
+// 	machine.Weight = w
+// 	logger.PrintPlace("name: " + machine.Name + ", weight: " + fmt.Sprint(machine.Weight) + ", w: " + fmt.Sprint(w))
+// }

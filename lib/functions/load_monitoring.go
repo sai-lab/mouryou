@@ -1,6 +1,7 @@
 package functions
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -22,13 +23,13 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	for {
 		w = mutex.Read(&working, &workMutex)
 		sts := config.Cluster.ServerStates(w)
-		ors, crs := Ratios(sts)
+		ors, crs, orifs, crifs := Ratios(sts)
 		orArr := convert.FloatsToStrings(ors, "ors")
 		crArr := convert.FloatsToStrings(crs, "crs")
 
-		logger.Print(orArr)
+		logger.Print(orifs)
 		logger.Write(orArr)
-		logger.Print(crArr)
+		logger.Print(crifs)
 		logger.Write(crArr)
 		// logger.Send(connection, err, arr)
 
@@ -37,12 +38,14 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	}
 }
 
-func Ratios(states []apache.ServerStat) ([]float64, []float64) {
+func Ratios(states []apache.ServerStat) ([]float64, []float64, []string, []string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 
 	ors := make([]float64, len(states))
 	crs := make([]float64, len(states))
+	orifs := make([]string, len(states))
+	crifs := make([]string, len(states))
 
 	for i, v := range states {
 		group.Add(1)
@@ -55,16 +58,21 @@ func Ratios(states []apache.ServerStat) ([]float64, []float64) {
 				logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
 				ors[i] = 1
 				crs[i] = 0
+				orifs[i] = v.HostName + ": " + "1"
+				crifs[i] = v.HostName + ": " + "0"
 			} else {
 				ors[i] = v.ApacheStat
 				crs[i] = v.CpuUsedPercent[0]
-				if ors[i] == 1 && crs[i] == 100 {
-					models.CriticalCh <- v.HostName
+				orifs[i] = v.HostName + ": " + fmt.Sprint(ors[i])
+				crifs[i] = v.HostName + ": " + fmt.Sprint(crs[i])
+				if ors[i] == 1 && crs[i] >= 100 {
+					fmt.Println("critical!")
+					//models.CriticalCh <- v.HostName
 				}
 			}
 		}(i, v)
 	}
 	group.Wait()
 
-	return ors, crs
+	return ors, crs, orifs, crifs
 }

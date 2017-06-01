@@ -8,27 +8,27 @@ import (
 )
 
 type ClusterStruct struct {
-	LoadBalancer    LoadBalancerStruct     `json:"load_balancer"`
-	Vendors         []VendorStruct         `json:"vendors"`
-	Hypervisors     []HypervisorStruct     `json:"hypervisors"`
-	VirtualMachines []VirtualMachineStruct `json:"-"`
+	LoadBalancer    LoadBalancerStruct              `json:"load_balancer"`
+	Vendors         []VendorStruct                  `json:"vendors"`
+	Hypervisors     []HypervisorStruct              `json:"hypervisors"`
+	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
 }
 
 func (cluster *ClusterStruct) Initialize() {
 	cluster.LoadBalancer.Initialize()
 	logger.PrintPlace("Cluster Initialize")
 	for _, vendor := range cluster.Vendors {
-		logger.PrintPlace("range cluster.Vendors")
 		vendor.Initialize()
-		cluster.VirtualMachines = append(cluster.VirtualMachines, vendor.VirtualMachines...)
+		cluster.VirtualMachines = vendor.VirtualMachines
 	}
 
 	for _, machine := range cluster.VirtualMachines {
-		cluster.LoadBalancer.Add(machine.Host)
+		cluster.LoadBalancer.Add(machine.Name)
+		if machine.Id == 1 {
+			continue
+		}
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
-
-	cluster.LoadBalancer.Active(cluster.VirtualMachines[0].Name)
 }
 
 func (cluster ClusterStruct) ServerStates(n int) []apache.ServerStat {
@@ -38,13 +38,16 @@ func (cluster ClusterStruct) ServerStates(n int) []apache.ServerStat {
 
 	for i := 0; i < n; i++ {
 		group.Add(1)
-		go func(i int, machine *VirtualMachineStruct) {
+		go func(i int, machines map[string]VirtualMachineStruct) {
 			defer group.Done()
-
 			mutex.Lock()
 			defer mutex.Unlock()
-			states[i] = machine.ServerState()
-		}(i, &cluster.VirtualMachines[i])
+			for _, machine := range machines {
+				if machine.Id == i+1 {
+					states[i] = machine.ServerState()
+				}
+			}
+		}(i, cluster.VirtualMachines)
 	}
 	group.Wait()
 
