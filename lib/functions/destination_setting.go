@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sai-lab/mouryou/lib/logger"
+	//"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/timer"
@@ -32,7 +32,6 @@ func DestinationSetting(config *models.ConfigStruct) {
 			mutex.Write(&booting, &bootMutex, b-1)
 			go timer.Set(&waiting, &waitMutex, config.Wait)
 		case "shutting down":
-			logger.PrintPlace("Virtual Machine Shutting down")
 			mutex.Write(&shuting, &shutMutex, s+1)
 			mutex.Write(&working, &workMutex, w-1)
 			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)

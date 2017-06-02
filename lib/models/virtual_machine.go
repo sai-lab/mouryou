@@ -87,15 +87,3 @@ func (machine VirtualMachineStruct) Shutdown(sleep time.Duration) string {
 
 	return "shutted down"
 }
-
-// func (machine *VirtualMachineStruct) SetStatus(s string) {
-// 	logger.PrintPlace("name: " + machine.Name + ", status: " + machine.Status + ", s: " + s)
-// 	machine.Status = s
-// 	logger.PrintPlace("name: " + machine.Name + ", status: " + machine.Status + ", s: " + s)
-// }
-
-// func (machine VirtualMachineStruct) SetWeight(w float64) {
-// 	logger.PrintPlace("name: " + machine.Name + ", weight: " + fmt.Sprint(machine.Weight) + ", w: " + fmt.Sprint(w))
-// 	machine.Weight = w
-// 	logger.PrintPlace("name: " + machine.Name + ", weight: " + fmt.Sprint(machine.Weight) + ", w: " + fmt.Sprint(w))
-// }

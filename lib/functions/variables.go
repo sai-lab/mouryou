@@ -17,16 +17,22 @@ type StatusStruct struct {
 	Info   string
 }
 
+type CriticalStruct struct {
+	Name string
+	Info string
+}
+
 var (
 	loadCh           = make(chan float64, 1)
 	powerCh          = make(chan PowerStruct, 1)
 	statusCh         = make(chan StatusStruct, 1)
+	criticalCh       = make(chan CriticalStruct, 1)
 	states           []StatusStruct
 	working          int     = 1
 	booting          int     = 0
 	shuting          int     = 0
 	waiting          int     = 0
-	totalWeight      float64 = 1
+	totalWeight      float64 = 10
 	workMutex        sync.RWMutex
 	bootMutex        sync.RWMutex
 	shutMutex        sync.RWMutex

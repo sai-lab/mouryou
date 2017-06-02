@@ -5,31 +5,25 @@ import (
 	//"strings"
 	"sync"
 
-	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	//"github.com/sai-lab/mouryou/lib/timer"
 )
 
 func Initialize(config *models.ConfigStruct) {
-	i := 0 // debug
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st StatusStruct
 		st.Name = name
-		st.Weight = 1
+		st.Weight = 10
 
 		if machine.Id == 1 {
 			st.Info = "booted up"
 			states = append(states, st)
-			logger.PrintPlace("machine.Name = " + machine.Name + ", state.Name = " + states[i].Name + ", state.Weight = " + fmt.Sprint(states[i].Weight) + ", state.Info = " + states[i].Info) // debug
-			i++                                                                                                                                                                                //debug
 			continue
 		}
 
 		st.Info = "shutted down"
 		states = append(states, st)
-		logger.PrintPlace("machine.Name = " + machine.Name + ", state.Name = " + states[i].Name + ", state.Weight = " + fmt.Sprint(states[i].Weight) + ", state.Info = " + states[i].Info) //debug
-		i++                                                                                                                                                                                // debug
 	}
 }
 
@@ -41,7 +35,6 @@ func BootUpVMs(config *models.ConfigStruct, weight float64) {
 	defer mu.RUnlock()
 
 	for i, state := range states {
-		logger.PrintPlace("check states, st.Name: " + state.Name + ", st.Weight: " + fmt.Sprint(state.Weight) + ", st.Info: " + state.Info)
 		if state.Info != "shutted down" {
 			continue
 		}
@@ -50,7 +43,6 @@ func BootUpVMs(config *models.ConfigStruct, weight float64) {
 			mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight+state.Weight)
 			return
 		} else {
-			logger.PrintPlace("candidate add" + state.Name)
 			candidate = append(candidate, i)
 		}
 	}
@@ -81,7 +73,6 @@ func BootUpVM(config *models.ConfigStruct, st StatusStruct) {
 	if statusCh != nil {
 		statusCh <- st
 	}
-	logger.PrintPlace("Booting Up, st.Name: " + st.Name)
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
 	st.Info = p.Info
@@ -89,10 +80,9 @@ func BootUpVM(config *models.ConfigStruct, st StatusStruct) {
 		powerCh <- p
 	}
 	if statusCh != nil {
-		logger.PrintPlace("channel is sended")
 		statusCh <- st
 	}
-	logger.PrintPlace("Booted Up, st.Name: " + st.Name)
+	fmt.Println(st.Name + "is booted up")
 }
 
 func ShutDownVMs(config *models.ConfigStruct, weight float64) {
@@ -135,10 +125,54 @@ func ShutDownVM(config *models.ConfigStruct, st StatusStruct) {
 	}
 }
 
-func ChangeWeight(hostname string, state string) {
-	switch state {
-	case "critical":
-	case "light":
+func MonitorWeightChange(config *models.ConfigStruct) {
+	var cr CriticalStruct
+
+	for cr = range criticalCh {
+		fmt.Println("get critical message")
+		switch cr.Info {
+		case "critical":
+			go FireChangeWeight(config, cr, 1, false)
+		case "light":
+			go FireChangeWeight(config, cr, 1, true)
+		default:
+		}
 	}
 
+	fmt.Println("MonitorWeightChange is finished!")
+}
+
+func FireChangeWeight(config *models.ConfigStruct, cr CriticalStruct, w float64, incOrDec bool) {
+	var mu sync.RWMutex
+	var err error
+
+	mu.RLock()
+	defer mu.RUnlock()
+	for _, state := range states {
+		if state.Name == cr.Name {
+			if !incOrDec && state.Weight <= 5 {
+				fmt.Println(state.Name + " is low weight")
+				break
+			}
+			s := StatusStruct{state.Name, state.Weight, state.Info}
+			if incOrDec {
+				s.Weight = state.Weight + w
+			} else {
+				s.Weight = state.Weight - w
+			}
+
+			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
+			if err != nil {
+				fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+				break
+			}
+			if statusCh != nil {
+				statusCh <- s
+			} else {
+				fmt.Println("statusCh is nil")
+			}
+			mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight-1)
+			break
+		}
+	}
 }

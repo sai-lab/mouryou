@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
 
 	pipeline "github.com/mattn/go-pipeline"
 	"github.com/sai-lab/mouryou/lib/check"
@@ -112,4 +113,19 @@ func (balancer LoadBalancerStruct) Inactive(name string) error {
 	}
 
 	return nil
+}
+
+func (balancer LoadBalancerStruct) ChangeWeight(name string, weight float64) error {
+	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
+	_, err := pipeline.Output(
+		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatFloat(weight, 'g', 3, 64)},
+		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
+	)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+		return err
+	}
+
+	return nil
+
 }

@@ -2,17 +2,12 @@ package models
 
 //import libvirt "github.com/rgbkrk/libvirt-go"
 
-import (
-	"github.com/sai-lab/mouryou/lib/logger"
-)
-
 type VendorStruct struct {
 	Name            string                          `json:"name"`
 	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
 }
 
 func (vendor *VendorStruct) Initialize() {
-	logger.PrintPlace("vendor Initialize")
 	for _, v := range vendor.VirtualMachines {
 		v.Vendor = vendor
 

@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/apache"
-	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 type ClusterStruct struct {
@@ -16,7 +15,6 @@ type ClusterStruct struct {
 
 func (cluster *ClusterStruct) Initialize() {
 	cluster.LoadBalancer.Initialize()
-	logger.PrintPlace("Cluster Initialize")
 	for _, vendor := range cluster.Vendors {
 		vendor.Initialize()
 		cluster.VirtualMachines = vendor.VirtualMachines
@@ -35,6 +33,8 @@ func (cluster ClusterStruct) ServerStates(n int) []apache.ServerStat {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 	states := make([]apache.ServerStat, n)
+
+	// here!
 
 	for i := 0; i < n; i++ {
 		group.Add(1)

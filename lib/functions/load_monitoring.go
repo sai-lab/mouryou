@@ -63,11 +63,14 @@ func Ratios(states []apache.ServerStat) ([]float64, []float64, []string, []strin
 			} else {
 				ors[i] = v.ApacheStat
 				crs[i] = v.CpuUsedPercent[0]
-				orifs[i] = v.HostName + ": " + fmt.Sprint(ors[i])
-				crifs[i] = v.HostName + ": " + fmt.Sprint(crs[i])
+				orifs[i] = v.HostName + ": " + fmt.Sprintf("%.5f", ors[i])
+				crifs[i] = v.HostName + ": " + fmt.Sprintf("%3.5f", crs[i])
 				if ors[i] == 1 && crs[i] >= 100 {
-					fmt.Println("critical!")
-					//models.CriticalCh <- v.HostName
+					fmt.Println("critical is occured in " + v.HostName)
+					if criticalCh != nil {
+						c := CriticalStruct{v.HostName, "critical"}
+						criticalCh <- c
+					}
 				}
 			}
 		}(i, v)

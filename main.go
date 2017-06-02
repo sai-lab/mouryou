@@ -27,6 +27,7 @@ func main() {
 	go functions.ServerManagement(config)
 	go functions.DestinationSetting(config)
 	go functions.StatusManager()
+	go functions.MonitorWeightChange(config)
 	go functions.MeasureServer(config)
 
 	channel := make(chan os.Signal, 1)
