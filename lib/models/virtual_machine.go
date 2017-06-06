@@ -22,7 +22,6 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
 
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		//logger.PrintPlace("Scoreboard error! : " + fmt.Sprint(err))
 		state.HostName = machine.Name
 		state.Other = "Connection is timeout."
 	} else {
@@ -31,6 +30,7 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
 			logger.PrintPlace(fmt.Sprint(err))
 		}
 	}
+	state.Id = machine.Id
 
 	return state
 }

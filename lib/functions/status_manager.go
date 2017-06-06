@@ -1,8 +1,10 @@
 package functions
 
 import (
-	"fmt"
+	"strconv"
 	"sync"
+
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 func StatusManager() {
@@ -10,7 +12,9 @@ func StatusManager() {
 	var mutex sync.RWMutex
 
 	for status = range statusCh {
-		fmt.Println("StatusManager : statusCh get, Name: " + status.Name + ", Weight: " + fmt.Sprint(status.Weight) + ", Info: " + status.Info)
+		sts := []string{"st", status.Name, strconv.FormatFloat(status.Weight, 'g', 4, 64), status.Info}
+		logger.Print(sts)
+		logger.Write(sts)
 		name := status.Name
 		mutex.Lock()
 		for i, v := range states {

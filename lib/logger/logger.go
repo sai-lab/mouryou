@@ -29,6 +29,20 @@ func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
+func PWArrays(arrs [7][]string) {
+	for i := 0; i < 6; i++ {
+		if i == 3 {
+			continue
+		}
+		if i == 5 {
+			log.Println("," + strings.Join(arrs[i], ","))
+			continue
+		}
+		fmt.Println(strings.Join(arrs[i], " "))
+		log.Println("," + strings.Join(arrs[i], ","))
+	}
+}
+
 func PrintPlace(str string) {
 	var i int = 0
 	var path string

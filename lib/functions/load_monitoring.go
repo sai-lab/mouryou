@@ -3,34 +3,38 @@ package functions
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
 	"github.com/sai-lab/mouryou/lib/calculate"
-	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
-	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
 func LoadMonitoring(config *models.ConfigStruct) {
-	var w int
+	var mu sync.RWMutex
 
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
 	// connection, err := config.WebSocket.Dial()
 
 	for {
-		w = mutex.Read(&working, &workMutex)
-		sts := config.Cluster.ServerStates(w)
-		ors, crs, orifs, crifs := Ratios(sts)
-		orArr := convert.FloatsToStrings(ors, "ors")
-		crArr := convert.FloatsToStrings(crs, "crs")
+		mu.RLock()
+		status := states
+		mu.RUnlock()
 
-		logger.Print(orifs)
-		logger.Write(orArr)
-		logger.Print(crifs)
-		logger.Write(crArr)
+		bt := []string{}
+		for _, v := range status {
+			if v.Info == "booted up" {
+				bt = append(bt, v.Name)
+			}
+		}
+
+		sts := config.Cluster.ServerStates(bt)
+		ors, arrs := Ratios(sts)
+
+		logger.PWArrays(arrs)
 		// logger.Send(connection, err, arr)
 
 		loadCh <- calculate.Sum(ors)
@@ -38,14 +42,25 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	}
 }
 
-func Ratios(states []apache.ServerStat) ([]float64, []float64, []string, []string) {
+func Ratios(states []apache.ServerStat) ([]float64, [7][]string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 
-	ors := make([]float64, len(states))
-	crs := make([]float64, len(states))
-	orifs := make([]string, len(states))
-	crifs := make([]string, len(states))
+	length := len(states)
+	ors := make([]float64, length)
+	var arrs [7][]string
+
+	for i := 0; i < 7; i++ {
+		arrs[i] = make([]string, length+1)
+	}
+
+	arrs[0][0] = "ors"
+	arrs[1][0] = "crs"
+	arrs[2][0] = "tps"
+	arrs[3][0] = "dls"
+	arrs[4][0] = "mps"
+	arrs[5][0] = "times"
+	arrs[6][0] = "critical"
 
 	for i, v := range states {
 		group.Add(1)
@@ -54,20 +69,28 @@ func Ratios(states []apache.ServerStat) ([]float64, []float64, []string, []strin
 			mutex.Lock()
 			defer mutex.Unlock()
 
+			id := strconv.FormatInt(int64(v.Id), 10)
 			if v.Other != "" {
 				logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
 				ors[i] = 1
-				crs[i] = 0
-				orifs[i] = v.HostName + ": " + "1"
-				crifs[i] = v.HostName + ": " + "0"
+				arrs[0][i+1] = "[" + id + "]" + "1"
+				arrs[1][i+1] = "[" + id + "]" + "0"
+				arrs[2][i+1] = "[" + id + "]" + "0"
+				arrs[3][i+1] = "[" + id + "]" + "0"
+				arrs[4][i+1] = "[" + id + "]" + "0"
+				arrs[5][i+1] = "[" + id + "]" + "0"
 			} else {
 				ors[i] = v.ApacheStat
-				crs[i] = v.CpuUsedPercent[0]
-				orifs[i] = v.HostName + ": " + fmt.Sprintf("%.5f", ors[i])
-				crifs[i] = v.HostName + ": " + fmt.Sprintf("%3.5f", crs[i])
-				if ors[i] == 1 && crs[i] >= 100 {
+				arrs[0][i+1] = "[" + id + "]" + fmt.Sprintf("%.5f", ors[i])
+				arrs[1][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
+				arrs[2][i+1] = "[" + id + "]" + fmt.Sprintf("%5d", v.ApacheLog)
+				arrs[3][i+1] = "[" + id + "]" + v.DstatLog
+				arrs[4][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.UsedPercent)
+				arrs[5][i+1] = "[" + id + "]" + v.Time
+				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					fmt.Println("critical is occured in " + v.HostName)
 					if criticalCh != nil {
+						arrs[6][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
 						c := CriticalStruct{v.HostName, "critical"}
 						criticalCh <- c
 					}
@@ -77,5 +100,5 @@ func Ratios(states []apache.ServerStat) ([]float64, []float64, []string, []strin
 	}
 	group.Wait()
 
-	return ors, crs, orifs, crifs
+	return ors, arrs
 }

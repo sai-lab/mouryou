@@ -15,12 +15,17 @@ type ServerStat struct {
 	CpuUsedPercent []float64 `json:"cpuUsedPercent"`
 	// Apache
 	ApacheStat float64 `json:"apacheStat"`
+	ApacheLog  int     `json:"apacheLog"`
+	// Dstat
+	DstatLog string `json:"dstatLog"`
 	// Time
 	Time string `json:"time"`
 	// Error
-	ErrorInfo []error `json:"errorInfo"`
+	//ErrorInfo []error `json:"errorInfo"`
 	// Other Error
 	Other string `json:"other"`
+	// ID
+	Id int `json:"-"`
 }
 
 type DiskStat struct {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/ratio"
@@ -36,17 +37,19 @@ func ServerManagement(config *models.ConfigStruct) {
 
 		ir = ratio.Increase(ttlors, config.Cluster.LoadBalancer.ScaleOut)
 		n = (((out + ir*float64(config.Sleep)) / ThHigh) - float64(w+b)) * 10
-		fmt.Println("SM: Now weight status. n: " + fmt.Sprintf("%3.5f", n) + ", tw: " + fmt.Sprintf("%3.5f", tw))
+		weights := []string{"we", fmt.Sprintf("%3.5f", n), fmt.Sprintf("%3.5f", tw)}
+		logger.Print(weights)
+		logger.Write(weights)
 
 		switch {
 		case n > tw && int(n) > 0 && s == 0:
 			if w+b < len(config.Cluster.VirtualMachines) {
-				go BootUpVMs(config, n-tw)
-				fmt.Println("SM: BootUp is fired. n: " + fmt.Sprintf("%3.5f", n) + ", tw: " + fmt.Sprintf("%3.5f", tw))
+				// go BootUpVMs(config, n-tw)
+				// fmt.Println("SM: BootUp is fired. n: " + fmt.Sprintf("%3.5f", n) + ", tw: " + fmt.Sprintf("%3.5f", tw))
 			}
 		case w > 1 && in < ThLow && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
-			go ShutDownVMs(config, 10)
-			fmt.Println("SM: Shutdown is fired")
+			// go ShutDownVMs(config, 10)
+			// fmt.Println("SM: Shutdown is fired")
 		}
 	}
 }

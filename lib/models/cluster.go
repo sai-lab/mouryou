@@ -22,32 +22,38 @@ func (cluster *ClusterStruct) Initialize() {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
-		if machine.Id == 1 {
+		if machine.Id == 6 {
 			continue
 		}
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
+	// cluster.LoadBalancer.Inactive("sai-server-2")
+	// cluster.LoadBalancer.Inactive("sai-server-4")
+	// cluster.LoadBalancer.Inactive("sai-server-7")
+	// cluster.LoadBalancer.Inactive("sai-server-8")
+	// cluster.LoadBalancer.Inactive("sai-server-9")
+	// cluster.LoadBalancer.Inactive("sai-server-10")
+	// cluster.LoadBalancer.Inactive("sai-server-11")
+	// cluster.LoadBalancer.Inactive("sai-server-12")
 }
 
-func (cluster ClusterStruct) ServerStates(n int) []apache.ServerStat {
+func (cluster ClusterStruct) ServerStates(bt []string) []apache.ServerStat {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
-	states := make([]apache.ServerStat, n)
+	states := make([]apache.ServerStat, len(bt))
 
-	// here!
-
-	for i := 0; i < n; i++ {
+	for i, v := range bt {
 		group.Add(1)
-		go func(i int, machines map[string]VirtualMachineStruct) {
+		go func(i int, v string, machines map[string]VirtualMachineStruct) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
 			for _, machine := range machines {
-				if machine.Id == i+1 {
+				if machine.Name == v {
 					states[i] = machine.ServerState()
 				}
 			}
-		}(i, cluster.VirtualMachines)
+		}(i, v, cluster.VirtualMachines)
 	}
 	group.Wait()
 
