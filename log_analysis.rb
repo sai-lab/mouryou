@@ -3,14 +3,17 @@ $base_log = $file_path.split("/").last
 $dir = $file_path.split("/").first
 $log_date = $base_log.split(".")[0]
 
-$ors = []
-$crs = []
-$tps = []
-$dls = []
-$mps = []
-$times = []
-$critical = []
-$we = []
+$ors       = []
+$crs       = []
+$tps       = []
+$dls       = []
+$mps       = []
+$buffers   = []
+$caches    = []
+$memalls   = []
+$times     = []
+$critical  = []
+$we        = []
 
 def write_log(arr, str)
   File.open($dir + "/" + $log_date + "_" + str + ".csv", "w") do |f|
@@ -19,7 +22,7 @@ def write_log(arr, str)
 end
 
 def sort_log(arr, str)
-  tmp = Array.new(arr.length)
+  tmp = []
 
   arr.each do |line|
     items = line.split(",")
@@ -69,7 +72,10 @@ begin
       when "tps" then $tps.push(line)
       when "dls" then $dls.push(line)
       when "mps" then $mps.push(line)
-      when "times" then $times.push(line)
+      when "buffers"  then $buffers.push(line)
+      when "caches"   then $caches.push(line)
+      when "memalls"  then $memalls.push(line)
+      when "times"    then $times.push(line)
       when "critical" then $critical.push(line)
       when "we" then $we.push(line)
       end
@@ -79,8 +85,10 @@ begin
   sort_log($ors, "ors")
   sort_log($crs, "crs")
   sort_log($tps, "tps")
-  # sort_log($dls, "dls")
   sort_log($mps, "mps")
+  sort_log($buffers, "buffers")
+  sort_log($caches, "caches")
+  write_log($memalls, "memalls")
   sort_log($times, "times")
   write_log($critical, "critical")
   write_log($we, "we")

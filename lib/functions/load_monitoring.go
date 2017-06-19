@@ -42,15 +42,15 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	}
 }
 
-func Ratios(states []apache.ServerStat) ([]float64, [7][]string) {
+func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 
 	length := len(states)
 	ors := make([]float64, length)
-	var arrs [7][]string
+	var arrs [10][]string
 
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 10; i++ {
 		arrs[i] = make([]string, length+1)
 	}
 
@@ -59,8 +59,11 @@ func Ratios(states []apache.ServerStat) ([]float64, [7][]string) {
 	arrs[2][0] = "tps"
 	arrs[3][0] = "dls"
 	arrs[4][0] = "mps"
-	arrs[5][0] = "times"
-	arrs[6][0] = "critical"
+	arrs[5][0] = "buffers"
+	arrs[6][0] = "caches"
+	arrs[7][0] = "memalls"
+	arrs[8][0] = "times"
+	arrs[9][0] = "critical"
 
 	for i, v := range states {
 		group.Add(1)
@@ -71,28 +74,30 @@ func Ratios(states []apache.ServerStat) ([]float64, [7][]string) {
 
 			id := strconv.FormatInt(int64(v.Id), 10)
 			if v.Other != "" {
-				logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
+				// logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
 				ors[i] = 1
 				arrs[0][i+1] = "[" + id + "]" + "1"
-				arrs[1][i+1] = "[" + id + "]" + "0"
-				arrs[2][i+1] = "[" + id + "]" + "0"
-				arrs[3][i+1] = "[" + id + "]" + "0"
-				arrs[4][i+1] = "[" + id + "]" + "0"
-				arrs[5][i+1] = "[" + id + "]" + "0"
+				for k := 1; k < 9; k++ {
+					arrs[k][i+1] = "[" + id + "]" + "0"
+				}
+				arrs[9][i+1] = "[" + id + "]" + v.Other
 			} else {
 				ors[i] = v.ApacheStat
 				arrs[0][i+1] = "[" + id + "]" + fmt.Sprintf("%.5f", ors[i])
 				arrs[1][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
 				arrs[2][i+1] = "[" + id + "]" + fmt.Sprintf("%5d", v.ApacheLog)
 				arrs[3][i+1] = "[" + id + "]" + v.DstatLog
-				arrs[4][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.UsedPercent)
-				arrs[5][i+1] = "[" + id + "]" + v.Time
+				arrs[4][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.MemStat.UsedPercent)
+				arrs[5][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5d", v.MemStat.Buffers)
+				arrs[6][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5d", v.MemStat.Cached)
+				arrs[7][i+1] = "[" + id + "]" + fmt.Sprint(v.MemStat)
+				arrs[8][i+1] = "[" + id + "]" + v.Time
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
-					fmt.Println("critical is occured in " + v.HostName)
+					// fmt.Println("critical is occured in " + v.HostName)
 					if criticalCh != nil {
-						arrs[6][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
-						c := CriticalStruct{v.HostName, "critical"}
-						criticalCh <- c
+						arrs[9][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
+						// c := CriticalStruct{v.HostName, "critical"}
+						// criticalCh <- c
 					}
 				}
 			}

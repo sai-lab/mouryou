@@ -14,7 +14,6 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	logger.PrintPlace("mouryou start")
 	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
 	config.Cluster.Initialize()
 	functions.Initialize(config)
@@ -27,7 +26,7 @@ func main() {
 	go functions.ServerManagement(config)
 	go functions.DestinationSetting(config)
 	go functions.StatusManager()
-	go functions.MonitorWeightChange(config)
+	// go functions.MonitorWeightChange(config)
 	go functions.MeasureServer(config)
 
 	channel := make(chan os.Signal, 1)

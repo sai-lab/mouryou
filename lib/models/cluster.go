@@ -22,19 +22,11 @@ func (cluster *ClusterStruct) Initialize() {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
-		if machine.Id == 6 {
+		if machine.Id == 1 || machine.Id == 3 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
 			continue
 		}
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
-	// cluster.LoadBalancer.Inactive("sai-server-2")
-	// cluster.LoadBalancer.Inactive("sai-server-4")
-	// cluster.LoadBalancer.Inactive("sai-server-7")
-	// cluster.LoadBalancer.Inactive("sai-server-8")
-	// cluster.LoadBalancer.Inactive("sai-server-9")
-	// cluster.LoadBalancer.Inactive("sai-server-10")
-	// cluster.LoadBalancer.Inactive("sai-server-11")
-	// cluster.LoadBalancer.Inactive("sai-server-12")
 }
 
 func (cluster ClusterStruct) ServerStates(bt []string) []apache.ServerStat {

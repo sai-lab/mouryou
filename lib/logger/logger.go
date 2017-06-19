@@ -29,12 +29,12 @@ func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
-func PWArrays(arrs [7][]string) {
-	for i := 0; i < 6; i++ {
+func PWArrays(arrs [10][]string) {
+	for i := 0; i < 10; i++ {
 		if i == 3 {
 			continue
 		}
-		if i == 5 {
+		if i == 8 {
 			log.Println("," + strings.Join(arrs[i], ","))
 			continue
 		}

@@ -1,14 +1,16 @@
 package apache
 
+import (
+	"github.com/shirou/gopsutil/mem"
+)
+
 type ServerStat struct {
 	// Host
 	HostName             string `json:"hostname"`
 	HostID               string `json:"hostid"`
 	VirtualizationSystem string `json:"virtualizationSystem"`
 	// Memory
-	Total       uint64  `json:"total"`
-	Available   uint64  `json:"available"`
-	UsedPercent float64 `json:"usedPercent"`
+	MemStat mem.VirtualMemoryStat `json:"memStat"`
 	// DiskIO
 	DiskIO []DiskStat `json:"diskIO"`
 	// Cpu

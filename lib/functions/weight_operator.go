@@ -22,20 +22,13 @@ func Initialize(config *models.ConfigStruct) {
 		// 	continue
 		// } else if machine.Id == 3 {
 		// 	st.Info = "booted up"
-		// 	states = append(states, st)
-		// 	continue
-		// } else if machine.Id == 5 {
-		// 	st.Info = "booted up"
-		// 	states = append(states, st)
-		// 	continue
-		// } else if machine.Id == 6 {
-		// 	st.Info = "booted up"
+		// 	st.Weight = 20
 		// 	states = append(states, st)
 		// 	continue
 		// }
-
-		if machine.Id == 6 {
+		if machine.Id == 1 || machine.Id == 3 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
 			st.Info = "booted up"
+			st.Weight = 10
 			states = append(states, st)
 			continue
 		}
