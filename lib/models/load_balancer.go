@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
 
 	pipeline "github.com/mattn/go-pipeline"
 	"github.com/sai-lab/mouryou/lib/check"
@@ -34,30 +35,30 @@ func (balancer LoadBalancerStruct) Initialize() {
 	check.Error(err)
 }
 
-func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
-	var ocRate float64
-	ocRate = float64(w+b+s) / float64(n)
-	switch {
-	case ocRate <= 0.3:
-		threshold = 0.5
-	case ocRate <= 0.5:
-		threshold = 0.6
-	case ocRate <= 0.7:
-		threshold = 0.7
-	case ocRate <= 0.9:
-		threshold = 0.8
-	case ocRate <= 1.0:
-		threshold = 0.9
-	}
-}
+// func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
+// 	var ocRate float64
+// 	ocRate = float64(w+b+s) / float64(n)
+// 	switch {
+// 	case ocRate <= 0.3:
+// 		Threshold = 0.5
+// 	case ocRate <= 0.5:
+// 		Threshold = 0.6
+// 	case ocRate <= 0.7:
+// 		Threshold = 0.7
+// 	case ocRate <= 0.9:
+// 		Threshold = 0.8
+// 	case ocRate <= 1.0:
+// 		Threshold = 0.9
+// 	}
+// }
 
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
-	return threshold
+	return Threshold
 	// return balancer.ThresholdOut
 }
 
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
-	return (threshold-balancer.Diff)*float64(w) - balancer.Margin
+	return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
 	// return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
@@ -114,16 +115,16 @@ func (balancer LoadBalancerStruct) Inactive(name string) error {
 	return nil
 }
 
-func (balancer LoadBalancerStruct) ChangeWeight(name string, weight float64) error {
-	// logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
-	// _, err := pipeline.Output(
-	// 	[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatFloat(weight, 'g', 3, 64)},
-	// 	[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
-	// )
-	// if err != nil {
-	// 	logger.PrintPlace(fmt.Sprint(err))
-	// 	return err
-	// }
+func (balancer LoadBalancerStruct) ChangeWeight(name string, weight int) error {
+	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
+	_, err := pipeline.Output(
+		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatInt(int64(weight), 10)},
+		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
+	)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+		return err
+	}
 
 	return nil
 

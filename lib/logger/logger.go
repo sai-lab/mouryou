@@ -22,23 +22,23 @@ func Create() *os.File {
 }
 
 func Print(arr []string) {
-	fmt.Println(strings.Join(arr, "  "))
+	//fmt.Println(strings.Join(arr, "  "))
 }
 
 func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
-func PWArrays(arrs [10][]string) {
-	for i := 0; i < 10; i++ {
+func PWArrays(arrs [11][]string) {
+	for i := 0; i < 11; i++ {
 		if i == 3 {
 			continue
 		}
-		if i == 8 {
+		if i == 8 || i == 7 {
 			log.Println("," + strings.Join(arrs[i], ","))
 			continue
 		}
-		fmt.Println(strings.Join(arrs[i], " "))
+		//fmt.Println(strings.Join(arrs[i], " "))
 		log.Println("," + strings.Join(arrs[i], ","))
 	}
 }

@@ -14,6 +14,8 @@ $memalls   = []
 $times     = []
 $critical  = []
 $we        = []
+$rpss      = []
+$weights   = []
 
 def write_log(arr, str)
   File.open($dir + "/" + $log_date + "_" + str + ".csv", "w") do |f|
@@ -58,6 +60,37 @@ def sort_log(arr, str)
   write_log(tmp, str)
 end
 
+def sort_weights(arr, str)
+  tmp = []
+  arr.each do |line|
+    items = line.split(",")
+    len = items.length
+    sorted = Array.new(len)
+    for i in 0..len-1 do
+      if i == 0
+        sorted[i] = items[i]
+        next
+      end
+      if items[i].index("weights") != nil
+        next
+      end
+      datas = items[i].split(" ")
+      number = datas[0].split("-").last
+      sorted[number.to_i + 1] = datas[1].chomp
+    end
+
+    sorted.each do |x|
+      if x == nil
+        sorted.delete(x)
+      end
+    end
+
+    s = sorted.join(",")
+    tmp.push(s)
+  end
+  write_log(tmp, str)
+end
+
 def sort_dls
   # todo
 end
@@ -76,8 +109,12 @@ begin
       when "caches"   then $caches.push(line)
       when "memalls"  then $memalls.push(line)
       when "times"    then $times.push(line)
+      when "rpss"    then $rpss.push(line)
       when "critical" then $critical.push(line)
       when "we" then $we.push(line)
+      end
+      if line.index("weights") != nil
+        $weights.push(line)
       end
     end
   end
@@ -90,8 +127,10 @@ begin
   sort_log($caches, "caches")
   write_log($memalls, "memalls")
   sort_log($times, "times")
+  sort_log($rpss, "rpss")
   write_log($critical, "critical")
   write_log($we, "we")
+  sort_weights($weights, "weights")
 
 rescue SystemCallError => e
   puts %Q(class=[#{e.class}] message=[#{e.message}])

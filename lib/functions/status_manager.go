@@ -12,7 +12,7 @@ func StatusManager() {
 	var mutex sync.RWMutex
 
 	for status = range statusCh {
-		sts := []string{"st", status.Name, strconv.FormatFloat(status.Weight, 'g', 4, 64), status.Info}
+		sts := []string{"st", status.Name, strconv.FormatInt(int64(status.Weight), 10), status.Info}
 		logger.Print(sts)
 		logger.Write(sts)
 		name := status.Name

@@ -42,15 +42,16 @@ func LoadMonitoring(config *models.ConfigStruct) {
 	}
 }
 
-func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
+func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
+	var ds []DataStruct
 
 	length := len(states)
 	ors := make([]float64, length)
-	var arrs [10][]string
+	var arrs [11][]string
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 11; i++ {
 		arrs[i] = make([]string, length+1)
 	}
 
@@ -64,14 +65,17 @@ func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
 	arrs[7][0] = "memalls"
 	arrs[8][0] = "times"
 	arrs[9][0] = "critical"
+	arrs[10][0] = "rpss"
 
 	for i, v := range states {
 		group.Add(1)
+		var data DataStruct
 		go func(i int, v apache.ServerStat) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
 
+			data.Name = v.HostName
 			id := strconv.FormatInt(int64(v.Id), 10)
 			if v.Other != "" {
 				// logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
@@ -81,8 +85,16 @@ func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
 					arrs[k][i+1] = "[" + id + "]" + "0"
 				}
 				arrs[9][i+1] = "[" + id + "]" + v.Other
+				arrs[10][i+1] = "[" + id + "]" + "0"
+				data.Operating = 1
+				data.Cpu = 0
+				data.ThroughPut = 0
 			} else {
 				ors[i] = v.ApacheStat
+				data.Operating = ors[i]
+				data.Cpu = v.CpuUsedPercent[0]
+				data.ThroughPut = v.ReqPerSec
+				ds = append(ds, data)
 				arrs[0][i+1] = "[" + id + "]" + fmt.Sprintf("%.5f", ors[i])
 				arrs[1][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
 				arrs[2][i+1] = "[" + id + "]" + fmt.Sprintf("%5d", v.ApacheLog)
@@ -92,6 +104,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
 				arrs[6][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5d", v.MemStat.Cached)
 				arrs[7][i+1] = "[" + id + "]" + fmt.Sprint(v.MemStat)
 				arrs[8][i+1] = "[" + id + "]" + v.Time
+				arrs[10][i+1] = "[" + id + "]" + fmt.Sprintf("%6.2f", v.ReqPerSec)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					// fmt.Println("critical is occured in " + v.HostName)
 					if criticalCh != nil {
@@ -104,6 +117,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [10][]string) {
 		}(i, v)
 	}
 	group.Wait()
+	dataCh <- ds
 
 	return ors, arrs
 }

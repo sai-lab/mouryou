@@ -3,8 +3,11 @@ package functions
 import (
 	"fmt"
 	//"strings"
+	"container/ring"
 	"sync"
 
+	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	//"github.com/sai-lab/mouryou/lib/timer"
@@ -14,176 +17,129 @@ func Initialize(config *models.ConfigStruct) {
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st StatusStruct
 		st.Name = name
-		st.Weight = 10
 
-		// if machine.Id == 1 {
-		// 	st.Info = "booted up"
-		// 	states = append(states, st)
-		// 	continue
-		// } else if machine.Id == 3 {
-		// 	st.Info = "booted up"
-		// 	st.Weight = 20
-		// 	states = append(states, st)
-		// 	continue
-		// }
 		if machine.Id == 1 || machine.Id == 3 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
 			st.Info = "booted up"
-			st.Weight = 10
+			st.Weight = machine.Weight
 			states = append(states, st)
+			totalWeight += machine.Weight
 			continue
 		}
 
 		st.Info = "shutted down"
-		//st.Info = "booted up"
 		states = append(states, st)
 	}
 }
 
-func BootUpVMs(config *models.ConfigStruct, weight float64) {
-	var candidate []int
+func WeightOperator(config *models.ConfigStruct) {
 	var mu sync.RWMutex
+	var th, prevThroughPut float64
+
+	r := ring.New(LING_SIZE)
 
 	mu.RLock()
 	defer mu.RUnlock()
 
-	for i, state := range states {
-		if state.Info != "shutted down" {
-			continue
-		}
-		if state.Weight >= weight {
-			go BootUpVM(config, state)
-			mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight+state.Weight)
-			return
-		} else {
-			candidate = append(candidate, i)
-		}
-	}
+	for d := range dataCh {
+		cs := map[string]int{}
+		highCs := map[string]int{}
+		lowCs := map[string]int{}
+		weights := map[string]int{}
+		cluster := config.Cluster
+		prevThroughPut = 0
+		weights["weights"] = -1
 
-	if len(candidate) == 0 {
-		return
-	} else {
-		boot := candidate[0]
-		for _, n := range candidate {
-			if states[n].Weight > states[boot].Weight {
-				boot = n
+		for _, state := range states {
+			if state.Name != "" {
+				cs[state.Name] = 0
+				if state.Weight != 0 {
+					weights[state.Name] = state.Weight
+				}
 			}
 		}
-		go BootUpVM(config, states[boot])
-		mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight+states[boot].Weight)
-	}
-}
 
-func BootUpVM(config *models.ConfigStruct, st StatusStruct) {
-	var p PowerStruct
-
-	p.Name = st.Name
-	p.Info = "booting up"
-	st.Info = "booting up"
-	if powerCh != nil {
-		powerCh <- p
-	}
-	if statusCh != nil {
-		statusCh <- st
-	}
-
-	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
-	st.Info = p.Info
-	if powerCh != nil {
-		powerCh <- p
-	}
-	if statusCh != nil {
-		statusCh <- st
-	}
-	fmt.Println(st.Name + "is booted up")
-}
-
-func ShutDownVMs(config *models.ConfigStruct, weight float64) {
-	var mu sync.RWMutex
-
-	mu.RLock()
-	defer mu.RUnlock()
-
-	for _, st := range states {
-		if st.Info != "booted up" {
-			continue
+		r.Value = d
+		r = r.Next()
+		r.Do(func(v interface{}) {
+			if v != nil {
+				th = 0
+				for _, ds := range v.([]DataStruct) {
+					if prevThroughPut < 1 {
+						th = -1
+					} else {
+						th = ds.ThroughPut - prevThroughPut
+					}
+					if ds.Operating >= models.Threshold {
+						cs[ds.Name] += 1
+					} else if ds.Operating <= 0.3 && ds.Cpu <= 50 {
+						cs[ds.Name] -= 1
+					} else if ds.ThroughPut < float64(cluster.VirtualMachines[ds.Name].Average)/2 {
+						cs[ds.Name] -= 1
+					}
+					if th != -1 {
+						if ds.ThroughPut < cluster.VirtualMachines[ds.Name].Average && ds.Cpu <= 40 {
+							cs[ds.Name] -= 1
+						} else if (ds.ThroughPut < cluster.VirtualMachines[ds.Name].Average*1.3 || ds.ThroughPut > cluster.VirtualMachines[ds.Name].Average*0.8) && ds.Cpu >= 80 {
+							cs[ds.Name] += 1
+						}
+					}
+				}
+			}
+		})
+		for k, v := range cs {
+			if v < -5 {
+				lowCs[k] = v
+			} else if v > 5 {
+				highCs[k] = v
+			}
 		}
-		if st.Weight <= weight {
-			go ShutDownVM(config, st)
-			mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
-			return
+		if len(highCs) > 0 && len(lowCs) > 0 {
+			fmt.Println("highCs: " + fmt.Sprint(highCs))
+			fmt.Println("lowCs: " + fmt.Sprint(lowCs))
+			for name, _ := range lowCs {
+				FireChangeWeight(config, name, 5)
+				weights[name] = weights[name] + 5
+			}
+			for name, _ := range highCs {
+				if weights[name] <= 5 {
+					continue
+				}
+				FireChangeWeight(config, name, -5)
+				weights[name] = weights[name] - 5
+			}
 		}
+		ar := convert.MapToArray(weights)
+		logger.Write(ar)
+		logger.Print(ar)
 	}
 }
 
-func ShutDownVM(config *models.ConfigStruct, st StatusStruct) {
-	var p PowerStruct
-	p.Name = st.Name
-	p.Info = "shutting down"
-	st.Info = "shutting down"
-	if powerCh != nil {
-		powerCh <- p
-	}
-	if statusCh != nil {
-		statusCh <- st
-	}
-
-	p.Info = config.Cluster.VirtualMachines[st.Name].Shutdown(config.Sleep)
-	st.Info = p.Info
-	if powerCh != nil {
-		powerCh <- p
-	}
-	if statusCh != nil {
-		statusCh <- st
-	}
-}
-
-func MonitorWeightChange(config *models.ConfigStruct) {
-	var cr CriticalStruct
-
-	for cr = range criticalCh {
-		fmt.Println("get critical message")
-		switch cr.Info {
-		case "critical":
-			go FireChangeWeight(config, cr, 1, false)
-		case "light":
-			go FireChangeWeight(config, cr, 1, true)
-		default:
-		}
-	}
-
-	fmt.Println("MonitorWeightChange is finished!")
-}
-
-func FireChangeWeight(config *models.ConfigStruct, cr CriticalStruct, w float64, incOrDec bool) {
+func FireChangeWeight(config *models.ConfigStruct, name string, w int) {
 	var mu sync.RWMutex
 	var err error
 
 	mu.RLock()
 	defer mu.RUnlock()
 	for _, state := range states {
-		if state.Name == cr.Name {
-			if !incOrDec && state.Weight <= 5 {
+		if state.Name == name {
+			if w < 0 && state.Weight <= 5 {
 				fmt.Println(state.Name + " is low weight")
 				break
 			}
 			s := StatusStruct{state.Name, state.Weight, state.Info}
-			if incOrDec {
-				s.Weight = state.Weight + w
-			} else {
-				s.Weight = state.Weight - w
-			}
-
+			s.Weight = state.Weight + w
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {
 				fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
 				break
 			}
+
 			if statusCh != nil {
 				statusCh <- s
 			} else {
 				fmt.Println("statusCh is nil")
 			}
-			mutex.WriteFloat(&totalWeight, &totalWeightMutex, totalWeight-1)
+			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+w)
 			break
 		}
 	}

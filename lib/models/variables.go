@@ -1,5 +1,5 @@
 package models
 
 var (
-	threshold float64
+	Threshold float64
 )
