@@ -77,8 +77,8 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 
 			data.Name = v.HostName
 			id := strconv.FormatInt(int64(v.Id), 10)
+
 			if v.Other != "" {
-				// logger.PrintPlace(v.HostName + " Other error is occured! : " + v.Other)
 				ors[i] = 1
 				arrs[0][i+1] = "[" + id + "]" + "1"
 				for k := 1; k < 9; k++ {
@@ -88,12 +88,21 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 				arrs[10][i+1] = "[" + id + "]" + "0"
 				data.Operating = 1
 				data.Cpu = 0
-				data.ThroughPut = 0
+				data.Throughput = 0
 			} else {
+				if beforeTime[v.HostName] == 0 {
+					data.Throughput = 0
+				} else {
+					data.Throughput = (v.ApacheLog - beforeTotalAccess[v.HostName]) / (int(time.Now().Unix()) - beforeTime[v.HostName])
+				}
+				beforeTime[v.HostName] = int(time.Now().Unix())
+				beforeTotalAccess[v.HostName] = v.ApacheLog
+				beforeTime[v.HostName] = int(time.Now().Unix())
+
 				ors[i] = v.ApacheStat
 				data.Operating = ors[i]
 				data.Cpu = v.CpuUsedPercent[0]
-				data.ThroughPut = v.ReqPerSec
+
 				ds = append(ds, data)
 				arrs[0][i+1] = "[" + id + "]" + fmt.Sprintf("%.5f", ors[i])
 				arrs[1][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
@@ -106,7 +115,6 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 				arrs[8][i+1] = "[" + id + "]" + v.Time
 				arrs[10][i+1] = "[" + id + "]" + fmt.Sprintf("%6.2f", v.ReqPerSec)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
-					// fmt.Println("critical is occured in " + v.HostName)
 					if criticalCh != nil {
 						arrs[9][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
 						// c := CriticalStruct{v.HostName, "critical"}
@@ -118,6 +126,5 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 	}
 	group.Wait()
 	dataCh <- ds
-
 	return ors, arrs
 }

@@ -1,16 +1,14 @@
 package functions
 
 import (
-	"fmt"
-	//"strings"
 	"container/ring"
+	"fmt"
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/mutex"
-	//"github.com/sai-lab/mouryou/lib/timer"
 )
 
 func Initialize(config *models.ConfigStruct) {
@@ -33,7 +31,6 @@ func Initialize(config *models.ConfigStruct) {
 
 func WeightOperator(config *models.ConfigStruct) {
 	var mu sync.RWMutex
-	var th, prevThroughPut float64
 
 	r := ring.New(LING_SIZE)
 
@@ -41,17 +38,16 @@ func WeightOperator(config *models.ConfigStruct) {
 	defer mu.RUnlock()
 
 	for d := range dataCh {
-		cs := map[string]int{}
-		highCs := map[string]int{}
-		lowCs := map[string]int{}
+		loadStates := map[string]int{}
+		highLoads := map[string]int{}
+		lowLoads := map[string]int{}
 		weights := map[string]int{}
 		cluster := config.Cluster
-		prevThroughPut = 0
 		weights["weights"] = -1
 
 		for _, state := range states {
 			if state.Name != "" {
-				cs[state.Name] = 0
+				loadStates[state.Name] = 0
 				if state.Weight != 0 {
 					weights[state.Name] = state.Weight
 				}
@@ -62,45 +58,31 @@ func WeightOperator(config *models.ConfigStruct) {
 		r = r.Next()
 		r.Do(func(v interface{}) {
 			if v != nil {
-				th = 0
 				for _, ds := range v.([]DataStruct) {
-					if prevThroughPut < 1 {
-						th = -1
-					} else {
-						th = ds.ThroughPut - prevThroughPut
-					}
-					if ds.Operating >= models.Threshold {
-						cs[ds.Name] += 1
-					} else if ds.Operating <= 0.3 && ds.Cpu <= 50 {
-						cs[ds.Name] -= 1
-					} else if ds.ThroughPut < float64(cluster.VirtualMachines[ds.Name].Average)/2 {
-						cs[ds.Name] -= 1
-					}
-					if th != -1 {
-						if ds.ThroughPut < cluster.VirtualMachines[ds.Name].Average && ds.Cpu <= 40 {
-							cs[ds.Name] -= 1
-						} else if (ds.ThroughPut < cluster.VirtualMachines[ds.Name].Average*1.3 || ds.ThroughPut > cluster.VirtualMachines[ds.Name].Average*0.8) && ds.Cpu >= 80 {
-							cs[ds.Name] += 1
-						}
-					}
+					loadStates[ds.Name] += LoadCheck(ds, cluster.VirtualMachines[ds.Name].Average, models.Threshold)
 				}
 			}
 		})
-		for k, v := range cs {
+
+		// check server load
+		for k, v := range loadStates {
 			if v < -5 {
-				lowCs[k] = v
+				lowLoads[k] = v
 			} else if v > 5 {
-				highCs[k] = v
+				highLoads[k] = v
 			}
+			// fmt.Println(k + " " + strconv.Itoa(v))
 		}
-		if len(highCs) > 0 && len(lowCs) > 0 {
-			fmt.Println("highCs: " + fmt.Sprint(highCs))
-			fmt.Println("lowCs: " + fmt.Sprint(lowCs))
-			for name, _ := range lowCs {
+
+		if len(highLoads) > 0 && len(lowLoads) > 0 {
+			fmt.Println("highLoads: " + fmt.Sprint(highLoads))
+			fmt.Println("lowLoads: " + fmt.Sprint(lowLoads))
+
+			for name, _ := range lowLoads {
 				FireChangeWeight(config, name, 5)
 				weights[name] = weights[name] + 5
 			}
-			for name, _ := range highCs {
+			for name, _ := range highLoads {
 				if weights[name] <= 5 {
 					continue
 				}
@@ -108,10 +90,35 @@ func WeightOperator(config *models.ConfigStruct) {
 				weights[name] = weights[name] - 5
 			}
 		}
+
 		ar := convert.MapToArray(weights)
 		logger.Write(ar)
 		logger.Print(ar)
 	}
+}
+
+func LoadCheck(ds DataStruct, average int, threshold float64) int {
+	loadState := 0
+
+	if ds.Throughput != 0 {
+		if ds.Throughput < average && ds.Cpu <= 40 {
+			// Throughput is low && Using CPU rate is low.
+			loadState -= 1
+		} else if (float64(ds.Throughput) < float64(average)*1.3 || float64(ds.Throughput) > float64(average)*0.8) && ds.Cpu >= 90 {
+			// At first glance, throuput is noting bad but using CPU rate is high.
+			loadState += 1
+		}
+	}
+
+	if ds.Operating >= threshold {
+		// Operating rate is high.
+		loadState += 1
+	} else if ds.Operating <= 0.3 && ds.Cpu <= 50 {
+		// Operating rate is low && Using CPU rate is low.
+		loadState -= 1
+	}
+
+	return loadState
 }
 
 func FireChangeWeight(config *models.ConfigStruct, name string, w int) {

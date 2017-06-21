@@ -13,7 +13,7 @@ type VirtualMachineStruct struct {
 	Id         int               `json:"id"`
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
-	Average    float64           `json:"average"`
+	Average    int               `json:"average"`
 	Weight     int               `json:"weight"`
 	Hypervisor *HypervisorStruct `json:"-"`
 	Vendor     *VendorStruct     `json:"-"`

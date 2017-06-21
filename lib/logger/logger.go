@@ -22,7 +22,7 @@ func Create() *os.File {
 }
 
 func Print(arr []string) {
-	//fmt.Println(strings.Join(arr, "  "))
+	fmt.Println(strings.Join(arr, "  "))
 }
 
 func Write(arr []string) {
