@@ -16,11 +16,19 @@ func Initialize(config *models.ConfigStruct) {
 		var st StatusStruct
 		st.Name = name
 
-		if machine.Id == 1 || machine.Id == 3 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
+		if machine.Id == 1 || machine.Id == 4 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
 			st.Info = "booted up"
+
+			err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
+			if err != nil {
+				fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+				break
+			}
+
 			st.Weight = machine.Weight
 			states = append(states, st)
 			totalWeight += machine.Weight
+
 			continue
 		}
 
@@ -71,13 +79,9 @@ func WeightOperator(config *models.ConfigStruct) {
 			} else if v > 5 {
 				highLoads[k] = v
 			}
-			// fmt.Println(k + " " + strconv.Itoa(v))
 		}
 
 		if len(highLoads) > 0 && len(lowLoads) > 0 {
-			fmt.Println("highLoads: " + fmt.Sprint(highLoads))
-			fmt.Println("lowLoads: " + fmt.Sprint(lowLoads))
-
 			for name, _ := range lowLoads {
 				FireChangeWeight(config, name, 5)
 				weights[name] = weights[name] + 5

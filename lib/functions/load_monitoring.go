@@ -76,16 +76,16 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 			defer mutex.Unlock()
 
 			data.Name = v.HostName
-			id := strconv.FormatInt(int64(v.Id), 10)
+			id := "[" + strconv.FormatInt(int64(v.Id), 10) + "]"
 
 			if v.Other != "" {
 				ors[i] = 1
-				arrs[0][i+1] = "[" + id + "]" + "1"
+				arrs[0][i+1] = id + "1"
 				for k := 1; k < 9; k++ {
-					arrs[k][i+1] = "[" + id + "]" + "0"
+					arrs[k][i+1] = id + "0"
 				}
-				arrs[9][i+1] = "[" + id + "]" + v.Other
-				arrs[10][i+1] = "[" + id + "]" + "0"
+				arrs[9][i+1] = id + v.Other
+				arrs[10][i+1] = id + "0"
 				data.Operating = 1
 				data.Cpu = 0
 				data.Throughput = 0
@@ -104,16 +104,16 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 				data.Cpu = v.CpuUsedPercent[0]
 
 				ds = append(ds, data)
-				arrs[0][i+1] = "[" + id + "]" + fmt.Sprintf("%.5f", ors[i])
-				arrs[1][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
-				arrs[2][i+1] = "[" + id + "]" + fmt.Sprintf("%5d", v.ApacheLog)
-				arrs[3][i+1] = "[" + id + "]" + v.DstatLog
-				arrs[4][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5f", v.MemStat.UsedPercent)
-				arrs[5][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5d", v.MemStat.Buffers)
-				arrs[6][i+1] = "[" + id + "]" + fmt.Sprintf("%3.5d", v.MemStat.Cached)
-				arrs[7][i+1] = "[" + id + "]" + fmt.Sprint(v.MemStat)
-				arrs[8][i+1] = "[" + id + "]" + v.Time
-				arrs[10][i+1] = "[" + id + "]" + fmt.Sprintf("%6.2f", v.ReqPerSec)
+				arrs[0][i+1] = id + fmt.Sprintf("%.5f", ors[i])
+				arrs[1][i+1] = id + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
+				arrs[2][i+1] = id + fmt.Sprintf("%5d", v.ApacheLog)
+				arrs[3][i+1] = id + v.DstatLog
+				arrs[4][i+1] = id + fmt.Sprintf("%3.5f", v.MemStat.UsedPercent)
+				arrs[5][i+1] = id + fmt.Sprintf("%3.5d", v.MemStat.Buffers)
+				arrs[6][i+1] = id + fmt.Sprintf("%3.5d", v.MemStat.Cached)
+				arrs[7][i+1] = id + fmt.Sprint(v.MemStat)
+				arrs[8][i+1] = id + v.Time
+				arrs[10][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					if criticalCh != nil {
 						arrs[9][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"

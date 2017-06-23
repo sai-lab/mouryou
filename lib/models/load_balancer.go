@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+	"time"
 
 	pipeline "github.com/mattn/go-pipeline"
 	"github.com/sai-lab/mouryou/lib/check"
@@ -33,6 +34,8 @@ func (balancer LoadBalancerStruct) Initialize() {
 	logger.PrintPlace("reload haproxy")
 	err := exec.Command("systemctl", "reload", "haproxy").Run()
 	check.Error(err)
+
+	time.Sleep(time.Duration(1) * 3)
 }
 
 // func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
