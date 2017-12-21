@@ -1,10 +1,9 @@
-package functions
+package monitor
 
 import (
 	"net"
 	"net/http"
 
-	// "github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/check"
 	"github.com/sai-lab/mouryou/lib/models"
 )

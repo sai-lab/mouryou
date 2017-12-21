@@ -1,4 +1,4 @@
-package functions
+package monitor
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func LoadMonitoring(config *models.ConfigStruct) {
 
 	for {
 		mu.RLock()
-		status := states
+		status := States
 		mu.RUnlock()
 
 		bt := []string{}
@@ -37,7 +37,7 @@ func LoadMonitoring(config *models.ConfigStruct) {
 		logger.PWArrays(arrs)
 		// logger.Send(connection, err, arr)
 
-		loadCh <- calculate.Sum(ors)
+		LoadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
 	}
 }
@@ -115,11 +115,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 				arrs[8][i+1] = id + v.Time
 				arrs[10][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
-					if criticalCh != nil {
-						arrs[9][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
-						// c := CriticalStruct{v.HostName, "critical"}
-						// criticalCh <- c
-					}
+					arrs[9][i+1] = "[" + id + "]" + "Operating Ratio and CPU UsedPercent is MAX!"
 				}
 			}
 		}(i, v)

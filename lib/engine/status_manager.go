@@ -1,4 +1,4 @@
-package functions
+package engine
 
 import (
 	"strconv"
@@ -11,7 +11,7 @@ func StatusManager() {
 	var status StatusStruct
 	var mutex sync.RWMutex
 
-	for status = range statusCh {
+	for status = range StatusCh {
 		sts := []string{"st", status.Name, strconv.FormatInt(int64(status.Weight), 10), status.Info}
 		logger.Print(sts)
 		logger.Write(sts)
@@ -19,8 +19,8 @@ func StatusManager() {
 		mutex.Lock()
 		for i, v := range states {
 			if v.Name == name {
-				states[i].Weight = status.Weight
-				states[i].Info = status.Info
+				States[i].Weight = status.Weight
+				States[i].Info = status.Info
 				break
 			}
 		}

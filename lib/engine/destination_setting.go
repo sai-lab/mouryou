@@ -1,4 +1,4 @@
-package functions
+package engine
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func DestinationSetting(config *models.ConfigStruct) {
 
 	// connection, err := config.WebSocket.Dial()
 
-	for power = range powerCh {
+	for power = range PowerCh {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)

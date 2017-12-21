@@ -6,9 +6,11 @@ import (
 	"os/signal"
 	"runtime"
 
+	"github.com/sai-lab/mouryou/lib/engine"
 	"github.com/sai-lab/mouryou/lib/functions"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"github.com/sai-lab/mouryou/lib/monitor"
 )
 
 func main() {
@@ -16,18 +18,18 @@ func main() {
 
 	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
 	config.Cluster.Initialize()
-	functions.Initialize(config)
+	engine.Initialize(config)
 
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)
 
-	go functions.LoadMonitoring(config)
-	go functions.ServerManagement(config)
+	go monitor.LoadMonitoring(config)
+	go engine.ServerManagement(config)
 	go functions.DestinationSetting(config)
 	go functions.StatusManager()
-	go functions.WeightOperator(config)
-	go functions.MeasureServer(config)
+	go engine.WeightOperator(config)
+	go monitor.MeasureServer(config)
 
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt)

@@ -1,4 +1,4 @@
-package functions
+package engine
 
 import (
 	"container/ring"
@@ -9,6 +9,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/ratio"
 )
@@ -20,7 +21,7 @@ func ServerManagement(config *models.ConfigStruct) {
 	r := ring.New(LING_SIZE)
 	ttlors := make([]float64, LING_SIZE)
 
-	for ttlor = range loadCh {
+	for ttlor = range monitor.LoadCh {
 		r.Value = ttlor
 		r = r.Next()
 
@@ -60,7 +61,8 @@ func BootUpVMs(config *models.ConfigStruct, weight int) {
 	var mu sync.RWMutex
 
 	mu.RLock()
-	defer mu.RUnlock()
+	states := States
+	mu.RUnlock()
 
 	for i, state := range states {
 		if state.Info != "shutted down" {
@@ -89,17 +91,17 @@ func BootUpVMs(config *models.ConfigStruct, weight int) {
 	}
 }
 
-func BootUpVM(config *models.ConfigStruct, st StatusStruct) {
-	var p PowerStruct
+func BootUpVM(config *models.ConfigStruct, st monitor.StatusStruct) {
+	var p monitor.PowerStruct
 
 	p.Name = st.Name
 	p.Info = "booting up"
 	st.Info = "booting up"
-	if powerCh != nil {
-		powerCh <- p
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- p
 	}
-	if statusCh != nil {
-		statusCh <- st
+	if StatusCh != nil {
+		StatusCh <- st
 	}
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
@@ -119,7 +121,7 @@ func ShutDownVMs(config *models.ConfigStruct, weight int) {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	for _, st := range states {
+	for _, st := range States {
 		if st.Info != "booted up" {
 			continue
 		}
@@ -139,8 +141,8 @@ func ShutDownVM(config *models.ConfigStruct, st StatusStruct) {
 	if powerCh != nil {
 		powerCh <- p
 	}
-	if statusCh != nil {
-		statusCh <- st
+	if StatusCh != nil {
+		StatusCh <- st
 	}
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Shutdown(config.Sleep)
@@ -149,6 +151,6 @@ func ShutDownVM(config *models.ConfigStruct, st StatusStruct) {
 		powerCh <- p
 	}
 	if statusCh != nil {
-		statusCh <- st
+		StatusCh <- st
 	}
 }
