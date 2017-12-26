@@ -7,7 +7,6 @@ import (
 	"runtime"
 
 	"github.com/sai-lab/mouryou/lib/engine"
-	"github.com/sai-lab/mouryou/lib/functions"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
@@ -26,8 +25,8 @@ func main() {
 
 	go monitor.LoadMonitoring(config)
 	go engine.ServerManagement(config)
-	go functions.DestinationSetting(config)
-	go functions.StatusManager()
+	go engine.DestinationSetting(config)
+	go engine.StatusManager()
 	go engine.WeightOperator(config)
 	go monitor.MeasureServer(config)
 

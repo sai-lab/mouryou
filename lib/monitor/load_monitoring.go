@@ -121,6 +121,6 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 		}(i, v)
 	}
 	group.Wait()
-	dataCh <- ds
+	DataCh <- ds
 	return ors, arrs
 }

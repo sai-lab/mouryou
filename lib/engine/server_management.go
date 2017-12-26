@@ -61,7 +61,7 @@ func BootUpVMs(config *models.ConfigStruct, weight int) {
 	var mu sync.RWMutex
 
 	mu.RLock()
-	states := States
+	states := monitor.States
 	mu.RUnlock()
 
 	for i, state := range states {
@@ -100,17 +100,17 @@ func BootUpVM(config *models.ConfigStruct, st monitor.StatusStruct) {
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
 	}
-	if StatusCh != nil {
-		StatusCh <- st
+	if monitor.StatusCh != nil {
+		monitor.StatusCh <- st
 	}
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
 	st.Info = p.Info
-	if powerCh != nil {
-		powerCh <- p
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- p
 	}
-	if statusCh != nil {
-		statusCh <- st
+	if monitor.StatusCh != nil {
+		monitor.StatusCh <- st
 	}
 	fmt.Println(st.Name + "is booted up")
 }
@@ -121,7 +121,7 @@ func ShutDownVMs(config *models.ConfigStruct, weight int) {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	for _, st := range States {
+	for _, st := range monitor.States {
 		if st.Info != "booted up" {
 			continue
 		}
@@ -133,24 +133,24 @@ func ShutDownVMs(config *models.ConfigStruct, weight int) {
 	}
 }
 
-func ShutDownVM(config *models.ConfigStruct, st StatusStruct) {
-	var p PowerStruct
+func ShutDownVM(config *models.ConfigStruct, st monitor.StatusStruct) {
+	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"
 	st.Info = "shutting down"
-	if powerCh != nil {
-		powerCh <- p
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- p
 	}
-	if StatusCh != nil {
-		StatusCh <- st
+	if monitor.StatusCh != nil {
+		monitor.StatusCh <- st
 	}
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Shutdown(config.Sleep)
 	st.Info = p.Info
-	if powerCh != nil {
-		powerCh <- p
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- p
 	}
-	if statusCh != nil {
-		StatusCh <- st
+	if monitor.StatusCh != nil {
+		monitor.StatusCh <- st
 	}
 }

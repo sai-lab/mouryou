@@ -6,17 +6,17 @@ import (
 
 	//"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/timer"
 )
 
 func DestinationSetting(config *models.ConfigStruct) {
-	var power PowerStruct
 	var b, s, w, o int
 
 	// connection, err := config.WebSocket.Dial()
 
-	for power = range PowerCh {
+	for power := range monitor.PowerCh {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)

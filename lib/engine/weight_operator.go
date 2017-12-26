@@ -8,15 +8,16 @@ import (
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
 func Initialize(config *models.ConfigStruct) {
 	for name, machine := range config.Cluster.VirtualMachines {
-		var st StatusStruct
+		var st monitor.StatusStruct
 		st.Name = name
 
-		if machine.Id == 1 || machine.Id == 4 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
+		if machine.Id == 1 || machine.Id == 2 || machine.Id == 3 {
 			st.Info = "booted up"
 
 			err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
@@ -26,14 +27,14 @@ func Initialize(config *models.ConfigStruct) {
 			}
 
 			st.Weight = machine.Weight
-			states = append(states, st)
+			monitor.States = append(monitor.States, st)
 			totalWeight += machine.Weight
 
 			continue
 		}
 
 		st.Info = "shutted down"
-		states = append(states, st)
+		monitor.States = append(monitor.States, st)
 	}
 }
 
@@ -45,7 +46,7 @@ func WeightOperator(config *models.ConfigStruct) {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	for d := range dataCh {
+	for d := range monitor.DataCh {
 		loadStates := map[string]int{}
 		highLoads := map[string]int{}
 		lowLoads := map[string]int{}
@@ -53,7 +54,7 @@ func WeightOperator(config *models.ConfigStruct) {
 		cluster := config.Cluster
 		weights["weights"] = -1
 
-		for _, state := range states {
+		for _, state := range monitor.States {
 			if state.Name != "" {
 				loadStates[state.Name] = 0
 				if state.Weight != 0 {
@@ -66,7 +67,7 @@ func WeightOperator(config *models.ConfigStruct) {
 		r = r.Next()
 		r.Do(func(v interface{}) {
 			if v != nil {
-				for _, ds := range v.([]DataStruct) {
+				for _, ds := range v.([]monitor.DataStruct) {
 					loadStates[ds.Name] += LoadCheck(ds, cluster.VirtualMachines[ds.Name].Average, models.Threshold)
 				}
 			}
@@ -101,7 +102,7 @@ func WeightOperator(config *models.ConfigStruct) {
 	}
 }
 
-func LoadCheck(ds DataStruct, average int, threshold float64) int {
+func LoadCheck(ds monitor.DataStruct, average int, threshold float64) int {
 	loadState := 0
 
 	if ds.Throughput != 0 {
@@ -131,13 +132,13 @@ func FireChangeWeight(config *models.ConfigStruct, name string, w int) {
 
 	mu.RLock()
 	defer mu.RUnlock()
-	for _, state := range states {
+	for _, state := range monitor.States {
 		if state.Name == name {
 			if w < 0 && state.Weight <= 5 {
 				fmt.Println(state.Name + " is low weight")
 				break
 			}
-			s := StatusStruct{state.Name, state.Weight, state.Info}
+			s := monitor.StatusStruct{state.Name, state.Weight, state.Info}
 			s.Weight = state.Weight + w
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {
@@ -145,8 +146,8 @@ func FireChangeWeight(config *models.ConfigStruct, name string, w int) {
 				break
 			}
 
-			if statusCh != nil {
-				statusCh <- s
+			if monitor.StatusCh != nil {
+				monitor.StatusCh <- s
 			} else {
 				fmt.Println("statusCh is nil")
 			}

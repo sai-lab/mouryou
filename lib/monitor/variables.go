@@ -19,8 +19,11 @@ type PowerStruct struct {
 }
 
 var (
+	StatusCh          = make(chan StatusStruct, 1)
+	PowerCh           = make(chan PowerStruct, 1)
 	LoadCh            = make(chan float64, 1)
-	dataCh            = make(chan []DataStruct, 1)
+	DataCh            = make(chan []DataStruct, 1)
+	States            []StatusStruct
 	beforeTime        = map[string]int{}
 	beforeTotalAccess = map[string]int{}
 )

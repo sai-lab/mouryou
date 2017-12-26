@@ -13,8 +13,6 @@ type StatusStruct struct {
 }
 
 var (
-	StatusCh         = make(chan StatusStruct, 1)
-	PowerCh          = make(chan PowerStruct, 1)
 	States           []StatusStruct
 	working          int = 1
 	booting          int = 0

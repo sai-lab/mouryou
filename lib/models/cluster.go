@@ -22,7 +22,7 @@ func (cluster *ClusterStruct) Initialize() {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
-		if machine.Id == 1 || machine.Id == 4 || machine.Id == 5 || machine.Id == 8 || machine.Id == 9 {
+		if machine.Id == 1 || machine.Id == 2 || machine.Id == 3 {
 			continue
 		}
 		cluster.LoadBalancer.Inactive(machine.Name)
