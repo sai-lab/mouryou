@@ -11,6 +11,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
+	"github.com/sai-lab/mouryou/lib/predictions"
 	"github.com/sai-lab/mouryou/lib/ratio"
 )
 
@@ -43,6 +44,17 @@ func ServerManagement(config *models.ConfigStruct) {
 		logger.Print(weights)
 		logger.Write(weights)
 
+		// --- Periodically Prediction Algorithm
+		hw := predictions.Periodically_Prediction(w, b, s, tw)
+		switch {
+		case hw > tw:
+			// go BootUpVMs(config, hw-tw)
+		case hw < tw:
+			// go ShutDownVMs(config, tw-hw)
+		}
+		/// ---
+
+		// --- Spike Prediction Algorithm
 		switch {
 		case int(n) > tw && int(n) > 0 && s == 0:
 			if w+b < len(config.Cluster.VirtualMachines) {
@@ -53,6 +65,7 @@ func ServerManagement(config *models.ConfigStruct) {
 			// go ShutDownVMs(config, 10)
 			// fmt.Println("SM: Shutdown is fired")
 		}
+		// ---
 	}
 }
 
