@@ -1,15 +1,44 @@
 package predictions
 
-import ()
+import (
+	"fmt"
+	"time"
 
-func Periodically_Prediction(w int, b int, s int, tw int) int {
-	//ここでは1,2時間後の負荷を取得する
-	//引数は台数情報と重み情報
-	//返り値は1時間後に必要な重み情報
-	//スクリプトに渡す値は予測開始時間，予測終了時間,2時間後の時間
-	//スクリプトから貰う値は1時間後の負荷と2時間後の負荷
-	//前回値を取得した時から1時間経ったら新たにスクリプトを実行する
-	//それまでは前回値を返す
+	"github.com/sai-lab/mouryou/lib/commands"
+	"github.com/sai-lab/mouryou/lib/logger"
+)
+
+var previousTime time.Time
+var afterWeight int
+var oneTimeAfterLoad float64
+var twoTimeAfterLoad float64
+
+// PeriodicallyPrediction get loads after 1 hour and 2hours by TimeSeriesAnalysis.
+// This arguments is information of the number of servers and weight.
+// This returns the necessary weight after 1 hour.
+// After 1 hour from execute TimeSeriesAnalysis, execute it once again.
+// Until then this returns the previous value
+func PeriodicallyPrediction(w int, b int, s int, tw int) int {
+	// TODO:必要な重みの計算
+	var nt time.Time
+	now := time.Now()
+
+	if previousTime != nt && isNotOneTimeAfter(now) {
+		return afterWeight
+	}
+
+	hls, err := commands.TimeSeriesAnalysis(now)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+		return 0
+	}
+
+	oneTimeAfterLoad = hls[0]
+	twoTimeAfterLoad = hls[1]
 
 	return 0
+}
+
+func isNotOneTimeAfter(t time.Time) bool {
+	return t.Add(time.Duration(-1) * time.Hour).Before(previousTime)
 }
