@@ -5,47 +5,36 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
-	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/predictions"
-	"github.com/sai-lab/mouryou/lib/ratio"
 )
 
-func ServerManagement(config *models.ConfigStruct) {
-	var ttlor, out, in, ThHigh, ThLow, ir, n float64
+func ServerManagement(c *models.ConfigStruct) {
+	var ttlOR, n float64
 	var b, w, s, tw int
+	var scaleIn bool
 
 	r := ring.New(LING_SIZE)
-	ttlors := make([]float64, LING_SIZE)
+	ttlORs := make([]float64, LING_SIZE)
 
-	for ttlor = range monitor.LoadCh {
-		r.Value = ttlor
+	for ttlOR = range monitor.LoadCh {
+		r.Value = ttlOR
 		r = r.Next()
-
-		ttlors = convert.RingToArray(r)
-		out = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleOut)
-		in = calculate.MovingAverage(ttlors, config.Cluster.LoadBalancer.ScaleIn)
+		ttlORs = convert.RingToArray(r)
 
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
 		tw = mutex.Read(&totalWeight, &totalWeightMutex)
-		// config.Cluster.LoadBalancer.ChangeThresholdOut(w, b, s, len(config.Cluster.VirtualMachines))
-		ThHigh = config.Cluster.LoadBalancer.ThHigh(w, len(config.Cluster.VirtualMachines))
-		ThLow = config.Cluster.LoadBalancer.ThLow(w)
 
-		ir = ratio.Increase(ttlors, config.Cluster.LoadBalancer.ScaleOut)
-		n = (((out + ir*float64(config.Sleep)) / ThHigh) - float64(w+b)) * 10
-		weights := []string{"we", fmt.Sprintf("%3.5f", n), fmt.Sprintf("%3d", tw)}
-		logger.Print(weights)
-		logger.Write(weights)
+		// Exec Algorithm
+		n, scaleIn = predictions.Exec(c, w, b, s, tw, ttlORs)
 
 		// --- Periodically Prediction Algorithm
-		hw := predictions.Periodically_Prediction(w, b, s, tw)
+		hw := predictions.PeriodicallyPrediction(w, b, s, tw)
 		switch {
 		case hw > tw:
 			// go BootUpVMs(config, hw-tw)
@@ -54,14 +43,14 @@ func ServerManagement(config *models.ConfigStruct) {
 		}
 		/// ---
 
-		// --- Spike Prediction Algorithm
+		// --- Basic Spike Prediction Algorithm's Server Management
 		switch {
 		case int(n) > tw && int(n) > 0 && s == 0:
-			if w+b < len(config.Cluster.VirtualMachines) {
+			if w+b < len(c.Cluster.VirtualMachines) {
 				// go BootUpVMs(config, n-tw)
 				// fmt.Println("SM: BootUp is fired. n: " + fmt.Sprintf("%3.5f", n) + ", tw: " + fmt.Sprintf("%3.5f", tw))
 			}
-		case w > 1 && in < ThLow && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
+		case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
 			// go ShutDownVMs(config, 10)
 			// fmt.Println("SM: Shutdown is fired")
 		}

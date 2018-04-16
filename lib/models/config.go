@@ -15,6 +15,7 @@ type ConfigStruct struct {
 	Wait      time.Duration   `json:"wait"`
 	Margin    float64         `json:"margin"`
 	WebSocket WebSocketStruct `json:"web_socket"`
+	Algorithm string          `json:"algorithm"`
 }
 
 func LoadConfig(path string) *ConfigStruct {
