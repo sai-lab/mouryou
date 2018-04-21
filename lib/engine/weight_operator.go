@@ -14,7 +14,7 @@ import (
 
 func Initialize(config *models.Config) {
 	for name, machine := range config.Cluster.VirtualMachines {
-		var st monitor.StatusStruct
+		var st monitor.Status
 		st.Name = name
 
 		if machine.Id == 1 || machine.Id == 2 || machine.Id == 3 {
@@ -27,14 +27,14 @@ func Initialize(config *models.Config) {
 			}
 
 			st.Weight = machine.Weight
-			monitor.States = append(monitor.States, st)
+			monitor.Statuses = append(monitor.Statuses, st)
 			totalWeight += machine.Weight
 
 			continue
 		}
 
 		st.Info = "shutted down"
-		monitor.States = append(monitor.States, st)
+		monitor.Statuses = append(monitor.Statuses, st)
 	}
 }
 
@@ -54,7 +54,7 @@ func WeightOperator(config *models.Config) {
 		cluster := config.Cluster
 		weights["weights"] = -1
 
-		for _, state := range monitor.States {
+		for _, state := range monitor.Statuses {
 			if state.Name != "" {
 				loadStates[state.Name] = 0
 				if state.Weight != 0 {
@@ -67,7 +67,7 @@ func WeightOperator(config *models.Config) {
 		r = r.Next()
 		r.Do(func(v interface{}) {
 			if v != nil {
-				for _, ds := range v.([]monitor.DataStruct) {
+				for _, ds := range v.([]monitor.Data) {
 					loadStates[ds.Name] += LoadCheck(ds, cluster.VirtualMachines[ds.Name].Average, models.Threshold)
 				}
 			}
@@ -102,14 +102,14 @@ func WeightOperator(config *models.Config) {
 	}
 }
 
-func LoadCheck(ds monitor.DataStruct, average int, threshold float64) int {
+func LoadCheck(ds monitor.Data, average int, threshold float64) int {
 	loadState := 0
 
 	if ds.Throughput != 0 {
-		if ds.Throughput < average && ds.Cpu <= 40 {
+		if ds.Throughput < average && ds.CPU <= 40 {
 			// Throughput is low && Using CPU rate is low.
 			loadState -= 1
-		} else if (float64(ds.Throughput) < float64(average)*1.3 || float64(ds.Throughput) > float64(average)*0.8) && ds.Cpu >= 90 {
+		} else if (float64(ds.Throughput) < float64(average)*1.3 || float64(ds.Throughput) > float64(average)*0.8) && ds.CPU >= 90 {
 			// At first glance, throuput is noting bad but using CPU rate is high.
 			loadState += 1
 		}
@@ -118,7 +118,7 @@ func LoadCheck(ds monitor.DataStruct, average int, threshold float64) int {
 	if ds.Operating >= threshold {
 		// Operating rate is high.
 		loadState += 1
-	} else if ds.Operating <= 0.3 && ds.Cpu <= 50 {
+	} else if ds.Operating <= 0.3 && ds.CPU <= 50 {
 		// Operating rate is low && Using CPU rate is low.
 		loadState -= 1
 	}
@@ -132,13 +132,13 @@ func FireChangeWeight(config *models.Config, name string, w int) {
 
 	mu.RLock()
 	defer mu.RUnlock()
-	for _, state := range monitor.States {
+	for _, state := range monitor.Statuses {
 		if state.Name == name {
 			if w < 0 && state.Weight <= 5 {
 				fmt.Println(state.Name + " is low weight")
 				break
 			}
-			s := monitor.StatusStruct{state.Name, state.Weight, state.Info}
+			s := monitor.Status{state.Name, state.Weight, state.Info}
 			s.Weight = state.Weight + w
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {

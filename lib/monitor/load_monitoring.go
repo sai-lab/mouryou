@@ -14,24 +14,18 @@ import (
 )
 
 func LoadMonitoring(config *models.Config) {
-	var mu sync.RWMutex
-
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
 	// connection, err := config.WebSocket.Dial()
 
 	for {
-		mu.RLock()
-		status := States
-		mu.RUnlock()
-
-		bt := []string{}
-		for _, v := range status {
+		bootedNum := []string{}
+		for _, v := range GetStatuses() {
 			if v.Info == "booted up" {
-				bt = append(bt, v.Name)
+				bootedNum = append(bootedNum, v.Name)
 			}
 		}
 
-		sts := config.Cluster.ServerStates(bt)
+		sts := config.Cluster.ServerStates(bootedNum)
 		ors, arrs := Ratios(sts)
 
 		logger.PWArrays(arrs)
@@ -45,7 +39,7 @@ func LoadMonitoring(config *models.Config) {
 func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
-	var ds []DataStruct
+	var ds []Data
 
 	length := len(states)
 	ors := make([]float64, length)
@@ -69,7 +63,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 
 	for i, v := range states {
 		group.Add(1)
-		var data DataStruct
+		var data Data
 		go func(i int, v apache.ServerStat) {
 			defer group.Done()
 			mutex.Lock()
@@ -87,7 +81,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 				arrs[9][i+1] = id + v.Other
 				arrs[10][i+1] = id + "0"
 				data.Operating = 1
-				data.Cpu = 0
+				data.CPU = 0
 				data.Throughput = 0
 			} else {
 				if beforeTime[v.HostName] == 0 {
@@ -101,7 +95,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 
 				ors[i] = v.ApacheStat
 				data.Operating = ors[i]
-				data.Cpu = v.CpuUsedPercent[0]
+				data.CPU = v.CpuUsedPercent[0]
 
 				ds = append(ds, data)
 				arrs[0][i+1] = id + fmt.Sprintf("%.5f", ors[i])

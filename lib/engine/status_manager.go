@@ -17,10 +17,10 @@ func StatusManager() {
 		logger.Write(sts)
 		name := status.Name
 		mutex.Lock()
-		for i, v := range monitor.States {
+		for i, v := range monitor.Statuses {
 			if v.Name == name {
-				monitor.States[i].Weight = status.Weight
-				monitor.States[i].Info = status.Info
+				monitor.Statuses[i].Weight = status.Weight
+				monitor.Statuses[i].Info = status.Info
 				break
 			}
 		}

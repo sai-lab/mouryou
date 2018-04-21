@@ -13,7 +13,7 @@ type ServerStat struct {
 	MemStat mem.VirtualMemoryStat `json:"memStat"`
 	// DiskIO
 	DiskIO []DiskStat `json:"diskIO"`
-	// Cpu
+	// CPU
 	CpuUsedPercent []float64 `json:"cpuUsedPercent"`
 	// Apache
 	ApacheStat float64 `json:"apacheStat"`

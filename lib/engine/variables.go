@@ -6,14 +6,7 @@ import (
 
 const LING_SIZE = 10
 
-type StatusStruct struct {
-	Name   string
-	Weight int
-	Info   string
-}
-
 var (
-	States           []StatusStruct
 	working          int = 1
 	booting          int = 0
 	shuting          int = 0
