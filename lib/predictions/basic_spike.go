@@ -1,14 +1,16 @@
 package predictions
 
 import (
-	"github.com/sai-lab/mouryou/lib/ratio"
 	"fmt"
+
+	"github.com/sai-lab/mouryou/lib/ratio"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/calculate"
 )
 
-func basicSpike(c *models.ConfigStruct, w int, b int, s int, tw int, ttlORs []float64) (float64, bool){
+// basicSpike
+func basicSpike(c *models.Config, w int, b int, s int, tw int, ttlORs []float64) (float64, bool){
 	out := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleOut)
 	in := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleIn)
 

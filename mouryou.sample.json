@@ -1,0 +1,35 @@
+{
+  "timeout": 1,
+  "sleep": 30,
+  "wait": 30,
+  "margin": 0.007,
+  "algorithm": "basic_spike",
+  "use_hetero": false,
+  "adjust_server_num": true,
+  "web_socket": {
+    "origin": "http://localhost/",
+    "url": "ws://localhost:8000/ws"
+  },
+  "cluster": {
+    "load_balancer": {
+      "name": "haproxy",
+      "virtual_ip": "192.168.11.11",
+      "algorithm": "wlc",
+      "threshold": 0.8,
+      "margin": 0.05,
+      "scale_out": 2,
+      "scale_in": 6
+    },
+    "hypervisors": [
+      {
+        "host": "192.168.11.20",
+        "virtual_machines": [
+          {
+            "name": "web-server-1",
+            "host": "192.168.11.21"
+          }
+        ]
+      }
+    ]
+  }
+}

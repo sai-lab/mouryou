@@ -8,26 +8,27 @@ import (
 	"github.com/sai-lab/mouryou/lib/check"
 )
 
-type ConfigStruct struct {
-	Cluster   ClusterStruct   `json:"cluster"`
-	Timeout   time.Duration   `json:"timeout"`
-	Sleep     time.Duration   `json:"sleep"`
-	Wait      time.Duration   `json:"wait"`
-	Margin    float64         `json:"margin"`
-	WebSocket WebSocketStruct `json:"web_socket"`
-	Algorithm string          `json:"algorithm"`
+type Config struct {
+	Timeout         time.Duration   `json:"timeout"`
+	Sleep           time.Duration   `json:"sleep"`
+	Wait            time.Duration   `json:"wait"`
+	Margin          float64         `json:"margin"`
+	Algorithm       string          `json:"algorithm"`
+	UseHetero       bool            `json:"use_hetero"`
+	AdjustServerNum bool            `json:"adjust_server_num"`
+	WebSocket       WebSocketStruct `json:"web_socket"`
+	Cluster         Cluster  `json:"cluster"`
 }
 
-func LoadConfig(path string) *ConfigStruct {
-	var config ConfigStruct
+//LoadConfig
+func (c *Config) LoadSetting(path string) {
 
 	bytes, err := ioutil.ReadFile(path)
 	check.Error(err)
 
-	err = json.Unmarshal(bytes, &config)
+	err = json.Unmarshal(bytes, &c)
 	check.Error(err)
 
-	Threshold = config.Cluster.LoadBalancer.ThresholdOut
+	Threshold = c.Cluster.LoadBalancer.ThresholdOut
 
-	return &config
 }

@@ -6,14 +6,14 @@ import (
 	"github.com/sai-lab/mouryou/lib/apache"
 )
 
-type ClusterStruct struct {
+type Cluster struct {
 	LoadBalancer    LoadBalancerStruct              `json:"load_balancer"`
 	Vendors         []VendorStruct                  `json:"vendors"`
 	Hypervisors     []HypervisorStruct              `json:"hypervisors"`
 	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
 }
 
-func (cluster *ClusterStruct) Initialize() {
+func (cluster *Cluster) Initialize() {
 	cluster.LoadBalancer.Initialize()
 	for _, vendor := range cluster.Vendors {
 		vendor.Initialize()
@@ -29,7 +29,7 @@ func (cluster *ClusterStruct) Initialize() {
 	}
 }
 
-func (cluster ClusterStruct) ServerStates(bt []string) []apache.ServerStat {
+func (cluster Cluster) ServerStates(bt []string) []apache.ServerStat {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 	states := make([]apache.ServerStat, len(bt))

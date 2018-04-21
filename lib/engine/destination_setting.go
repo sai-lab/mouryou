@@ -11,7 +11,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/timer"
 )
 
-func DestinationSetting(config *models.ConfigStruct) {
+func DestinationSetting(config *models.Config) {
 	var b, s, w, o int
 
 	// connection, err := config.WebSocket.Dial()

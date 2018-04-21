@@ -13,7 +13,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/models"
 )
 
-func LoadMonitoring(config *models.ConfigStruct) {
+func LoadMonitoring(config *models.Config) {
 	var mu sync.RWMutex
 
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)

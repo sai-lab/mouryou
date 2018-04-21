@@ -8,7 +8,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/models"
 )
 
-func MeasureServer(config *models.ConfigStruct) {
+func MeasureServer(config *models.Config) {
 	listener, err := net.Listen("tcp", ":9999")
 	check.Error(err)
 

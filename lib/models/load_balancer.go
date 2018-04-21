@@ -11,7 +11,9 @@ import (
 	"github.com/sai-lab/mouryou/lib/logger"
 )
 
+// LoadBalancerStruct
 type LoadBalancerStruct struct {
+	Name         string  `json:"name"`
 	VirtualIP    string  `json:"virtual_ip"`
 	Algorithm    string  `json:"algorithm"`
 	ThresholdOut float64 `json:"threshold_out"`
@@ -22,49 +24,59 @@ type LoadBalancerStruct struct {
 	Diff         float64 `json:"diff"`
 }
 
+// Initialize
 func (balancer LoadBalancerStruct) Initialize() {
 	logger.PrintPlace("Load Balancer Initialize")
 	exec.Command("ip", "addr", "add", balancer.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
 
-	// err := exec.Command("ipvsadm", "-C").Run()
-	// check.Error(err)
-	// err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
-	// check.Error(err)
-
-	logger.PrintPlace("reload haproxy")
-	err := exec.Command("systemctl", "reload", "haproxy").Run()
-	check.Error(err)
+	switch balancer.Name {
+	case "ipvs":
+		err := exec.Command("ipvsadm", "-C").Run()
+		check.Error(err)
+		err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
+		check.Error(err)
+	case "haproxy":
+		logger.PrintPlace("reload haproxy")
+		err := exec.Command("systemctl", "reload", "haproxy").Run()
+		check.Error(err)
+	default:
+		logger.PrintPlace("Error!: cannot determine the name ofload balancer")
+	}
 
 	time.Sleep(time.Duration(1) * 3)
 }
 
-// func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
-// 	var ocRate float64
-// 	ocRate = float64(w+b+s) / float64(n)
-// 	switch {
-// 	case ocRate <= 0.3:
-// 		Threshold = 0.5
-// 	case ocRate <= 0.5:
-// 		Threshold = 0.6
-// 	case ocRate <= 0.7:
-// 		Threshold = 0.7
-// 	case ocRate <= 0.9:
-// 		Threshold = 0.8
-// 	case ocRate <= 1.0:
-// 		Threshold = 0.9
-// 	}
-// }
+// ChangeThresholdOut
+func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
+	var ocRate float64
+	ocRate = float64(w+b+s) / float64(n)
+	switch {
+	case ocRate <= 0.3:
+		Threshold = 0.5
+	case ocRate <= 0.5:
+		Threshold = 0.6
+	case ocRate <= 0.7:
+		Threshold = 0.7
+	case ocRate <= 0.9:
+		Threshold = 0.8
+	case ocRate <= 1.0:
+		Threshold = 0.9
+	}
+}
 
+// ThHigh
 func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
 	return Threshold
 	// return balancer.ThresholdOut
 }
 
+// ThLow
 func (balancer LoadBalancerStruct) ThLow(w int) float64 {
 	return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
 	// return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
+// Add
 func (balancer LoadBalancerStruct) Add(name string) error {
 	// err := exec.Command("ipvsadm", "-a", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 	// if err != nil {
@@ -74,6 +86,7 @@ func (balancer LoadBalancerStruct) Add(name string) error {
 	return nil
 }
 
+// Remove
 func (balancer LoadBalancerStruct) Remove(name string) error {
 	// err := exec.Command("ipvsadm", "-d", "-t", balancer.VirtualIP+":http", "-r", host+":http").Run()
 	// if err != nil {
@@ -85,6 +98,7 @@ func (balancer LoadBalancerStruct) Remove(name string) error {
 	return nil
 }
 
+// Active
 func (balancer LoadBalancerStruct) Active(name string) error {
 	// err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
 
@@ -102,6 +116,7 @@ func (balancer LoadBalancerStruct) Active(name string) error {
 	return nil
 }
 
+// Inactive
 func (balancer LoadBalancerStruct) Inactive(name string) error {
 	//err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 
@@ -118,6 +133,7 @@ func (balancer LoadBalancerStruct) Inactive(name string) error {
 	return nil
 }
 
+// ChangeWeight
 func (balancer LoadBalancerStruct) ChangeWeight(name string, weight int) error {
 	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
 	_, err := pipeline.Output(

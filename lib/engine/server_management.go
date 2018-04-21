@@ -10,55 +10,75 @@ import (
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/predictions"
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
-func ServerManagement(c *models.ConfigStruct) {
-	var ttlOR, n float64
-	var b, w, s, tw int
+//ServerManagement
+func ServerManagement(c *models.Config) {
+	var (
+		totalOR        float64
+		requiredNumber float64
+		i              int
+	    mu             sync.RWMutex
+	)
+	var b, w, s, tw, hw int
 	var scaleIn bool
 
 	r := ring.New(LING_SIZE)
 	ttlORs := make([]float64, LING_SIZE)
 
-	for ttlOR = range monitor.LoadCh {
-		r.Value = ttlOR
+	for totalOR = range monitor.LoadCh {
+		r.Value = totalOR
 		r = r.Next()
 		ttlORs = convert.RingToArray(r)
 
-		w = mutex.Read(&working, &workMutex)
-		b = mutex.Read(&booting, &bootMutex)
-		s = mutex.Read(&shuting, &shutMutex)
+		// Get Number of Active Servers
+		w  = mutex.Read(&working, &workMutex)
+		b  = mutex.Read(&booting, &bootMutex)
+		s  = mutex.Read(&shuting, &shutMutex)
 		tw = mutex.Read(&totalWeight, &totalWeightMutex)
 
 		// Exec Algorithm
-		n, scaleIn = predictions.Exec(c, w, b, s, tw, ttlORs)
-
-		// --- Periodically Prediction Algorithm
-		hw := predictions.PeriodicallyPrediction(w, b, s, tw)
-		switch {
-		case hw > tw:
-			// go BootUpVMs(config, hw-tw)
-		case hw < tw:
-			// go ShutDownVMs(config, tw-hw)
-		}
-		/// ---
-
-		// --- Basic Spike Prediction Algorithm's Server Management
-		switch {
-		case int(n) > tw && int(n) > 0 && s == 0:
-			if w+b < len(c.Cluster.VirtualMachines) {
-				// go BootUpVMs(config, n-tw)
-				// fmt.Println("SM: BootUp is fired. n: " + fmt.Sprintf("%3.5f", n) + ", tw: " + fmt.Sprintf("%3.5f", tw))
+		if c.UseHetero {
+			// Exec Algorithm for Server with Different Performace
+			hw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, ttlORs)
+			switch {
+			case hw > tw:
+				go BootUpVMs(c, hw-tw, requiredNumber)
+			case hw < tw:
+				go ShutDownVMs(c, tw-hw)
 			}
-		case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
-			// go ShutDownVMs(config, 10)
-			// fmt.Println("SM: Shutdown is fired")
+		} else {
+			// Exec Algorithm for Server with Same Performace
+			requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
+			mu.RLock()
+			states := monitor.States
+			mu.RUnlock()
+
+			switch {
+			case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
+				for i = 0; i < int(requiredNumber); i++ {
+					if w+b+i < len(c.Cluster.VirtualMachines) {
+						for _, state := range states {
+							if state.Info != "shutted down" {
+								continue
+							}
+							go BootUpVM(c, state)
+							mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+state.Weight)
+						}
+						logger.PrintPlace("Bootup")
+					}
+				}
+			case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
+				go ShutDownVMs(c, 10)
+				fmt.Println("SM: Shutdown is fired")
+			}
 		}
-		// ---
 	}
 }
 
-func BootUpVMs(config *models.ConfigStruct, weight int) {
+// BootUpVMs
+func BootUpVMs(c *models.Config, weight int, requiredNumber float64) {
 	var candidate []int
 	var mu sync.RWMutex
 
@@ -71,7 +91,7 @@ func BootUpVMs(config *models.ConfigStruct, weight int) {
 			continue
 		}
 		if state.Weight >= weight {
-			go BootUpVM(config, state)
+			go BootUpVM(c, state)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+state.Weight)
 			return
 		} else {
@@ -88,12 +108,13 @@ func BootUpVMs(config *models.ConfigStruct, weight int) {
 				boot = n
 			}
 		}
-		go BootUpVM(config, states[boot])
+		go BootUpVM(c, states[boot])
 		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+states[boot].Weight)
 	}
 }
 
-func BootUpVM(config *models.ConfigStruct, st monitor.StatusStruct) {
+//BootUpVM
+func BootUpVM(config *models.Config, st monitor.StatusStruct) {
 	var p monitor.PowerStruct
 
 	p.Name = st.Name
@@ -117,7 +138,8 @@ func BootUpVM(config *models.ConfigStruct, st monitor.StatusStruct) {
 	fmt.Println(st.Name + "is booted up")
 }
 
-func ShutDownVMs(config *models.ConfigStruct, weight int) {
+//ShutDownVMs
+func ShutDownVMs(config *models.Config, weight int) {
 	var mu sync.RWMutex
 
 	mu.RLock()
@@ -135,7 +157,8 @@ func ShutDownVMs(config *models.ConfigStruct, weight int) {
 	}
 }
 
-func ShutDownVM(config *models.ConfigStruct, st monitor.StatusStruct) {
+//ShutDownVM
+func ShutDownVM(config *models.Config, st monitor.StatusStruct) {
 	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"

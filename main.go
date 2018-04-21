@@ -15,20 +15,21 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	config := models.LoadConfig(os.Getenv("HOME") + "/.mouryou.json")
-	config.Cluster.Initialize()
-	engine.Initialize(config)
+	c := new(models.Config)
+	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
+	c.Cluster.Initialize()
+	engine.Initialize(c)
 
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)
 
-	go monitor.LoadMonitoring(config)
-	go engine.ServerManagement(config)
-	go engine.DestinationSetting(config)
+	go monitor.LoadMonitoring(c)
+	go engine.ServerManagement(c)
+	go engine.DestinationSetting(c)
 	go engine.StatusManager()
-	go engine.WeightOperator(config)
-	go monitor.MeasureServer(config)
+	go engine.WeightOperator(c)
+	go monitor.MeasureServer(c)
 
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt)

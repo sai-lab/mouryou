@@ -12,7 +12,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
-func Initialize(config *models.ConfigStruct) {
+func Initialize(config *models.Config) {
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st monitor.StatusStruct
 		st.Name = name
@@ -38,7 +38,7 @@ func Initialize(config *models.ConfigStruct) {
 	}
 }
 
-func WeightOperator(config *models.ConfigStruct) {
+func WeightOperator(config *models.Config) {
 	var mu sync.RWMutex
 
 	r := ring.New(LING_SIZE)
@@ -126,7 +126,7 @@ func LoadCheck(ds monitor.DataStruct, average int, threshold float64) int {
 	return loadState
 }
 
-func FireChangeWeight(config *models.ConfigStruct, name string, w int) {
+func FireChangeWeight(config *models.Config, name string, w int) {
 	var mu sync.RWMutex
 	var err error
 
