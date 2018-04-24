@@ -16,6 +16,7 @@ func Initialize(config *models.Config) {
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st monitor.State
 		st.Name = name
+		fmt.Println(name)
 
 		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
 		if err != nil {
@@ -26,14 +27,14 @@ func Initialize(config *models.Config) {
 
 		if config.ContainID(machine.Id) {
 			if config.Develop {
-				logger.PrintPlace("set booted up for " + machine.Name)
+				fmt.Println("set booted up for " + machine.Name)
 			}
 			st.Info = "booted up"
 			totalWeight += machine.Weight
 		} else {
 			st.Info = "shutted down"
 			if config.Develop {
-				logger.PrintPlace("set shutted down for " + machine.Name)
+				fmt.Println("set shutted down for " + machine.Name)
 			}
 		}
 		monitor.States = append(monitor.States, st)
