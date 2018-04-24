@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/apache"
+	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 type Cluster struct {
@@ -22,7 +23,9 @@ func (cluster *Cluster) Initialize(config *Config) {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
+		logger.PrintPlace("machine Name:" + machine.Name)
 		if config.ContainID(machine.Id) {
+			logger.PrintPlace("machine Name:" + machine.Name)
 			continue
 		}
 		cluster.LoadBalancer.Inactive(machine.Name)

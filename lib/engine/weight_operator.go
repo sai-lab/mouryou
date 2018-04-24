@@ -3,6 +3,7 @@ package engine
 import (
 	"container/ring"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/convert"
@@ -17,6 +18,7 @@ func Initialize(config *models.Config) {
 		var st monitor.State
 		st.Name = name
 		fmt.Println(name)
+		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
 
 		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
 		if err != nil {
@@ -24,16 +26,20 @@ func Initialize(config *models.Config) {
 			break
 		}
 		st.Weight = machine.Weight
+		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id))
+		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
 
 		if config.ContainID(machine.Id) {
 			if config.Develop {
 				fmt.Println("set booted up for " + machine.Name)
+				logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
 			}
 			st.Info = "booted up"
 			totalWeight += machine.Weight
 		} else {
 			st.Info = "shutted down"
 			if config.Develop {
+				logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
 				fmt.Println("set shutted down for " + machine.Name)
 			}
 		}
@@ -60,7 +66,8 @@ func WeightOperator(config *models.Config) {
 		for _, state := range monitor.States {
 			if state.Name != "" {
 				loadStates[state.Name] = 0
-				if state.Weight != 0 {
+				logger.PrintPlace("state Name: " + state.Name + ", state weight: " + strconv.Itoa(state.Weight))
+				if state.Weight != 0 && state.Info == "booted up" {
 					weights[state.Name] = state.Weight
 				}
 			}

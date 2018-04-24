@@ -21,6 +21,7 @@ func LoadMonitoring(config *models.Config) {
 		bootedServers := []string{}
 		//
 		for _, v := range GetStates() {
+			logger.PrintPlace("Machine Name: " + v.Name + "Machine Info: " + v.Info)
 			if v.Info == "booted up" {
 				bootedServers = append(bootedServers, v.Name)
 			}
