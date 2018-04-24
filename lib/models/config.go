@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	Develop         bool            `json:"develop"`
 	Timeout         time.Duration   `json:"timeout"`
 	Sleep           time.Duration   `json:"sleep"`
 	Wait            time.Duration   `json:"wait"`

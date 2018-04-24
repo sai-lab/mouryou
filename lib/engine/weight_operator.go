@@ -17,23 +17,25 @@ func Initialize(config *models.Config) {
 		var st monitor.State
 		st.Name = name
 
-		if config.ContainID(machine.Id) {
-			st.Info = "booted up"
-
-			err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
-			if err != nil {
-				fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
-				break
-			}
-
-			st.Weight = machine.Weight
-			monitor.States = append(monitor.States, st)
-			totalWeight += machine.Weight
-
-			continue
+		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
+		if err != nil {
+			fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+			break
 		}
+		st.Weight = machine.Weight
 
-		st.Info = "shutted down"
+		if config.ContainID(machine.Id) {
+			if config.Develop {
+				logger.PrintPlace("set booted up for " + machine.Name)
+			}
+			st.Info = "booted up"
+			totalWeight += machine.Weight
+		} else {
+			st.Info = "shutted down"
+			if config.Develop {
+				logger.PrintPlace("set shutted down for " + machine.Name)
+			}
+		}
 		monitor.States = append(monitor.States, st)
 	}
 }
