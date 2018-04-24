@@ -72,7 +72,7 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	)
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
-	statuses := monitor.GetStatuses()
+	statuses := monitor.GetStates()
 
 	switch {
 	case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
@@ -98,7 +98,7 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 func bootUpVMs(c *models.Config, weight int) {
 	var candidate []int
 
-	statuses := monitor.GetStatuses()
+	statuses := monitor.GetStates()
 
 	for i, status := range statuses {
 		if status.Info != "shutted down" {
@@ -128,7 +128,7 @@ func bootUpVMs(c *models.Config, weight int) {
 }
 
 // bootUpVM
-func bootUpVM(c *models.Config, st monitor.Status) {
+func bootUpVM(c *models.Config, st monitor.State) {
 	var p monitor.PowerStruct
 
 	p.Name = st.Name
@@ -137,8 +137,8 @@ func bootUpVM(c *models.Config, st monitor.Status) {
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
 	}
-	if monitor.StatusCh != nil {
-		monitor.StatusCh <- st
+	if monitor.StateCh != nil {
+		monitor.StateCh <- st
 	}
 
 	p.Info = c.Cluster.VirtualMachines[st.Name].Bootup(c.Sleep)
@@ -146,8 +146,8 @@ func bootUpVM(c *models.Config, st monitor.Status) {
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
 	}
-	if monitor.StatusCh != nil {
-		monitor.StatusCh <- st
+	if monitor.StateCh != nil {
+		monitor.StateCh <- st
 	}
 	fmt.Println(st.Name + "is booted up")
 }
@@ -159,7 +159,7 @@ func shutDownVMs(c *models.Config, weight int) {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	for _, st := range monitor.Statuses {
+	for _, st := range monitor.States {
 		if st.Info != "booted up" {
 			continue
 		}
@@ -172,7 +172,7 @@ func shutDownVMs(c *models.Config, weight int) {
 }
 
 //shutDownVM
-func shutDownVM(c *models.Config, st monitor.Status) {
+func shutDownVM(c *models.Config, st monitor.State) {
 	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"
@@ -180,8 +180,8 @@ func shutDownVM(c *models.Config, st monitor.Status) {
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
 	}
-	if monitor.StatusCh != nil {
-		monitor.StatusCh <- st
+	if monitor.StateCh != nil {
+		monitor.StateCh <- st
 	}
 
 	p.Info = c.Cluster.VirtualMachines[st.Name].Shutdown(c.Sleep)
@@ -189,7 +189,7 @@ func shutDownVM(c *models.Config, st monitor.Status) {
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
 	}
-	if monitor.StatusCh != nil {
-		monitor.StatusCh <- st
+	if monitor.StateCh != nil {
+		monitor.StateCh <- st
 	}
 }

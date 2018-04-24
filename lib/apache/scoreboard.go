@@ -33,7 +33,7 @@ func Scoreboard(host string) ([]byte, error) {
 }
 
 func OperatingRatio(board []byte) float64 {
-	var status ServerStat
+	var status ServerStatus
 	err := json.Unmarshal(board, &status)
 	if err != nil {
 		return 0

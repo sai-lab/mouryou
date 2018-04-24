@@ -4,7 +4,8 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-type ServerStat struct {
+// ServerStatus は各Webサーバの負荷状況を格納します。
+type ServerStatus struct {
 	// Host
 	HostName             string `json:"hostname"`
 	HostID               string `json:"hostid"`
@@ -12,7 +13,7 @@ type ServerStat struct {
 	// Memory
 	MemStat mem.VirtualMemoryStat `json:"memStat"`
 	// DiskIO
-	DiskIO []DiskStat `json:"diskIO"`
+	DiskIO []DiskStatus `json:"diskIO"`
 	// CPU
 	CpuUsedPercent []float64 `json:"cpuUsedPercent"`
 	// Apache
@@ -31,7 +32,7 @@ type ServerStat struct {
 	Id int `json:"-"`
 }
 
-type DiskStat struct {
+type DiskStatus struct {
 	Name       string `json:"name"`
 	IoTime     uint64 `json:"ioTime"`
 	WeightedIO uint64 `json:"weightedIO"`

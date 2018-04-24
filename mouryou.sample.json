@@ -6,6 +6,7 @@
   "algorithm": "basic_spike",
   "use_hetero": false,
   "adjust_server_num": true,
+  "start_machine_ids": [1, 2],
   "web_socket": {
     "origin": "http://localhost/",
     "url": "ws://localhost:8000/ws"

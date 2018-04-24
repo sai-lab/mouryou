@@ -16,6 +16,7 @@ type Config struct {
 	Algorithm       string          `json:"algorithm"`
 	UseHetero       bool            `json:"use_hetero"`
 	AdjustServerNum bool            `json:"adjust_server_num"`
+	StartMachineIDs []int           `json:"start_machine_ids"`
 	WebSocket       WebSocketStruct `json:"web_socket"`
 	Cluster         Cluster         `json:"cluster"`
 }
@@ -31,4 +32,13 @@ func (c *Config) LoadSetting(path string) {
 
 	Threshold = c.Cluster.LoadBalancer.ThresholdOut
 
+}
+
+func (c *Config) ContainID(i int) bool {
+	for _, v := range c.StartMachineIDs {
+		if i == v {
+			return true
+		}
+	}
+	return false
 }

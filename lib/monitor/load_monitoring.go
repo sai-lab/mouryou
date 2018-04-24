@@ -18,15 +18,16 @@ func LoadMonitoring(config *models.Config) {
 	// connection, err := config.WebSocket.Dial()
 
 	for {
-		bootedNum := []string{}
-		for _, v := range GetStatuses() {
+		bootedServers := []string{}
+		//
+		for _, v := range GetStates() {
 			if v.Info == "booted up" {
-				bootedNum = append(bootedNum, v.Name)
+				bootedServers = append(bootedServers, v.Name)
 			}
 		}
 
-		sts := config.Cluster.ServerStates(bootedNum)
-		ors, arrs := Ratios(sts)
+		satuses := config.Cluster.ServerStatuses(bootedServers)
+		ors, arrs := Ratios(satuses)
 
 		logger.PWArrays(arrs)
 		// logger.Send(connection, err, arr)
@@ -36,7 +37,7 @@ func LoadMonitoring(config *models.Config) {
 	}
 }
 
-func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
+func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 	var ds []Data
@@ -64,7 +65,7 @@ func Ratios(states []apache.ServerStat) ([]float64, [11][]string) {
 	for i, v := range states {
 		group.Add(1)
 		var data Data
-		go func(i int, v apache.ServerStat) {
+		go func(i int, v apache.ServerStatus) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()

@@ -17,7 +17,7 @@ func main() {
 
 	c := new(models.Config)
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
-	c.Cluster.Initialize()
+	c.Cluster.Initialize(c)
 	engine.Initialize(c)
 
 	file := logger.Create()

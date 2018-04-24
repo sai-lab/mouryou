@@ -19,8 +19,8 @@ type VirtualMachineStruct struct {
 	Vendor     *VendorStruct     `json:"-"`
 }
 
-func (machine VirtualMachineStruct) ServerState() apache.ServerStat {
-	var state apache.ServerStat
+func (machine VirtualMachineStruct) ServerState() apache.ServerStatus {
+	var state apache.ServerStatus
 
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {

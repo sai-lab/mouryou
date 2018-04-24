@@ -14,10 +14,10 @@ import (
 
 func Initialize(config *models.Config) {
 	for name, machine := range config.Cluster.VirtualMachines {
-		var st monitor.Status
+		var st monitor.State
 		st.Name = name
 
-		if machine.Id == 1 || machine.Id == 2 || machine.Id == 3 {
+		if config.ContainID(machine.Id) {
 			st.Info = "booted up"
 
 			err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
@@ -27,14 +27,14 @@ func Initialize(config *models.Config) {
 			}
 
 			st.Weight = machine.Weight
-			monitor.Statuses = append(monitor.Statuses, st)
+			monitor.States = append(monitor.States, st)
 			totalWeight += machine.Weight
 
 			continue
 		}
 
 		st.Info = "shutted down"
-		monitor.Statuses = append(monitor.Statuses, st)
+		monitor.States = append(monitor.States, st)
 	}
 }
 
@@ -54,7 +54,7 @@ func WeightOperator(config *models.Config) {
 		cluster := config.Cluster
 		weights["weights"] = -1
 
-		for _, state := range monitor.Statuses {
+		for _, state := range monitor.States {
 			if state.Name != "" {
 				loadStates[state.Name] = 0
 				if state.Weight != 0 {
@@ -132,13 +132,13 @@ func FireChangeWeight(config *models.Config, name string, w int) {
 
 	mu.RLock()
 	defer mu.RUnlock()
-	for _, state := range monitor.Statuses {
+	for _, state := range monitor.States {
 		if state.Name == name {
 			if w < 0 && state.Weight <= 5 {
 				fmt.Println(state.Name + " is low weight")
 				break
 			}
-			s := monitor.Status{state.Name, state.Weight, state.Info}
+			s := monitor.State{state.Name, state.Weight, state.Info}
 			s.Weight = state.Weight + w
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {
@@ -146,8 +146,8 @@ func FireChangeWeight(config *models.Config, name string, w int) {
 				break
 			}
 
-			if monitor.StatusCh != nil {
-				monitor.StatusCh <- s
+			if monitor.StateCh != nil {
+				monitor.StateCh <- s
 			} else {
 				fmt.Println("statusCh is nil")
 			}

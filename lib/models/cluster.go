@@ -13,7 +13,7 @@ type Cluster struct {
 	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
 }
 
-func (cluster *Cluster) Initialize() {
+func (cluster *Cluster) Initialize(config *Config) {
 	cluster.LoadBalancer.Initialize()
 	for _, vendor := range cluster.Vendors {
 		vendor.Initialize()
@@ -22,20 +22,18 @@ func (cluster *Cluster) Initialize() {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
-		// if machine.Id == 1 || machine.Id == 2 || machine.Id == 3 {
-		// 	continue
-		// }
-		if machine.Id == 1 {
+		if config.ContainID(machine.Id) {
 			continue
 		}
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
 }
 
-func (cluster Cluster) ServerStates(bt []string) []apache.ServerStat {
+// ServerStatuses は稼働中のサーバ配列btを受け取り、btの負荷状況を返します。
+func (cluster Cluster) ServerStatuses(bt []string) []apache.ServerStatus {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
-	states := make([]apache.ServerStat, len(bt))
+	statuses := make([]apache.ServerStatus, len(bt))
 
 	for i, v := range bt {
 		group.Add(1)
@@ -45,12 +43,12 @@ func (cluster Cluster) ServerStates(bt []string) []apache.ServerStat {
 			defer mutex.Unlock()
 			for _, machine := range machines {
 				if machine.Name == v {
-					states[i] = machine.ServerState()
+					statuses[i] = machine.ServerState()
 				}
 			}
 		}(i, v, cluster.VirtualMachines)
 	}
 	group.Wait()
 
-	return states
+	return statuses
 }
