@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/predictions"
-	"github.com/sai-lab/mouryou/lib/logger"
 )
 
 // ServerManagementは起動状況と負荷状況に基いてオートスケールを実行します.
@@ -21,15 +21,15 @@ func ServerManagement(c *models.Config) {
 		// totalOR means the total value of the operating ratios of the working servers
 		totalOR float64
 		// w means the number of working servers
-		w       int
+		w int
 		// b means the number of booting servers
-		b       int
+		b int
 		// s means the number of servers that are stopped
-		s       int
+		s int
 		// tw means the total value of the weights of the working servers
-		tw      int
+		tw int
 		// nw means the necessary weights
-		nw      int
+		nw int
 	)
 
 	r := ring.New(LING_SIZE)
@@ -41,9 +41,9 @@ func ServerManagement(c *models.Config) {
 		ttlORs = convert.RingToArray(r)
 
 		// Get Number of Active Servers
-		w  = mutex.Read(&working, &workMutex)
-		b  = mutex.Read(&booting, &bootMutex)
-		s  = mutex.Read(&shuting, &shutMutex)
+		w = mutex.Read(&working, &workMutex)
+		b = mutex.Read(&booting, &bootMutex)
+		s = mutex.Read(&shuting, &shutMutex)
 		tw = mutex.Read(&totalWeight, &totalWeightMutex)
 
 		// Exec Algorithm
@@ -66,9 +66,9 @@ func ServerManagement(c *models.Config) {
 // スケールインするかの真偽値を受け取り,それらに従って起動停止処理を実行します.
 func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s int, tw int) {
 	var (
-		scaleIn bool
+		scaleIn        bool
 		requiredNumber float64
-		i int
+		i              int
 	)
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)

@@ -8,6 +8,7 @@ type Status struct {
 	Weight int
 	Info   string
 }
+
 // Data
 type Data struct {
 	Name       string

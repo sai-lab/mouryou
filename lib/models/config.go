@@ -17,7 +17,7 @@ type Config struct {
 	UseHetero       bool            `json:"use_hetero"`
 	AdjustServerNum bool            `json:"adjust_server_num"`
 	WebSocket       WebSocketStruct `json:"web_socket"`
-	Cluster         Cluster  `json:"cluster"`
+	Cluster         Cluster         `json:"cluster"`
 }
 
 //LoadConfig
