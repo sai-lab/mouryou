@@ -40,7 +40,7 @@ func (balancer LoadBalancerStruct) Initialize() {
 		err := exec.Command("systemctl", "reload", "haproxy").Run()
 		check.Error(err)
 	default:
-		logger.PrintPlace("Error!: cannot determine the name ofload balancer")
+		logger.PrintPlace("Error!: cannot determine the name of load balancer")
 	}
 
 	time.Sleep(time.Duration(1) * 3)
