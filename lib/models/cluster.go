@@ -8,10 +8,10 @@ import (
 )
 
 type Cluster struct {
-	LoadBalancer    LoadBalancerStruct              `json:"load_balancer"`
-	Vendors         []VendorStruct                  `json:"vendors"`
-	Hypervisors     []HypervisorStruct              `json:"hypervisors"`
-	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
+	LoadBalancer    LoadBalancer              `json:"load_balancer"`
+	Vendors         []VendorStruct            `json:"vendors"`
+	Hypervisors     []HypervisorStruct        `json:"hypervisors"`
+	VirtualMachines map[string]VirtualMachine `json:"virtual_machines"`
 }
 
 func (cluster *Cluster) Initialize(config *Config) {
@@ -32,6 +32,10 @@ func (cluster *Cluster) Initialize(config *Config) {
 	}
 }
 
+func (cluster *Cluster) valueChack() error {
+	return nil
+}
+
 // ServerStatuses は稼働中のサーバ配列btを受け取り、btの負荷状況を返します。
 func (cluster Cluster) ServerStatuses(bt []string) []apache.ServerStatus {
 	var group sync.WaitGroup
@@ -40,7 +44,7 @@ func (cluster Cluster) ServerStatuses(bt []string) []apache.ServerStatus {
 
 	for i, v := range bt {
 		group.Add(1)
-		go func(i int, v string, machines map[string]VirtualMachineStruct) {
+		go func(i int, v string, machines map[string]VirtualMachine) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()

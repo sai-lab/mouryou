@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -11,8 +12,8 @@ import (
 	"github.com/sai-lab/mouryou/lib/logger"
 )
 
-// LoadBalancerStruct
-type LoadBalancerStruct struct {
+// LoadBalancer
+type LoadBalancer struct {
 	Name         string  `json:"name"`
 	VirtualIP    string  `json:"virtual_ip"`
 	Algorithm    string  `json:"algorithm"`
@@ -25,7 +26,7 @@ type LoadBalancerStruct struct {
 }
 
 // Initialize
-func (balancer LoadBalancerStruct) Initialize() {
+func (balancer LoadBalancer) Initialize() {
 	logger.PrintPlace("Load Balancer Initialize")
 	exec.Command("ip", "addr", "add", balancer.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
 
@@ -46,8 +47,46 @@ func (balancer LoadBalancerStruct) Initialize() {
 	time.Sleep(time.Duration(1) * 3)
 }
 
+func (lb *LoadBalancer) valueChack() error {
+	var err error
+	var errTxt string
+	var e string
+
+	if lb.Name == "" {
+		e = "please set load_balancer name for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + e
+	}
+	if lb.VirtualIP == "" {
+		e = "please set load_balancer virtual_ip for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + e
+	}
+	if lb.Algorithm == "" {
+		e = "please set load_balancer algorithm for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + e
+	}
+	if lb.ThresholdOut == float64(0) {
+		e = "please set load_balancer threshold_out for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + e
+	}
+	if lb.ThresholdIn == float64(0) {
+		e = "please set load_balancertimeout value for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + e
+	}
+
+	if errTxt != "" {
+		err = errors.New(errTxt)
+	}
+
+	return err
+}
+
 // ChangeThresholdOut
-func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
+func (balancer LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
 	var ocRate float64
 	ocRate = float64(w+b+s) / float64(n)
 	switch {
@@ -65,19 +104,19 @@ func (balancer LoadBalancerStruct) ChangeThresholdOut(w, b, s, n int) {
 }
 
 // ThHigh
-func (balancer LoadBalancerStruct) ThHigh(w, n int) float64 {
+func (balancer LoadBalancer) ThHigh(w, n int) float64 {
 	return Threshold
 	// return balancer.ThresholdOut
 }
 
 // ThLow
-func (balancer LoadBalancerStruct) ThLow(w int) float64 {
+func (balancer LoadBalancer) ThLow(w int) float64 {
 	return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
 	// return balancer.ThresholdIn*float64(w) - balancer.Margin
 }
 
 // Add
-func (balancer LoadBalancerStruct) Add(name string) error {
+func (balancer LoadBalancer) Add(name string) error {
 	// err := exec.Command("ipvsadm", "-a", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 	// if err != nil {
 	// 	return err
@@ -87,7 +126,7 @@ func (balancer LoadBalancerStruct) Add(name string) error {
 }
 
 // Remove
-func (balancer LoadBalancerStruct) Remove(name string) error {
+func (balancer LoadBalancer) Remove(name string) error {
 	// err := exec.Command("ipvsadm", "-d", "-t", balancer.VirtualIP+":http", "-r", host+":http").Run()
 	// if err != nil {
 	// 	return err
@@ -99,7 +138,7 @@ func (balancer LoadBalancerStruct) Remove(name string) error {
 }
 
 // Active
-func (balancer LoadBalancerStruct) Active(name string) error {
+func (balancer LoadBalancer) Active(name string) error {
 	// err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
 
 	logger.PrintPlace("enable server " + fmt.Sprint(name))
@@ -117,7 +156,7 @@ func (balancer LoadBalancerStruct) Active(name string) error {
 }
 
 // Inactive
-func (balancer LoadBalancerStruct) Inactive(name string) error {
+func (balancer LoadBalancer) Inactive(name string) error {
 	//err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 
 	logger.PrintPlace("disable server " + fmt.Sprint(name))
@@ -134,7 +173,7 @@ func (balancer LoadBalancerStruct) Inactive(name string) error {
 }
 
 // ChangeWeight
-func (balancer LoadBalancerStruct) ChangeWeight(name string, weight int) error {
+func (balancer LoadBalancer) ChangeWeight(name string, weight int) error {
 	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
 	_, err := pipeline.Output(
 		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatInt(int64(weight), 10)},

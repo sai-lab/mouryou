@@ -38,7 +38,7 @@ func PWArrays(arrs [11][]string) {
 			log.Println("," + strings.Join(arrs[i], ","))
 			continue
 		}
-		//fmt.Println(strings.Join(arrs[i], " "))
+		fmt.Println(strings.Join(arrs[i], " "))
 		log.Println("," + strings.Join(arrs[i], ","))
 	}
 }

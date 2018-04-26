@@ -9,7 +9,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/logger"
 )
 
-type VirtualMachineStruct struct {
+type VirtualMachine struct {
 	Id         int               `json:"id"`
 	Name       string            `json:"name"`
 	Host       string            `json:"host"`
@@ -19,7 +19,7 @@ type VirtualMachineStruct struct {
 	Vendor     *VendorStruct     `json:"-"`
 }
 
-func (machine VirtualMachineStruct) ServerState() apache.ServerStatus {
+func (machine VirtualMachine) ServerState() apache.ServerStatus {
 	var state apache.ServerStatus
 
 	board, err := apache.Scoreboard(machine.Host)
@@ -37,7 +37,7 @@ func (machine VirtualMachineStruct) ServerState() apache.ServerStatus {
 	return state
 }
 
-func (machine VirtualMachineStruct) Bootup(sleep time.Duration) string {
+func (machine VirtualMachine) Bootup(sleep time.Duration) string {
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
 	// 	power <- err.Error()
@@ -62,7 +62,7 @@ func (machine VirtualMachineStruct) Bootup(sleep time.Duration) string {
 	return "booted up"
 }
 
-func (machine VirtualMachineStruct) Shutdown(sleep time.Duration) string {
+func (machine VirtualMachine) Shutdown(sleep time.Duration) string {
 	// connection, err :=  machine.Hypervisor.Connect() // here?
 
 	// if err != nil {

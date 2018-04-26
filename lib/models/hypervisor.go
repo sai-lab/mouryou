@@ -3,9 +3,9 @@ package models
 //import libvirt "github.com/rgbkrk/libvirt-go"
 
 type HypervisorStruct struct {
-	Name            string                 `json:"name"`
-	Host            string                 `json:"host"`
-	VirtualMachines []VirtualMachineStruct `json:"virtual_machines"`
+	Name            string           `json:"name"`
+	Host            string           `json:"host"`
+	VirtualMachines []VirtualMachine `json:"virtual_machines"`
 }
 
 func (hypervisor *HypervisorStruct) Initialize() {

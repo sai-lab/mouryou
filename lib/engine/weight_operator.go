@@ -30,17 +30,17 @@ func Initialize(config *models.Config) {
 		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
 
 		if config.ContainID(machine.Id) {
-			if config.Develop {
-				fmt.Println("set booted up for " + machine.Name)
-				logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+			if config.DevelopLogLevel > 0 {
+				logger.PrintPlace("LogLevel 1 : set booted up " + " Machine Name: " + name +
+					" Weight: " + strconv.Itoa(machine.Weight))
 			}
 			st.Info = "booted up"
 			totalWeight += machine.Weight
 		} else {
 			st.Info = "shutted down"
-			if config.Develop {
-				logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
-				fmt.Println("set shutted down for " + machine.Name)
+			if config.DevelopLogLevel > 0 {
+				logger.PrintPlace("LogLevel 1 : set shutted down " + " Machine Name: " + name +
+					" Weight: " + strconv.Itoa(machine.Weight))
 			}
 		}
 		monitor.States = append(monitor.States, st)

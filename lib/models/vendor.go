@@ -3,8 +3,8 @@ package models
 //import libvirt "github.com/rgbkrk/libvirt-go"
 
 type VendorStruct struct {
-	Name            string                          `json:"name"`
-	VirtualMachines map[string]VirtualMachineStruct `json:"virtual_machines"`
+	Name            string                    `json:"name"`
+	VirtualMachines map[string]VirtualMachine `json:"virtual_machines"`
 }
 
 func (vendor *VendorStruct) Initialize() {
