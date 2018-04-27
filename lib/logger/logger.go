@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/websocket"
 
 	"github.com/sai-lab/mouryou/lib/check"
+	"github.com/sai-lab/mouryou/lib/models"
 )
 
 func Create() *os.File {
@@ -29,7 +30,7 @@ func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
-func PWArrays(arrs [11][]string) {
+func PWArrays(c *models.Config, arrs [11][]string) {
 	for i := 0; i < 11; i++ {
 		if i == 3 {
 			continue
@@ -38,7 +39,11 @@ func PWArrays(arrs [11][]string) {
 			log.Println("," + strings.Join(arrs[i], ","))
 			continue
 		}
-		fmt.Println(strings.Join(arrs[i], " "))
+		if c.DevelopLogLevel >= 3 {
+			// サーバのパラメータを全て標準出力に出力
+			fmt.Println(strings.Join(arrs[i], " "))
+		}
+
 		log.Println("," + strings.Join(arrs[i], ","))
 	}
 }

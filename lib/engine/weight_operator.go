@@ -17,8 +17,9 @@ func Initialize(config *models.Config) {
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st monitor.State
 		st.Name = name
-		fmt.Println(name)
-		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		if config.DevelopLogLevel >= 4 {
+			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		}
 
 		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
 		if err != nil {

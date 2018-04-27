@@ -32,6 +32,7 @@ type ServerStatus struct {
 	Id int `json:"-"`
 }
 
+// DiskStatus はディスクの付加情報を格納します。
 type DiskStatus struct {
 	Name       string `json:"name"`
 	IoTime     uint64 `json:"ioTime"`

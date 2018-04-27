@@ -19,24 +19,28 @@ type VirtualMachine struct {
 	Vendor     *VendorStruct     `json:"-"`
 }
 
-func (machine VirtualMachine) ServerState() apache.ServerStatus {
-	var state apache.ServerStatus
+// ServerState はapache.Scoreboardから負荷状況を受け取り返却します。
+func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
+	var status apache.ServerStatus
 
 	board, err := apache.Scoreboard(machine.Host)
 	if err != nil {
-		state.HostName = machine.Name
-		state.Other = "Connection is timeout."
+		// errがあった場合、timeoutしていると判断します。
+		status.HostName = machine.Name
+		status.Other = "Connection is timeout."
 	} else {
-		err = json.Unmarshal(board, &state)
+		err = json.Unmarshal(board, &status)
 		if err != nil {
 			logger.PrintPlace(fmt.Sprint(err))
 		}
 	}
-	state.Id = machine.Id
+	status.Id = machine.Id
 
-	return state
+	return status
 }
 
+// Bootup はVMの起動処理を行います。
+// 現在は実際に起動停止は行わないため起動にかかる時間分sleepします。
 func (machine VirtualMachine) Bootup(sleep time.Duration) string {
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
@@ -62,6 +66,8 @@ func (machine VirtualMachine) Bootup(sleep time.Duration) string {
 	return "booted up"
 }
 
+// Bootup はVMの起動処理を行います。
+// 現在は実際に起動停止は行わないため停止にかかる時間分sleepします。
 func (machine VirtualMachine) Shutdown(sleep time.Duration) string {
 	// connection, err :=  machine.Hypervisor.Connect() // here?
 

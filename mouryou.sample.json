@@ -1,4 +1,5 @@
 {
+  "develop_log_level": 0,
   "timeout": 1,
   "sleep": 30,
   "wait": 30,

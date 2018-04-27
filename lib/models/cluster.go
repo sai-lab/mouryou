@@ -14,6 +14,7 @@ type Cluster struct {
 	VirtualMachines map[string]VirtualMachine `json:"virtual_machines"`
 }
 
+// Initialize はconfigに基いてLBやVMの設定を行います。
 func (cluster *Cluster) Initialize(config *Config) {
 	cluster.LoadBalancer.Initialize()
 	for _, vendor := range cluster.Vendors {
@@ -23,17 +24,18 @@ func (cluster *Cluster) Initialize(config *Config) {
 
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
-		logger.PrintPlace("machine Name:" + machine.Name)
+		if config.DevelopLogLevel >= 4 {
+			logger.PrintPlace("The name of the VM added to the cluster is " + machine.Name)
+		}
 		if config.ContainID(machine.Id) {
-			logger.PrintPlace("machine Name:" + machine.Name)
+			if config.DevelopLogLevel >= 4 {
+				logger.PrintPlace("The name of the VM running from the start is " + machine.Name)
+			}
 			continue
 		}
+		// 開始時から稼働するVM以外にはリクエストを振り分けないようにしています。
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
-}
-
-func (cluster *Cluster) valueChack() error {
-	return nil
 }
 
 // ServerStatuses は稼働中のサーバ配列btを受け取り、btの負荷状況を返します。
@@ -50,7 +52,7 @@ func (cluster Cluster) ServerStatuses(bt []string) []apache.ServerStatus {
 			defer mutex.Unlock()
 			for _, machine := range machines {
 				if machine.Name == v {
-					statuses[i] = machine.ServerState()
+					statuses[i] = machine.ServerStatus()
 				}
 			}
 		}(i, v, cluster.VirtualMachines)

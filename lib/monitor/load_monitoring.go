@@ -21,7 +21,9 @@ func LoadMonitoring(config *models.Config) {
 		bootedServers := []string{}
 		//
 		for _, v := range GetStates() {
-			logger.PrintPlace("Machine Name: " + v.Name + "Machine Info: " + v.Info)
+			if config.DevelopLogLevel >= 4 {
+				logger.PrintPlace("GetStates() Machine Name: " + v.Name + "Machine Info: " + v.Info)
+			}
 			if v.Info == "booted up" {
 				bootedServers = append(bootedServers, v.Name)
 			}
@@ -30,7 +32,7 @@ func LoadMonitoring(config *models.Config) {
 		satuses := config.Cluster.ServerStatuses(bootedServers)
 		ors, arrs := Ratios(satuses)
 
-		logger.PWArrays(arrs)
+		logger.PWArrays(config, arrs)
 		// logger.Send(connection, err, arr)
 
 		LoadCh <- calculate.Sum(ors)

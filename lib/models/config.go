@@ -13,6 +13,13 @@ import (
 )
 
 type Config struct {
+	// DevelopLogLevel はデバッグ用標準出力のレベルを指定します。
+	// 必要ないと判断したら消してください。
+	// DevelopLogLevel==0: デフォルト 標準出力なし
+	// DevelopLogLevel>=1: 起動停止操作等を出力
+	// DevelopLogLevel>=2: 各サーバの重み情報を出力
+	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
+	// DevelopLogLevel>=4: 詳細に
 	DevelopLogLevel int             `json:"develop_log_level"`
 	Timeout         time.Duration   `json:"timeout"`
 	Sleep           time.Duration   `json:"sleep"`
@@ -26,19 +33,23 @@ type Config struct {
 	Cluster         Cluster         `json:"cluster"`
 }
 
-//LoadConfig
+// LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
+// 設定されていない値があるとここで処理を終了します。
 func (c *Config) LoadSetting(path string) {
 	bytes, err := ioutil.ReadFile(path)
 	check.Error(err)
 
 	err = json.Unmarshal(bytes, &c)
 	check.Error(err)
+
 	err = c.valueCheck()
 	check.Error(err)
 
 	Threshold = c.Cluster.LoadBalancer.ThresholdOut
 }
 
+// valueCheck は設定ファイル(~/.mouryou.json)に各設定値が記述されているかチェックします。
+// 記述がない設定値があるとerrorを返します。
 func (c *Config) valueCheck() error {
 	var err error
 	var errTxt string
@@ -83,6 +94,8 @@ func (c *Config) valueCheck() error {
 	return err
 }
 
+// ContainID は受け取ったVMのIDが開始時から稼動状態とするサーバに
+// 指定されているかどうか検証します。
 func (c *Config) ContainID(i int) bool {
 	for _, v := range c.StartMachineIDs {
 		if i == v {

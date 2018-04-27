@@ -12,7 +12,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/logger"
 )
 
-// LoadBalancer
+// LoadBalancer はロードバランサの設定情報を格納します。
 type LoadBalancer struct {
 	Name         string  `json:"name"`
 	VirtualIP    string  `json:"virtual_ip"`
@@ -25,29 +25,33 @@ type LoadBalancer struct {
 	Diff         float64 `json:"diff"`
 }
 
-// Initialize
-func (balancer LoadBalancer) Initialize() {
-	logger.PrintPlace("Load Balancer Initialize")
-	exec.Command("ip", "addr", "add", balancer.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
+// Initialize はロードバランサの初期設定を行います。
+func (lb LoadBalancer) Initialize(c *Config) {
+	if c.DevelopLogLevel >= 1 {
+		logger.PrintPlace("Load Balancer Initialize")
+	}
+	// 仮想IPを設定します。
+	exec.Command("ip", "addr", "add", lb.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
 
-	switch balancer.Name {
+	switch lb.Name {
 	case "ipvs":
 		err := exec.Command("ipvsadm", "-C").Run()
 		check.Error(err)
-		err = exec.Command("ipvsadm", "-A", "-t", balancer.VirtualIP+":http", "-s", balancer.Algorithm).Run()
+		err = exec.Command("ipvsadm", "-A", "-t", lb.VirtualIP+":http", "-s", lb.Algorithm).Run()
 		check.Error(err)
 	case "haproxy":
 		logger.PrintPlace("reload haproxy")
 		err := exec.Command("systemctl", "reload", "haproxy").Run()
 		check.Error(err)
 	default:
-		logger.PrintPlace("Error!: cannot determine the name of load balancer")
+		err := errors.New("cannot determine the name of load balancer")
+		check.Error(err)
 	}
 
 	time.Sleep(time.Duration(1) * 3)
 }
 
-func (lb *LoadBalancer) valueChack() error {
+func (lb *LoadBalancer) valueCheck() error {
 	var err error
 	var errTxt string
 	var e string
@@ -73,7 +77,7 @@ func (lb *LoadBalancer) valueChack() error {
 		errTxt = errTxt + e
 	}
 	if lb.ThresholdIn == float64(0) {
-		e = "please set load_balancertimeout value for mouryou.json"
+		e = "please set load_balancer timeout value for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + e
 	}
