@@ -108,15 +108,23 @@ func (balancer LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
 }
 
 // ThHigh
-func (balancer LoadBalancer) ThHigh(w, n int) float64 {
-	return Threshold
-	// return balancer.ThresholdOut
+func (balancer LoadBalancer) ThHigh(c *Config, w, n int) float64 {
+	switch c.Algorithm {
+	case "basic_spike":
+		return balancer.ThresholdOut
+	default:
+		return Threshold
+	}
 }
 
 // ThLow
-func (balancer LoadBalancer) ThLow(w int) float64 {
-	return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
-	// return balancer.ThresholdIn*float64(w) - balancer.Margin
+func (balancer LoadBalancer) ThLow(c *Config, w int) float64 {
+	switch c.Algorithm {
+	case "basic_spike":
+		return balancer.ThresholdOut*float64(w) - balancer.Margin
+	default:
+		return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
+	}
 }
 
 // Add

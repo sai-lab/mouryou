@@ -11,6 +11,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/predictions"
+	"strconv"
 )
 
 // ServerManagementは起動状況と負荷状況に基いてオートスケールを実行します.
@@ -74,6 +75,9 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
 	statuses := monitor.GetStates()
 
+	if c.DevelopLogLevel >= 3 {
+		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))
+	}
 	switch {
 	case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
 		for i = 0; i < int(requiredNumber); i++ {
@@ -84,13 +88,17 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 					}
 					go bootUpVM(c, status)
 					mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
+					if c.DevelopLogLevel >= 1 {
+						logger.PrintPlace("BootUp " + status.Name)
+					}
 				}
-				logger.PrintPlace("BootUp")
 			}
 		}
 	case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
 		go shutDownVMs(c, 10)
-		fmt.Println("SM: Shutdown is fired")
+		if c.DevelopLogLevel >= 1 {
+			fmt.Println("SM: Shutdown is fired")
+		}
 	}
 }
 
@@ -140,6 +148,9 @@ func bootUpVM(c *models.Config, st monitor.State) {
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
 	}
+	if c.DevelopLogLevel >= 1 {
+		fmt.Println(st.Name + " is booting up")
+	}
 
 	p.Info = c.Cluster.VirtualMachines[st.Name].Bootup(c.Sleep)
 	st.Info = p.Info
@@ -149,7 +160,9 @@ func bootUpVM(c *models.Config, st monitor.State) {
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
 	}
-	fmt.Println(st.Name + "is booted up")
+	if c.DevelopLogLevel >= 1 {
+		fmt.Println(st.Name + " is boot up")
+	}
 }
 
 // shutDownVMs
@@ -166,6 +179,9 @@ func shutDownVMs(c *models.Config, weight int) {
 		if st.Weight <= weight {
 			go shutDownVM(c, st)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
+			if c.DevelopLogLevel >= 1 {
+				fmt.Println(st.Name + " going to shutdown")
+			}
 			return
 		}
 	}
