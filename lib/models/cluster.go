@@ -16,7 +16,7 @@ type Cluster struct {
 
 // Initialize はconfigに基いてLBやVMの設定を行います。
 func (cluster *Cluster) Initialize(config *Config) {
-	cluster.LoadBalancer.Initialize()
+	cluster.LoadBalancer.Initialize(config)
 	for _, vendor := range cluster.Vendors {
 		vendor.Initialize()
 		cluster.VirtualMachines = vendor.VirtualMachines

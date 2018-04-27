@@ -14,7 +14,7 @@ func basicSpike(c *models.Config, w int, b int, s int, tw int, ttlORs []float64)
 	out := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleOut)
 	in := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleIn)
 
-	ThHigh := c.Cluster.LoadBalancer.ThHigh(w, len(c.Cluster.VirtualMachines))
+	ThHigh := c.Cluster.LoadBalancer.ThHigh(c, w, len(c.Cluster.VirtualMachines))
 	ThLow := c.Cluster.LoadBalancer.ThLow(c, w)
 
 	ir := ratio.Increase(ttlORs, c.Cluster.LoadBalancer.ScaleOut)

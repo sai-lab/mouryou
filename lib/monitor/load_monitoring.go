@@ -32,7 +32,7 @@ func LoadMonitoring(config *models.Config) {
 		satuses := config.Cluster.ServerStatuses(bootedServers)
 		ors, arrs := Ratios(satuses)
 
-		logger.PWArrays(config, arrs)
+		logger.PWArrays(config.DevelopLogLevel, arrs)
 		// logger.Send(connection, err, arr)
 
 		LoadCh <- calculate.Sum(ors)
