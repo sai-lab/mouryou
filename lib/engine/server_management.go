@@ -3,6 +3,7 @@ package engine
 import (
 	"container/ring"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/sai-lab/mouryou/lib/convert"
@@ -11,7 +12,6 @@ import (
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/predictions"
-	"strconv"
 )
 
 // ServerManagementは起動状況と負荷状況に基いてオートスケールを実行します.

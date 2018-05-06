@@ -27,11 +27,12 @@ func Initialize(config *models.Config) {
 			break
 		}
 		st.Weight = machine.Weight
-		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id))
-		logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		if config.DevelopLogLevel >= 4 {
+			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		}
 
 		if config.ContainID(machine.Id) {
-			if config.DevelopLogLevel > 0 {
+			if config.DevelopLogLevel > 1 {
 				logger.PrintPlace("LogLevel 1 : set booted up " + " Machine Name: " + name +
 					" Weight: " + strconv.Itoa(machine.Weight))
 			}
@@ -39,7 +40,7 @@ func Initialize(config *models.Config) {
 			totalWeight += machine.Weight
 		} else {
 			st.Info = "shutted down"
-			if config.DevelopLogLevel > 0 {
+			if config.DevelopLogLevel > 1 {
 				logger.PrintPlace("LogLevel 1 : set shutted down " + " Machine Name: " + name +
 					" Weight: " + strconv.Itoa(machine.Weight))
 			}
@@ -67,7 +68,9 @@ func WeightOperator(config *models.Config) {
 		for _, state := range monitor.States {
 			if state.Name != "" {
 				loadStates[state.Name] = 0
-				logger.PrintPlace("state Name: " + state.Name + ", state weight: " + strconv.Itoa(state.Weight))
+				if config.DevelopLogLevel >= 5 {
+					logger.PrintPlace("state Name: " + state.Name + ", state weight: " + strconv.Itoa(state.Weight))
+				}
 				if state.Weight != 0 && state.Info == "booted up" {
 					weights[state.Name] = state.Weight
 				}
