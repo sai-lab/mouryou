@@ -14,7 +14,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/predictions"
 )
 
-// ServerManagementは起動状況と負荷状況に基いてオートスケールを実行します.
+// ServerManagement は起動状況と負荷状況に基いてオートスケールを実行します.
 // 起動状況はengine.destination_settingが設定しています.
 // 負荷状況はmonitor.LoadChから取得します.
 func ServerManagement(c *models.Config) {
@@ -97,6 +97,7 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
 		go shutDownVMs(c, 10)
 		if c.DevelopLogLevel >= 1 {
+			fmt.Println("working number is " + strconv.Itoa(w))
 			fmt.Println("SM: Shutdown is fired")
 		}
 	}
@@ -109,6 +110,7 @@ func bootUpVMs(c *models.Config, weight int) {
 	statuses := monitor.GetStates()
 
 	for i, status := range statuses {
+		// 停止中のサーバ以外は無視
 		if status.Info != "shutted down" {
 			continue
 		}
@@ -116,23 +118,22 @@ func bootUpVMs(c *models.Config, weight int) {
 			go bootUpVM(c, status)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
 			return
-		} else {
-			candidate = append(candidate, i)
 		}
+		candidate = append(candidate, i)
 	}
 
 	if len(candidate) == 0 {
 		return
-	} else {
-		boot := candidate[0]
-		for _, n := range candidate {
-			if statuses[n].Weight > statuses[boot].Weight {
-				boot = n
-			}
-		}
-		go bootUpVM(c, statuses[boot])
-		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+statuses[boot].Weight)
 	}
+
+	boot := candidate[0]
+	for _, n := range candidate {
+		if statuses[n].Weight > statuses[boot].Weight {
+			boot = n
+		}
+	}
+	go bootUpVM(c, statuses[boot])
+	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+statuses[boot].Weight)
 }
 
 // bootUpVM
@@ -173,6 +174,7 @@ func shutDownVMs(c *models.Config, weight int) {
 	defer mu.RUnlock()
 
 	for _, st := range monitor.States {
+		// 稼働中のサーバ以外は無視
 		if st.Info != "booted up" {
 			continue
 		}
