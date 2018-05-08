@@ -6,7 +6,12 @@ import "sync"
 type State struct {
 	Name   string
 	Weight int
-	Info   string
+	// Infoはサーバの状態を示します。
+	// booting up は起動処理中を示します。
+	// booted up は稼働中を示します。
+	// shutting down は停止処理中を示します。
+	// shutted down は停止中を示します。
+	Info string
 }
 
 // Data
