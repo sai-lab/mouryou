@@ -21,6 +21,10 @@ func DestinationSetting(config *models.Config) {
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
 
+		if config.DevelopLogLevel >= 1 {
+			fmt.Println("PowerCh comming ", power.Name, power.Info)
+		}
+
 		switch power.Info {
 		case "booting up":
 			mutex.Write(&booting, &bootMutex, b+1)
