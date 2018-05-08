@@ -20,17 +20,18 @@ type Config struct {
 	// DevelopLogLevel>=2: 各サーバの重み情報を出力
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
-	DevelopLogLevel int             `json:"develop_log_level"`
-	Timeout         time.Duration   `json:"timeout"`
-	Sleep           time.Duration   `json:"sleep"`
-	Wait            time.Duration   `json:"wait"`
-	Margin          float64         `json:"margin"`
-	Algorithm       string          `json:"algorithm"`
-	UseHetero       bool            `json:"use_hetero"`
-	AdjustServerNum bool            `json:"adjust_server_num"`
-	StartMachineIDs []int           `json:"start_machine_ids"`
-	WebSocket       WebSocketStruct `json:"web_socket"`
-	Cluster         Cluster         `json:"cluster"`
+	DevelopLogLevel   int             `json:"develop_log_level"`
+	Timeout           time.Duration   `json:"timeout"`
+	Sleep             time.Duration   `json:"sleep"`
+	Wait              time.Duration   `json:"wait"`
+	Margin            float64         `json:"margin"`
+	Algorithm         string          `json:"algorithm"`
+	UseHetero         bool            `json:"use_hetero"`
+	AdjustServerNum   bool            `json:"adjust_server_num"`
+	OriginMachineName string          `json:"origin_machine_name"`
+	StartMachineIDs   []int           `json:"start_machine_ids"`
+	WebSocket         WebSocketStruct `json:"web_socket"`
+	Cluster           Cluster         `json:"cluster"`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
@@ -78,6 +79,11 @@ func (c *Config) valueCheck() error {
 	}
 	if c.Algorithm == "" {
 		e := "please set algorithm for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + ", " + e
+	}
+	if c.OriginMachineName == "" {
+		e := "please set originMachineName for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + ", " + e
 	}

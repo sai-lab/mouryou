@@ -178,6 +178,10 @@ func shutDownVMs(c *models.Config, weight int) {
 		if st.Info != "booted up" {
 			continue
 		}
+		// オリジンサーバは無視
+		if st.Name == c.OriginMachineName {
+			continue
+		}
 		if st.Weight <= weight {
 			go shutDownVM(c, st)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
