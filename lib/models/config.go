@@ -20,18 +20,19 @@ type Config struct {
 	// DevelopLogLevel>=2: 各サーバの重み情報を出力
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
-	DevelopLogLevel   int             `json:"develop_log_level"`
-	Timeout           time.Duration   `json:"timeout"`
-	Sleep             time.Duration   `json:"sleep"`
-	Wait              time.Duration   `json:"wait"`
-	Margin            float64         `json:"margin"`
-	Algorithm         string          `json:"algorithm"`
-	UseHetero         bool            `json:"use_hetero"`
-	AdjustServerNum   bool            `json:"adjust_server_num"`
-	OriginMachineName string          `json:"origin_machine_name"`
-	StartMachineIDs   []int           `json:"start_machine_ids"`
-	WebSocket         WebSocketStruct `json:"web_socket"`
-	Cluster           Cluster         `json:"cluster"`
+	DevelopLogLevel       int             `json:"develop_log_level"`
+	Timeout               time.Duration   `json:"timeout"`
+	Sleep                 time.Duration   `json:"sleep"`
+	Wait                  time.Duration   `json:"wait"`
+	Margin                float64         `json:"margin"`
+	Algorithm             string          `json:"algorithm"`
+	UseHetero             bool            `json:"use_hetero"`
+	AdjustServerNum       bool            `json:"adjust_server_num"`
+	OriginMachineNames    []string        `json:"origin_machine_name"`
+	AlwaysRunningMachines []string        `json:"always_running_machines"`
+	StartMachineIDs       []int           `json:"start_machine_ids"`
+	WebSocket             WebSocketStruct `json:"web_socket"`
+	Cluster               Cluster         `json:"cluster"`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
@@ -55,6 +56,7 @@ func (c *Config) valueCheck() error {
 	var err error
 	var errTxt string
 	var e string
+	stringNil := []string(nil)
 	intNil := []int(nil)
 
 	if c.Timeout == time.Duration(0) {
@@ -82,13 +84,18 @@ func (c *Config) valueCheck() error {
 		fmt.Println(e)
 		errTxt = errTxt + ", " + e
 	}
-	if c.OriginMachineName == "" {
-		e := "please set originMachineName for mouryou.json"
+	if reflect.DeepEqual(c.OriginMachineNames, stringNil) {
+		e := "please set origin_machine_names for mouryou.json"
+		fmt.Println(e)
+		errTxt = errTxt + ", " + e
+	}
+	if reflect.DeepEqual(c.AlwaysRunningMachines, stringNil) {
+		e := "please set always_running_machines for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + ", " + e
 	}
 	if reflect.DeepEqual(c.StartMachineIDs, intNil) {
-		e := "please set startMachineIDs for mouryou.json"
+		e := "please set start_machine_ids for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + ", " + e
 	}
@@ -105,6 +112,16 @@ func (c *Config) valueCheck() error {
 func (c *Config) ContainID(i int) bool {
 	for _, v := range c.StartMachineIDs {
 		if i == v {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainMachineName はnameがnamesに含まれているかどうか検証します。
+func (*Config) ContainMachineName(names []string, name string) bool {
+	for _, n := range names {
+		if name == n {
 			return true
 		}
 	}

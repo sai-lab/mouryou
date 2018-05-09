@@ -7,7 +7,14 @@
   "algorithm": "basic_spike",
   "use_hetero": false,
   "adjust_server_num": true,
-  "origin_machine_name": "origin",
+  "origin_machine_names": [
+    "origin-01",
+    "origin-02"
+  ],
+  "always_running_machines": [
+    "mirror-01",
+    "mirror-02"
+  ],
   "start_machine_ids": [1, 2],
   "web_socket": {
     "origin": "http://localhost/",

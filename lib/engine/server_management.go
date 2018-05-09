@@ -179,9 +179,14 @@ func shutDownVMs(c *models.Config, weight int) {
 			continue
 		}
 		// オリジンサーバは無視
-		if st.Name == c.OriginMachineName {
+		if c.ContainMachineName(c.OriginMachineNames, st.Name) {
 			continue
 		}
+		// 常に稼働するサーバは無視
+		if c.ContainMachineName(c.AlwaysRunningMachines, st.Name) {
+			continue
+		}
+
 		if st.Weight <= weight {
 			go shutDownVM(c, st)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
