@@ -28,7 +28,7 @@ type Config struct {
 	Algorithm             string          `json:"algorithm"`
 	UseHetero             bool            `json:"use_hetero"`
 	AdjustServerNum       bool            `json:"adjust_server_num"`
-	OriginMachineNames    []string        `json:"origin_machine_name"`
+	OriginMachineNames    []string        `json:"origin_machine_names"`
 	AlwaysRunningMachines []string        `json:"always_running_machines"`
 	StartMachineIDs       []int           `json:"start_machine_ids"`
 	WebSocket             WebSocketStruct `json:"web_socket"`
