@@ -73,16 +73,18 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	)
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
-	statuses := monitor.GetStates()
 
-	if c.DevelopLogLevel >= 3 {
+	if c.DevelopLogLevel >= 1 {
 		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))
 	}
 	switch {
 	case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
 		for i = 0; i < int(requiredNumber); i++ {
 			if w+b+i < len(c.Cluster.VirtualMachines) {
-				for _, status := range statuses {
+				if c.DevelopLogLevel >= 1 {
+					logger.PrintPlace("w + b + i " + strconv.Itoa(w+b+i) + " VM len " + strconv.Itoa(len(c.Cluster.VirtualMachines)))
+				}
+				for _, status := range monitor.GetStates() {
 					if status.Info != "shutted down" {
 						continue
 					}
@@ -91,6 +93,7 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 					if c.DevelopLogLevel >= 1 {
 						logger.PrintPlace("BootUp " + status.Name)
 					}
+					break
 				}
 			}
 		}

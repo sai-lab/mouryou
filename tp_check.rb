@@ -12,12 +12,19 @@ def guess_data(index, row)
     return
   end
   i = 1
-  if index + i >= $data.length
+  if index + i >= $data.length-1
     return
   end
+  if $data[index+i][row].nil?
+    return
+  end
+
   while $data[index+i][row].chomp.to_i == 0
     i += 1
-    if index + i >= $data.length
+    if $data[index+i][row].nil?
+      return
+    end
+    if index + i >= $data.length-1
       return
     end
   end
@@ -57,6 +64,9 @@ begin
 
   for i in 1..$data.length-1
     for j in 1..$data[i].length-1
+      if $data[i][j].nil?
+        next
+      end
       if $data[i][j].chomp.to_i == 0
         guess_data(i, j)
       end
