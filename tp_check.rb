@@ -35,6 +35,10 @@ def guess_data(index, row)
     return
   end
 
+  if $data[after_i][row].nil? || $data[index-1][row].nil?
+    return
+  end
+
   time_before = Time.parse($data[index][0]) - Time.parse($data[index-1][0])
   time_after = Time.parse($data[after_i][0]) - Time.parse($data[index][0])
 
