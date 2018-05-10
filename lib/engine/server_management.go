@@ -69,7 +69,6 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	var (
 		scaleIn        bool
 		requiredNumber float64
-		i              int
 	)
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
@@ -79,24 +78,35 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 	}
 	switch {
 	case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
-		for i = 0; i < int(requiredNumber); i++ {
-			if w+b+i < len(c.Cluster.VirtualMachines) {
+		i := 0
+		for _, status := range monitor.GetStates() {
+			if status.Info == "shutted down" && w+b+i < len(c.Cluster.VirtualMachines) && i < int(requiredNumber) {
+				go bootUpVM(c, status)
+				mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
 				if c.DevelopLogLevel >= 1 {
-					logger.PrintPlace("w + b + i " + strconv.Itoa(w+b+i) + " VM len " + strconv.Itoa(len(c.Cluster.VirtualMachines)))
-				}
-				for _, status := range monitor.GetStates() {
-					if status.Info != "shutted down" {
-						continue
-					}
-					go bootUpVM(c, status)
-					mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
-					if c.DevelopLogLevel >= 1 {
-						logger.PrintPlace("BootUp " + status.Name)
-					}
-					break
+					logger.PrintPlace("BootUp " + status.Name)
 				}
 			}
+			i++
 		}
+		// for i = 0; i < int(requiredNumber); i++ {
+		// 	if w+b+i < len(c.Cluster.VirtualMachines) {
+		// 		if c.DevelopLogLevel >= 1 {
+		// 			logger.PrintPlace("w+b+i " + strconv.Itoa(w+b+i) + " VM len " + strconv.Itoa(len(c.Cluster.VirtualMachines)))
+		// 		}
+		// 		for _, status := range monitor.GetStates() {
+		// 			if status.Info != "shutted down" {
+		// 				continue
+		// 			}
+		// 			go bootUpVM(c, status)
+		// 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
+		// 			if c.DevelopLogLevel >= 1 {
+		// 				logger.PrintPlace("BootUp " + status.Name)
+		// 			}
+		// 			break
+		// 		}
+		// 	}
+		// }
 	case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
 		go shutDownVMs(c, 10)
 		if c.DevelopLogLevel >= 1 {
