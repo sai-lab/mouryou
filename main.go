@@ -31,6 +31,7 @@ func main() {
 	//go engine.WeightOperator(c)
 	if c.Algorithm == "DecreaseWeightFromBasicSpike" {
 		go engine.DecreaseWeight(c)
+		go monitor.WeightMonitor(c)
 	}
 	go monitor.MeasureServer(c)
 

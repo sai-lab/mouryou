@@ -42,5 +42,4 @@ func DecreaseWeight(config *models.Config) {
 			mu.RUnlock()
 		}
 	}
-
 }
