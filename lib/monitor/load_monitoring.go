@@ -104,6 +104,8 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 				data.Operating = 1
 				data.CPU = 0
 				data.Throughput = 0
+				data.Error = v.Other
+				ds = append(ds, data)
 			} else {
 				if beforeTime[v.HostName] == 0 {
 					data.Throughput = 0
@@ -136,6 +138,7 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 			}
 		}(i, v)
 	}
+
 	group.Wait()
 	DataCh <- ds
 	return ors, arrs
