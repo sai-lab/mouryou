@@ -77,6 +77,8 @@ func WeightOperator(config *models.Config) {
 			}
 		}
 
+		logger.PrintPlace("~~~~~~~~~~~~~~~Here!!!!!!~~~~~~~~~~~~~~~~~~~^")
+
 		r.Value = d
 		r = r.Next()
 		r.Do(func(v interface{}) {
