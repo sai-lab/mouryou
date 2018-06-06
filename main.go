@@ -28,7 +28,7 @@ func main() {
 	go engine.ServerManagement(c)
 	go engine.DestinationSetting(c)
 	go engine.StatusManager()
-	go engine.WeightOperator(c)
+	//go engine.WeightOperator(c)
 	go monitor.MeasureServer(c)
 
 	channel := make(chan os.Signal, 1)

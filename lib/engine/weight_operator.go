@@ -77,8 +77,6 @@ func WeightOperator(config *models.Config) {
 			}
 		}
 
-		logger.PrintPlace("~~~~~~~~~~~~~~~Here!!!!!!~~~~~~~~~~~~~~~~~~~^")
-
 		r.Value = d
 		r = r.Next()
 		r.Do(func(v interface{}) {
@@ -156,7 +154,6 @@ func FireChangeWeight(config *models.Config, name string, w int) {
 			}
 			s := monitor.State{state.Name, state.Weight, state.Info}
 			s.Weight = state.Weight + w
-			logger.PrintPlace("-------------------- ChangeWeight " + s.Name + " -----------------------")
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {
 				fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
