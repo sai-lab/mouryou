@@ -38,6 +38,7 @@ func Initialize(config *models.Config) {
 			}
 			st.Info = "booted up"
 			totalWeight += machine.Weight
+			futureTotalWeight += machine.Weight
 		} else {
 			st.Info = "shutted down"
 			if config.DevelopLogLevel > 1 {

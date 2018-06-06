@@ -29,6 +29,7 @@ func ServerManagement(c *models.Config) {
 		s int
 		// tw means the total value of the weights of the working servers
 		tw int
+		fw int
 		// nw means the necessary weights
 		nw int
 	)
@@ -46,15 +47,16 @@ func ServerManagement(c *models.Config) {
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
 		tw = mutex.Read(&totalWeight, &totalWeightMutex)
+		fw = mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
 
 		// Exec Algorithm
 		if c.UseHetero {
 			nw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, ttlORs)
 			switch {
 			case nw > tw:
-				go bootUpVMs(c, nw-tw)
+				go bootUpVMs(c, nw-fw)
 			case nw < tw:
-				go shutDownVMs(c, tw-nw)
+				go shutDownVMs(c, fw-nw)
 			}
 		} else {
 			startStopSameServers(c, ttlORs, w, b, s, tw)
@@ -82,7 +84,7 @@ func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s in
 		for _, status := range monitor.GetStates() {
 			if status.Info == "shutted down" && w+b+i < len(c.Cluster.VirtualMachines) && i < int(requiredNumber) {
 				go bootUpVM(c, status)
-				mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
+				mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
 				if c.DevelopLogLevel >= 1 {
 					logger.PrintPlace("BootUp " + status.Name)
 				}
@@ -111,7 +113,7 @@ func bootUpVMs(c *models.Config, weight int) {
 		}
 		if status.Weight >= weight {
 			go bootUpVM(c, status)
-			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+status.Weight)
+			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
 			return
 		}
 		candidate = append(candidate, i)
@@ -128,7 +130,7 @@ func bootUpVMs(c *models.Config, weight int) {
 		}
 	}
 	go bootUpVM(c, statuses[boot])
-	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+statuses[boot].Weight)
+	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+statuses[boot].Weight)
 }
 
 // bootUpVM
@@ -159,6 +161,7 @@ func bootUpVM(c *models.Config, st monitor.State) {
 	if c.DevelopLogLevel >= 1 {
 		fmt.Println(st.Name + " is boot up")
 	}
+	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+st.Weight)
 }
 
 // shutDownVMs
