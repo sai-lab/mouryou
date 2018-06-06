@@ -186,6 +186,7 @@ func (balancer LoadBalancer) Inactive(name string) error {
 
 // ChangeWeight
 func (balancer LoadBalancer) ChangeWeight(name string, weight int) error {
+	logger.PrintPlace("############################################")
 	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
 	_, err := pipeline.Output(
 		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatInt(int64(weight), 10)},
