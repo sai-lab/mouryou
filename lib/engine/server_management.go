@@ -51,7 +51,7 @@ func ServerManagement(c *models.Config) {
 
 		// Exec Algorithm
 		if c.UseHetero {
-			nw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, ttlORs)
+			nw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, fw, ttlORs)
 			switch {
 			case nw > tw:
 				go bootUpVMs(c, nw-fw)
@@ -59,7 +59,7 @@ func ServerManagement(c *models.Config) {
 				go shutDownVMs(c, fw-nw)
 			}
 		} else {
-			startStopSameServers(c, ttlORs, w, b, s, tw)
+			startStopSameServers(c, ttlORs, w, b, s, tw, fw)
 		}
 	}
 }
@@ -67,13 +67,13 @@ func ServerManagement(c *models.Config) {
 // startStopSameServersは単一性能向けアルゴリズムのサーバ起動停止メソッドです.
 // predictions.ExecSameAlgorithmメソッドからmodels.Config.Sleep時間後に必要な台数と
 // スケールインするかの真偽値を受け取り,それらに従って起動停止処理を実行します.
-func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s int, tw int) {
+func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s int, tw int, fw int) {
 	var (
 		scaleIn        bool
 		requiredNumber float64
 	)
 
-	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, ttlORs)
+	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, fw, ttlORs)
 
 	if c.DevelopLogLevel >= 1 {
 		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))

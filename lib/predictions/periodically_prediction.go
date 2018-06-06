@@ -23,7 +23,7 @@ var twoTimeAfterLoad float64
 // 返り値は1時間後の安定稼働に必要な重みです.
 // 時系列解析を実行してから1時間経過するともう一度実行します.
 // それまでは過去の値を返却します.
-func PeriodicallyPrediction(w int, b int, s int, tw int) int {
+func PeriodicallyPrediction(w int, b int, s int, tw int, fw int) int {
 	// TODO:必要な重みの計算
 	var nt time.Time
 	now := time.Now()

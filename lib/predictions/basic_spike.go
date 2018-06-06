@@ -10,7 +10,7 @@ import (
 )
 
 // basicSpike
-func basicSpike(c *models.Config, w int, b int, s int, tw int, ttlORs []float64) (float64, bool) {
+func basicSpike(c *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) (float64, bool) {
 	out := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleOut)
 	in := calculate.MovingAverage(ttlORs, c.Cluster.LoadBalancer.ScaleIn)
 
@@ -19,7 +19,7 @@ func basicSpike(c *models.Config, w int, b int, s int, tw int, ttlORs []float64)
 
 	ir := ratio.Increase(ttlORs, c.Cluster.LoadBalancer.ScaleOut)
 	n := (((out + ir*float64(c.Sleep)) / ThHigh) - float64(w+b)) * 10
-	weights := []string{"we", fmt.Sprintf("%3.5f", n), fmt.Sprintf("%3d", tw)}
+	weights := []string{"we", fmt.Sprintf("%3.5f", n), fmt.Sprintf("%3d", tw), fmt.Sprintf("%3d", fw)}
 	logger.Print(weights)
 	logger.Write(weights)
 
