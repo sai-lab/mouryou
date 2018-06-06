@@ -34,8 +34,8 @@ func DecreaseWeight(config *models.Config) {
 				}
 
 				// サーバの重みを変更したとき、合計の重みを変更する
-				tw := mutex.Read(&totalWeight, &totalWeightMutex)
-				mutex.Write(&totalWeight, &totalWeightMutex, tw-(monitor.States[i].Weight-lowWeight))
+				mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-(monitor.States[i].Weight-lowWeight))
+				mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-(monitor.States[i].Weight-lowWeight))
 				monitor.States[i].Weight = lowWeight
 				break
 			}
