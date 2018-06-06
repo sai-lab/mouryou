@@ -154,7 +154,7 @@ func (balancer LoadBalancer) Active(name string) error {
 	// err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
 
 	logger.PrintPlace("enable server " + fmt.Sprint(name))
-	logger.Write("enable server " + fmt.Sprint(name))
+	logger.WriteMonoString("enable server " + fmt.Sprint(name))
 	_, err := pipeline.Output(
 		[]string{"echo", "enable", "server", "backend_servers/" + name},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
@@ -173,7 +173,7 @@ func (balancer LoadBalancer) Inactive(name string) error {
 	//err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 
 	logger.PrintPlace("disable server " + fmt.Sprint(name))
-	logger.Write("disable server " + fmt.Sprint(name))
+	logger.WriteMonoString("disable server " + fmt.Sprint(name))
 	_, err := pipeline.Output(
 		[]string{"echo", "disable", "server", "backend_servers/" + name},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
@@ -189,7 +189,7 @@ func (balancer LoadBalancer) Inactive(name string) error {
 // ChangeWeight
 func (balancer LoadBalancer) ChangeWeight(name string, weight int) error {
 	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
-	logger.Write("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
+	logger.WriteMonoString("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
 	_, err := pipeline.Output(
 		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatInt(int64(weight), 10)},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},

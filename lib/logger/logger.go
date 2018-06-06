@@ -29,6 +29,10 @@ func Write(arr []string) {
 	log.Println("," + strings.Join(arr, ","))
 }
 
+func WriteMonoString(str string) {
+	log.Println(str)
+}
+
 func PWArrays(developLogLevel int, arrs [11][]string) {
 	for i := 0; i < 11; i++ {
 		if i == 3 {
