@@ -21,7 +21,7 @@ func LoadMonitoring(config *models.Config) {
 		bootedServers := []string{}
 		//
 		for _, v := range GetStates() {
-			if config.DevelopLogLevel >= 4 {
+			if config.DevelopLogLevel >= 6 {
 				logger.PrintPlace("GetStates() Machine Name: " + v.Name + "Machine Info: " + v.Info)
 			}
 			if v.Info == "booted up" {

@@ -2,9 +2,10 @@ package engine
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
-	"sync"
 )
 
 func DecreaseWeight(config *models.Config) {
