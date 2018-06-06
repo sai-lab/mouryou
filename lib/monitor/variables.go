@@ -20,6 +20,7 @@ type Data struct {
 	Operating  float64
 	Throughput int
 	CPU        float64
+	Error      string
 }
 
 type PowerStruct struct {
