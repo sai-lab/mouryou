@@ -21,10 +21,12 @@ func ExecSameAlgorithm(c *models.Config, w int, b int, s int, tw int, ttlORs []f
 	case "BasicSpike":
 		// 短期間の移動平均に基づくオートスケールアルゴリズム
 		n, scaleIn = basicSpike(c, w, b, s, tw, ttlORs)
-
 	case "ServerNumDependSpike":
 		// 台数依存オートスケールアルゴリズム
 		c.Cluster.LoadBalancer.ChangeThresholdOut(w, b, s, len(c.Cluster.VirtualMachines))
+		n, scaleIn = basicSpike(c, w, b, s, tw, ttlORs)
+	case "DecreaseWeightFromBasicSpike":
+		// 過負荷となったサーバの重みを下げるオートスケールアルゴリズム
 		n, scaleIn = basicSpike(c, w, b, s, tw, ttlORs)
 	}
 	return n, scaleIn
