@@ -20,12 +20,20 @@ type Config struct {
 	// DevelopLogLevel>=2: 各サーバの重み情報を出力
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
-	DevelopLogLevel       int             `json:"develop_log_level"`
-	Timeout               time.Duration   `json:"timeout"`
-	Sleep                 time.Duration   `json:"sleep"`
-	Wait                  time.Duration   `json:"wait"`
-	Margin                float64         `json:"margin"`
-	Algorithm             string          `json:"algorithm"`
+	DevelopLogLevel int `json:"develop_log_level"`
+	// 負荷取得がタイムアウトしたと判断するまでの時間
+	Timeout time.Duration `json:"timeout"`
+	Sleep   time.Duration `json:"sleep"`
+	Wait    time.Duration `json:"wait"`
+	// タイムアウトなどして重さを下げた後、復元するまでの時間
+	RestorationTime time.Duration `json:"restoration_time"`
+	// 起動までのMargin
+	Margin float64 `json:"margin"`
+	// 利用するアルゴリズム
+	Algorithm string `json:"algorithm"`
+	// 重さを変更するか
+	IsWeightChange bool `json:"is_weight_change"`
+	// ヘテロな環境を使用するか
 	UseHetero             bool            `json:"use_hetero"`
 	AdjustServerNum       bool            `json:"adjust_server_num"`
 	OriginMachineNames    []string        `json:"origin_machine_names"`

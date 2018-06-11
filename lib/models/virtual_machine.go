@@ -10,13 +10,19 @@ import (
 )
 
 type VirtualMachine struct {
-	Id         int               `json:"id"`
-	Name       string            `json:"name"`
-	Host       string            `json:"host"`
-	Average    int               `json:"average"`
-	Weight     int               `json:"weight"`
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	Host string `json:"host"`
+	// スループットの平均値
+	Average int `json:"average"`
+	// 基準の重さ
+	BasicWeight int `json:"basic_weight"`
+	// 現在の重さ
+	Weight int `json:"weight"`
+	// ハイパーバイザ
 	Hypervisor *HypervisorStruct `json:"-"`
-	Vendor     *VendorStruct     `json:"-"`
+	// ベンダー
+	Vendor *VendorStruct `json:"-"`
 }
 
 // ServerState はapache.Scoreboardから負荷状況を受け取り返却します。

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"sync"
 
+	"time"
+
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -153,7 +155,7 @@ func FireChangeWeight(config *models.Config, name string, w int) {
 				fmt.Println(state.Name + " is low weight")
 				break
 			}
-			s := monitor.State{state.Name, state.Weight, state.Info}
+			s := monitor.State{state.Name, state.Weight, state.Info, time.Now()}
 			s.Weight = state.Weight + w
 			err = config.Cluster.LoadBalancer.ChangeWeight(s.Name, s.Weight)
 			if err != nil {
