@@ -95,15 +95,15 @@ func (balancer LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
 	ocRate = float64(w+b+s) / float64(n)
 	switch {
 	case ocRate <= 0.3:
-		Threshold = 0.5
+		Threshold = 0.1
 	case ocRate <= 0.5:
-		Threshold = 0.6
+		Threshold = 0.3
 	case ocRate <= 0.7:
-		Threshold = 0.7
+		Threshold = 0.5
 	case ocRate <= 0.9:
-		Threshold = 0.8
+		Threshold = 0.6
 	case ocRate <= 1.0:
-		Threshold = 0.9
+		Threshold = 0.7
 	}
 }
 
