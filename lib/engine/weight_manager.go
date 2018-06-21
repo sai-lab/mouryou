@@ -16,6 +16,9 @@ func WeightManager(config *models.Config) {
 		for _, information := range informations {
 			// エラーがあればdecreaseWeight, なければincreaseWeight
 			// Connection is Timeout や Operating Ratio and CPU UsedPercent is MAX! など
+			if !config.IsWeightChange {
+				continue
+			}
 			if information.Error != "" {
 				decreaseWeight(information, config)
 			} else {

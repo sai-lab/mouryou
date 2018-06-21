@@ -29,10 +29,8 @@ func main() {
 	go engine.DestinationSetting(c)
 	go engine.StatusManager()
 	//go engine.WeightOperator(c)
-	if c.IsWeightChange {
-		go engine.WeightManager(c)
-		go monitor.WeightMonitor(c)
-	}
+	go engine.WeightManager(c)
+	go monitor.WeightMonitor(c)
 	go monitor.MeasureServer(c)
 
 	channel := make(chan os.Signal, 1)
