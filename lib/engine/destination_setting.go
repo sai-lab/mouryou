@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	//"github.com/sai-lab/mouryou/lib/logger"
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
@@ -20,6 +20,8 @@ func DestinationSetting(config *models.Config) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shuting, &shutMutex)
+		workingLog := []string{"workingLog", fmt.Sprintf("%d %d %d", w, b, s)}
+		logger.Write(workingLog)
 
 		if config.DevelopLogLevel >= 1 {
 			fmt.Println("PowerCh comming ", power.Name, power.Info)

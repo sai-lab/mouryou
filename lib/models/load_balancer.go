@@ -89,10 +89,12 @@ func (lb *LoadBalancer) valueCheck() error {
 	return err
 }
 
-// ChangeThresholdOut
-func (balancer LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
+// ChangeThresholdOut は起動台数に応じて閾値を切り替えます。
+func (lb LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
 	var ocRate float64
 	ocRate = float64(w+b+s) / float64(n)
+	ocRateLog := []string{"ocRateLog", fmt.Sprintf("%5.3f %d %d %d %d", ocRate, w, b, s, n)}
+	logger.Write(ocRateLog)
 	switch {
 	case ocRate <= 0.3:
 		Threshold = 0.1
@@ -118,12 +120,13 @@ func (balancer LoadBalancer) ThHigh(c *Config, w, n int) float64 {
 }
 
 // ThLow
-func (balancer LoadBalancer) ThLow(c *Config, w int) float64 {
+func (balancer LoadBalancer) ThLow(c *Config, w, n int) float64 {
 	switch c.Algorithm {
 	case "basic_spike":
 		return balancer.ThresholdOut*float64(w) - balancer.Margin
 	default:
-		return (Threshold-balancer.Diff)*float64(w) - balancer.Margin
+		//return (Threshold-balancer.Diff)*(float64(w)) - balancer.Margin
+		return (Threshold-balancer.Diff)*float64(w/n) - balancer.Margin
 	}
 }
 

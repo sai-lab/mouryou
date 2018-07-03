@@ -188,6 +188,7 @@ func shutDownVMs(c *models.Config, weight int) {
 		if st.Weight <= weight {
 			go shutDownVM(c, st)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
+			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-st.Weight)
 			if c.DevelopLogLevel >= 1 {
 				fmt.Println(st.Name + " going to shutdown")
 			}
