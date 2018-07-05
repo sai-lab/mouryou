@@ -90,10 +90,10 @@ func (lb *LoadBalancer) valueCheck() error {
 }
 
 // ChangeThresholdOut は起動台数に応じて閾値を切り替えます。
-func (lb LoadBalancer) ChangeThresholdOut(w, b, s, n int) {
+func (lb LoadBalancer) ChangeThresholdOut(working, booting, shuting, n int) {
 	var ocRate float64
-	ocRate = float64(w+b+s) / float64(n)
-	ocRateLog := []string{"ocRateLog", fmt.Sprintf("%5.3f %d %d %d %d", ocRate, w, b, s, n)}
+	ocRate = float64(working+booting+shuting) / float64(n)
+	ocRateLog := []string{"ocRateLog", fmt.Sprintf("%5.3f %d %d %d %d", ocRate, working, booting, shuting, n)}
 	logger.Write(ocRateLog)
 	switch {
 	case ocRate <= 0.3:

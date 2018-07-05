@@ -49,6 +49,9 @@ func ServerManagement(c *models.Config) {
 		tw = mutex.Read(&totalWeight, &totalWeightMutex)
 		fw = mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
 
+		wServerManagementLog := []string{"wServerManagementLog", fmt.Sprintf("%d, %d, %d", w, b, s)}
+		logger.Write(wServerManagementLog)
+
 		// Exec Algorithm
 		if c.UseHetero {
 			nw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, fw, ttlORs)
