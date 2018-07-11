@@ -1,6 +1,11 @@
 package predictions
 
-import "github.com/sai-lab/mouryou/lib/models"
+import (
+	"fmt"
+
+	"github.com/sai-lab/mouryou/lib/logger"
+	"github.com/sai-lab/mouryou/lib/models"
+)
 
 //ExecDifferentAlgorithm exec algorithm for server with same performance
 func ExecDifferentAlgorithm(c *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) int {
@@ -29,5 +34,14 @@ func ExecSameAlgorithm(c *models.Config, w int, b int, s int, tw int, fw int, tt
 		// 過負荷となったサーバの重みを下げるオートスケールアルゴリズム
 		n, scaleIn = basicSpike(c, w, b, s, tw, fw, ttlORs)
 	}
+
+	weights := []string{"weights", fmt.Sprintf("%3.5f, %3.5f", tw, fw)}
+	logger.Print(weights)
+	logger.Write(weights)
+
+	requiredNum := []string{"requiredNum", fmt.Sprintf("%3.5f, %3.5f", n)}
+	logger.Print(requiredNum)
+	logger.Write(requiredNum)
+
 	return n, scaleIn
 }
