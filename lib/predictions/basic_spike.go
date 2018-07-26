@@ -21,10 +21,13 @@ func basicSpike(c *models.Config, w int, b int, s int, tw int, fw int, ttlORs []
 	ir := ratio.Increase(ttlORs, c.Cluster.LoadBalancer.ScaleOut)
 	predictedValue := out + ir*float64(c.Sleep)
 	n := (predictedValue / ThHigh) - float64(w+b)
-	weights := []string{"we", fmt.Sprintf("%3.5f", n), fmt.Sprintf("%3d", tw), fmt.Sprintf("%3d", fw), fmt.Sprintf("%3.5f", predictedValue)}
-	logger.Print(weights)
-	logger.Write(weights)
+
+	logData := []string{"predictedValue", fmt.Sprintf("%d %3.5f", c.Sleep, predictedValue)}
+	logger.Print(logData)
+	logger.Write(logData)
+
 	scaleInLog := []string{"scaleInLog", fmt.Sprintf("%3.5f, %3.5f, %b, %d, %d, %f", in, ThLow, in < ThLow, w, num, models.Threshold)}
+	logger.Print(scaleInLog)
 	logger.Write(scaleInLog)
 
 	return n, in < ThLow
