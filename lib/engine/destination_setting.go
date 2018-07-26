@@ -41,6 +41,7 @@ func DestinationSetting(config *models.Config) {
 			mutex.Write(&shuting, &shutMutex, s+1)
 			mutex.Write(&working, &workMutex, w-1)
 			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
+			go timer.Set(&waiting, &waitMutex, config.Wait)
 			// logger.Send(connection, err, "Shutting down: "+strconv.Itoa(w-1))
 		case "shutted down":
 			mutex.Write(&shuting, &shutMutex, s-1)
