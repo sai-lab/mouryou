@@ -31,8 +31,8 @@ func LoadMonitoring(config *models.Config) {
 			}
 		}
 
-		satuses := config.Cluster.ServerStatuses(bootedServers)
-		ors, arrs := Ratios(satuses)
+		statuses := config.Cluster.ServerStatuses(bootedServers)
+		ors, arrs := Ratios(statuses)
 
 		logger.PWArrays(config.DevelopLogLevel, arrs)
 		// logger.Send(connection, err, arr)
