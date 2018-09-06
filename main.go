@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 
+	"github.com/sai-lab/mouryou/lib/db"
 	"github.com/sai-lab/mouryou/lib/engine"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -19,6 +20,8 @@ func main() {
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
 	c.Cluster.Initialize(c)
 	engine.Initialize(c)
+	db.Set(c)
+	db.Connect()
 
 	file := logger.Create()
 	log.SetOutput(file)

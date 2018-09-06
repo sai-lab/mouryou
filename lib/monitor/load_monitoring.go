@@ -9,6 +9,8 @@ import (
 
 	"github.com/sai-lab/mouryou/lib/apache"
 	"github.com/sai-lab/mouryou/lib/calculate"
+	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/db"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 )
@@ -107,15 +109,7 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 				data.Error = v.Other
 				ds = append(ds, data)
 			} else {
-				if beforeTime[v.HostName] == 0 {
-					data.Throughput = 0
-				} else {
-					data.Throughput = (v.ApacheLog - beforeTotalAccess[v.HostName]) / (int(time.Now().Unix()) - beforeTime[v.HostName])
-				}
-
-				beforeTime[v.HostName] = int(time.Now().Unix())
-				beforeTotalAccess[v.HostName] = v.ApacheLog
-				beforeTime[v.HostName] = int(time.Now().Unix())
+				data.Throughput = CalcThroughput(v)
 
 				ors[i] = v.ApacheStat
 				data.Operating = ors[i]
@@ -142,4 +136,28 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 	group.Wait()
 	DataCh <- ds
 	return ors, arrs
+}
+
+func CalcThroughput(v apache.ServerStatus) int {
+	var result int
+	var unixTime int
+
+	unixTime, err := convert.StringsToTimeToInt(v.ApacheAcquisitionTime)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+	}
+
+	if beforeTime[v.HostName] == 0 {
+		//data.Throughput = 0
+		result = 0
+	} else {
+		result = (v.ApacheLog - beforeTotalAccess[v.HostName]) / (unixTime - beforeTime[v.HostName])
+	}
+
+	beforeTime[v.HostName] = unixTime
+	beforeTotalAccess[v.HostName] = v.ApacheLog
+
+	db.ThroughputInsert(v.HostName, result, unixTime)
+
+	return result
 }

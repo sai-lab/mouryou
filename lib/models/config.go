@@ -41,6 +41,9 @@ type Config struct {
 	StartMachineIDs       []int           `json:"start_machine_ids"`
 	WebSocket             WebSocketStruct `json:"web_socket"`
 	Cluster               Cluster         `json:"cluster"`
+	UseThrouput           bool            `json:"use_throughput"`
+	LogDB                 string          `json:"log_db"`
+	LogDSN                string          `json:log_dsn`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
