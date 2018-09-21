@@ -203,3 +203,25 @@ func (balancer LoadBalancer) ChangeWeight(name string, weight int) error {
 
 	return nil
 }
+
+func (balancer LoadBalancer) CheckRequest() (int, error) {
+	out, err := pipeline.Output(
+		[]string{"echo", "show", "stat"},
+		[]string{"socat", "unix-connect:/tmp/haproxy-cli.sock", "stdio"},
+		[]string{"head", "-2"},
+		[]string{"tail", "-1"},
+		[]string{"cut", "-f", "47", "-d", "\",\""},
+	)
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+		return -1, err
+	}
+
+	result, err := strconv.Atoi(string(out))
+	if err != nil {
+		logger.PrintPlace(fmt.Sprint(err))
+		return -1, err
+	}
+
+	return result, nil
+}
