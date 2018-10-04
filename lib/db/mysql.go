@@ -39,9 +39,9 @@ func ThroughputInsert(serverName string, num int, unixTime int) error {
 	return err
 }
 
-func LoadThroughput(serverName string) ([]int, []int) {
-	var throughputs []int
-	var measurementTimes []int
+func LoadThroughput(serverName string) []models.ThroughputWithTime {
+	var throughputsWithTimes []models.ThroughputWithTime
+	var tt models.ThroughputWithTime
 
 	rows, err := connection.Query(`
       SELECT throughput, measurement_time FROM throughputs 
@@ -52,14 +52,12 @@ func LoadThroughput(serverName string) ([]int, []int) {
 	defer rows.Close()
 
 	for rows.Next() {
-		throughput, measurementTime := 0, 0
-		err = rows.Scan(&throughput, &measurementTime)
+		err = rows.Scan(tt.Throughput, tt.MeasurementTime)
 		if err != nil {
 			logger.PrintPlace(fmt.Sprint(err))
 		}
-		throughputs = append(throughputs, throughput)
-		measurementTimes = append(measurementTimes, measurementTime)
+		throughputsWithTimes = append(throughputsWithTimes, tt)
 	}
 
-	return throughputs, measurementTimes
+	return throughputsWithTimes
 }

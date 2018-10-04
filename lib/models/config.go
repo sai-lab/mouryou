@@ -34,16 +34,21 @@ type Config struct {
 	// 重さを変更するか
 	IsWeightChange bool `json:"is_weight_change"`
 	// ヘテロな環境を使用するか
-	UseHetero             bool            `json:"use_hetero"`
-	AdjustServerNum       bool            `json:"adjust_server_num"`
-	OriginMachineNames    []string        `json:"origin_machine_names"`
-	AlwaysRunningMachines []string        `json:"always_running_machines"`
-	StartMachineIDs       []int           `json:"start_machine_ids"`
-	WebSocket             WebSocketStruct `json:"web_socket"`
-	Cluster               Cluster         `json:"cluster"`
-	UseThrouput           bool            `json:"use_throughput"`
-	LogDB                 string          `json:"log_db"`
-	LogDSN                string          `json:log_dsn`
+	UseHetero                   bool            `json:"use_hetero"`
+	AdjustServerNum             bool            `json:"adjust_server_num"`
+	OriginMachineNames          []string        `json:"origin_machine_names"`
+	AlwaysRunningMachines       []string        `json:"always_running_machines"`
+	StartMachineIDs             []int           `json:"start_machine_ids"`
+	WebSocket                   WebSocketStruct `json:"web_socket"`
+	Cluster                     Cluster         `json:"cluster"`
+	UseThroughput               bool            `json:"use_throughput"`
+	ThroughputScaleOutThreshold int             `json:"throughput_scale_out_threshold"`
+	ThroughputScaleInThreshold  int             `json:"throughput_scale_in_threshold"`
+	ThroughputScaleInRate       float64         `json:"throughput_scale_in_rate"`
+	ThroughputScaleOutTime      int             `json:"throughput_scale_out_time"`
+	ThroughputScaleInTime       int             `json:"throughput_scale_in_time"`
+	LogDB                       string          `json:"log_db"`
+	LogDSN                      string          `json:log_dsn`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。

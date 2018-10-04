@@ -15,6 +15,8 @@ type VirtualMachine struct {
 	Host string `json:"host"`
 	// スループットの平均値
 	Average int `json:"average"`
+	// 現在の負荷状況(スループット基準) 0:普通 1:過負荷 2:低負荷
+	LoadStatus int `json:"load_status"`
 	// 基準の重さ
 	BasicWeight int `json:"basic_weight"`
 	// 現在の重さ

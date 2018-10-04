@@ -67,6 +67,10 @@ func ServerManagement(c *models.Config) {
 	}
 }
 
+func ThroughputScale() {
+
+}
+
 // startStopSameServersは単一性能向けアルゴリズムのサーバ起動停止メソッドです.
 // predictions.ExecSameAlgorithmメソッドからmodels.Config.Sleep時間後に必要な台数と
 // スケールインするかの真偽値を受け取り,それらに従って起動停止処理を実行します.
