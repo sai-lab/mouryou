@@ -11,3 +11,13 @@ func FloatsToStrings(xs []float64, s string) []string {
 
 	return arr
 }
+
+func FloatsToStringsSimple(xs []float64) []string {
+	arr := make([]string, len(xs))
+
+	for i, x := range xs {
+		arr[i] = fmt.Sprintf("%.5f", x)
+	}
+
+	return arr
+}

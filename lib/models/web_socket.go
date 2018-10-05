@@ -1,6 +1,10 @@
 package models
 
-import "golang.org/x/net/websocket"
+import (
+	"fmt"
+
+	"golang.org/x/net/websocket"
+)
 
 type WebSocketStruct struct {
 	Origin string `json:"origin"`
@@ -8,5 +12,6 @@ type WebSocketStruct struct {
 }
 
 func (ws WebSocketStruct) Dial() (*websocket.Conn, error) {
+	fmt.Println("WebSocket Dial")
 	return websocket.Dial(ws.URL, "", ws.Origin)
 }

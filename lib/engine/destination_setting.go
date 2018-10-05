@@ -14,7 +14,7 @@ import (
 func DestinationSetting(config *models.Config) {
 	var b, s, w, o int
 
-	// connection, err := config.WebSocket.Dial()
+	connection, err := config.WebSocket.Dial()
 
 	for power := range monitor.PowerCh {
 		w = mutex.Read(&working, &workMutex)
@@ -30,10 +30,10 @@ func DestinationSetting(config *models.Config) {
 		switch power.Info {
 		case "booting up":
 			mutex.Write(&booting, &bootMutex, b+1)
-			// logger.Send(connection, err, "Booting up: "+strconv.Itoa(w))
+			logger.Send(connection, err, "Booting up: "+power.Name)
 		case "booted up":
 			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[power.Name].Name)
-			// logger.Send(connection, err, "Booted up: "+strconv.Itoa(w))
+			logger.Send(connection, err, "Booted up: "+power.Name)
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&booting, &bootMutex, b-1)
 			go timer.Set(&waiting, &waitMutex, config.Wait)
@@ -42,10 +42,10 @@ func DestinationSetting(config *models.Config) {
 			mutex.Write(&working, &workMutex, w-1)
 			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
 			go timer.Set(&waiting, &waitMutex, config.Wait)
-			// logger.Send(connection, err, "Shutting down: "+strconv.Itoa(w-1))
+			logger.Send(connection, err, "Shutting down: "+power.Name)
 		case "shutted down":
 			mutex.Write(&shuting, &shutMutex, s-1)
-			// logger.Send(connection, err, "Shutted down: "+strconv.Itoa(w-1))
+			logger.Send(connection, err, "Shutted down: "+power.Name)
 		default:
 			fmt.Println("Error:", power)
 			switch {
