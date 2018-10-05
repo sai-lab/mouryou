@@ -15,7 +15,7 @@ import (
 
 func LoadMonitoring(config *models.Config) {
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
-	// connection, err := config.WebSocket.Dial()
+	connection, err := config.WebSocket.Dial()
 
 	for {
 		bootedServers := []string{}
@@ -33,7 +33,7 @@ func LoadMonitoring(config *models.Config) {
 		ors, arrs := Ratios(satuses)
 
 		logger.PWArrays(config.DevelopLogLevel, arrs)
-		// logger.Send(connection, err, arr)
+		logger.Send(connection, err, arrs)
 
 		LoadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
