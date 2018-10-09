@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -103,4 +104,17 @@ func (machine VirtualMachine) Shutdown(sleep time.Duration) string {
 	time.Sleep(sleep * time.Second)
 
 	return "shutted down"
+}
+
+func ValidateOperation(str string) error {
+	switch str {
+	case "booting up":
+	case "booted up":
+	case "shutting down":
+	case "shutted down":
+	default:
+		return errors.New("Operation Setting is invalid")
+
+	}
+	return nil
 }
