@@ -10,9 +10,10 @@ import (
 )
 
 type VirtualMachine struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
-	Host string `json:"host"`
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	Operation string `json:"operation"`
 	// スループットの平均値
 	Average int `json:"average"`
 	// 基準の重さ
