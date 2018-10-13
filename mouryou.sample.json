@@ -19,8 +19,8 @@
   ],
   "start_machine_ids": [1, 2],
   "web_socket": {
-    "origin": "http://localhost/",
-    "url": "ws://localhost:8000/ws"
+    "origin": "http://0.0.0.0/",
+    "url": "ws://0.0.0.0:8000/ws"
   },
   "cluster": {
     "load_balancer": {
@@ -34,7 +34,7 @@
       "scale_in": 6,
       "diff": 0.2
     },
-    "hypervisors": [
+    "vendors": [
       {
         "name": "azure",
         "virtual_machines": {
@@ -42,6 +42,7 @@
             "id": 1,
             "name": "web-server-01",
             "host": "192.168.11.01",
+            "operation": "booted up",
             "unit_time": 30,
             "unit_cost": 10,
             "average": 250,
@@ -52,6 +53,7 @@
             "id": 2,
             "name": "web-server-02",
             "host": "192.168.11.02",
+            "operation": "booted up",
             "unit_time": 30,
             "unit_cost": 10,
             "average": 250,

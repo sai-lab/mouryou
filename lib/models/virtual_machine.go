@@ -21,8 +21,6 @@ type VirtualMachine struct {
 	BasicWeight int `json:"basic_weight"`
 	// 現在の重さ
 	Weight int `json:"weight"`
-	// is start machine
-	IsStartMachine bool `json:"is_start_machine"`
 	// ハイパーバイザ
 	Hypervisor *HypervisorStruct `json:"-"`
 	// ベンダー
