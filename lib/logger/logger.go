@@ -74,6 +74,10 @@ func PrintPlace(str string) {
 }
 
 func Send(connection *websocket.Conn, err error, data interface{}) {
+	if connection == nil {
+		return
+	}
+
 	var message string
 
 	switch data.(type) {
