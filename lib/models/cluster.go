@@ -15,7 +15,9 @@ type Cluster struct {
 }
 
 // Initialize はconfigに基いてLBやVMの設定を行います。
-func (cluster *Cluster) Initialize(config *Config) {
+func (cluster *Cluster) Initialize(config *Config) []string {
+	var startServers []string
+
 	cluster.LoadBalancer.Initialize(config)
 	for _, vendor := range cluster.Vendors {
 		vendor.Initialize()
@@ -31,11 +33,14 @@ func (cluster *Cluster) Initialize(config *Config) {
 			if config.DevelopLogLevel >= 4 {
 				logger.PrintPlace("The name of the VM running from the start is " + machine.Name)
 			}
+			startServers = append(startServers, machine.Name)
 			continue
 		}
 		// 開始時から稼働するVM以外にはリクエストを振り分けないようにしています。
 		cluster.LoadBalancer.Inactive(machine.Name)
 	}
+
+	return startServers
 }
 
 // ServerStatuses は稼働中のサーバ配列btを受け取り、btの負荷状況を返します。

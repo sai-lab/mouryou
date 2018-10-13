@@ -17,7 +17,12 @@ import (
 
 func LoadMonitoring(config *models.Config) {
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
-	// connection, err := config.WebSocket.Dial()
+	connection, err := config.WebSocket.Dial()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("ok")
+	}
 
 	for {
 		bootedServers := []string{}
@@ -32,17 +37,17 @@ func LoadMonitoring(config *models.Config) {
 		}
 
 		statuses := config.Cluster.ServerStatuses(bootedServers)
-		ors, arrs := Ratios(statuses)
+		ors, arrs, orsArr := Ratios(statuses)
 
 		logger.PWArrays(config.DevelopLogLevel, arrs)
-		// logger.Send(connection, err, arr)
+		logger.Send(connection, err, orsArr)
 
 		LoadCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
 	}
 }
 
-func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
+func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
@@ -135,7 +140,7 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string) {
 
 	group.Wait()
 	DataCh <- ds
-	return ors, arrs
+	return ors, arrs, convert.FloatsToStringsSimple(ors)
 }
 
 func CalcThroughput(v apache.ServerStatus) int {

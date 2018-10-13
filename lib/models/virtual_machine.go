@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,9 +11,10 @@ import (
 )
 
 type VirtualMachine struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
-	Host string `json:"host"`
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	Operation string `json:"operation"`
 	// スループットの平均値
 	Average int `json:"average"`
 	// 現在の負荷状況(スループット基準) 0:普通 1:過負荷 2:低負荷
@@ -102,4 +104,17 @@ func (machine VirtualMachine) Shutdown(sleep time.Duration) string {
 	time.Sleep(sleep * time.Second)
 
 	return "shutted down"
+}
+
+func ValidateOperation(str string) error {
+	switch str {
+	case "booting up":
+	case "booted up":
+	case "shutting down":
+	case "shutted down":
+	default:
+		return errors.New("Operation Setting is invalid")
+
+	}
+	return nil
 }

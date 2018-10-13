@@ -74,18 +74,18 @@ func PrintPlace(str string) {
 }
 
 func Send(connection *websocket.Conn, err error, data interface{}) {
-	if err != nil {
+	if connection == nil {
 		return
 	}
 
-	// var message string
+	var message string
 
-	// switch data.(type) {
-	// case string:
-	// 	message = data.(string)
-	// case []string:
-	// 	message = "Loads: " + strings.Join(data.([]string), ",")
-	// }
+	switch data.(type) {
+	case string:
+		message = data.(string)
+	case []string:
+		message = "Loads: " + strings.Join(data.([]string), ",")
+	}
 
-	// websocket.Message.Send(connection, message)
+	websocket.Message.Send(connection, message)
 }
