@@ -17,11 +17,9 @@ import (
 )
 
 func LoadDetermination(config *models.Config) {
-	for {
-		go ORBase(config)
-		if config.UseThroughput {
-			go TPBase(config)
-		}
+	go ORBase(config)
+	if config.UseThroughput {
+		go TPBase(config)
 	}
 }
 
@@ -119,25 +117,27 @@ func scaleSameServers(c *models.Config, ttlORs []float64, working int, booting i
 }
 
 func TPBase(config *models.Config) {
-	needScaleOut := false
-	needScaleIn := false
+	for _ = range monitor.LoadTPCh {
+		needScaleOut := false
+		needScaleIn := false
 
-	for name, value := range config.Cluster.VirtualMachines {
-		value.LoadStatus = judgeEachStatus(name, value.Average, config)
-		// 0:普通 1:高負荷 2:低負荷
-		switch value.LoadStatus {
-		case 1:
-			needScaleOut = true
-		case 2:
-			needScaleIn = true
-		default:
+		for name, value := range config.Cluster.VirtualMachines {
+			value.LoadStatus = judgeEachStatus(name, value.Average, config)
+			// 0:普通 1:高負荷 2:低負荷
+			switch value.LoadStatus {
+			case 1:
+				needScaleOut = true
+			case 2:
+				needScaleIn = true
+			default:
+			}
 		}
-	}
 
-	if needScaleOut {
-		scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
-	} else if needScaleIn {
-		scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
+		if needScaleOut {
+			scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
+		} else if needScaleIn {
+			scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
+		}
 	}
 }
 
@@ -148,13 +148,16 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 	var twts [30]models.ThroughputWithTime
 
 	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' LIMIT 30"
-	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBPasswd)
+	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
 	}
 
-	if res == nil {
-		return 0
+	for _, re := range res {
+		if re.Series == nil {
+			logger.WriteMonoString("database throughput is nil")
+			return 0
+		}
 	}
 	for i, row := range res[0].Series[0].Values {
 		t, err := time.Parse(time.RFC3339, row[0].(string))

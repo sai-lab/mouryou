@@ -1,8 +1,8 @@
 package databases
 
 import (
-	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
@@ -38,19 +38,19 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	}
 	nowTotalRequest = status.ApacheStat
 
-	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "AND total_request > 0' LIMIT 1"
-	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBPasswd)
+	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 LIMIT 1"
+	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
 	}
 
-	if res != nil {
+	if res[0].Series != nil {
 		for _, row := range res[0].Series[0].Values {
 			beforeApacheTime, err = time.Parse(time.RFC3339, row[0].(string))
 			if err != nil {
 				logger.WriteMonoString(err.Error())
 			}
-			beforeTotalRequest, err = row[1].(json.Number).Float64()
+			beforeTotalRequest, err = strconv.ParseFloat(row[1].(string), 64)
 			if err != nil {
 				logger.WriteMonoString(err.Error())
 			}
@@ -111,7 +111,8 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 }
 
 // QueryDB convenience function to query the database
-func QueryDB(clnt client.Client, cmd string, db string) (res []client.Result, err error) {
+func QueryDB(clnt client.Client, cmd string, db string) ([]client.Result, error) {
+	var res []client.Result
 	q := client.Query{
 		Command:  cmd,
 		Database: db,
