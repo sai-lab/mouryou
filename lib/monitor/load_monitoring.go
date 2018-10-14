@@ -114,12 +114,9 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
 				arrs[reqPerSec][i+1] = id + "0"
 				data.Operating = 1
 				data.CPU = 0
-				data.Throughput = 0
 				data.Error = v.Other
 				ds = append(ds, data)
 			} else {
-				data.Throughput = CalcThroughput(v)
-
 				ors[i] = v.ApacheStat
 				data.Operating = ors[i]
 				data.CPU = v.CpuUsedPercent[0]
@@ -145,28 +142,4 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
 	group.Wait()
 	DataCh <- ds
 	return ors, arrs, convert.FloatsToStringsSimple(ors)
-}
-
-func CalcThroughput(v apache.ServerStatus) int {
-	var result int
-	var unixTime int
-
-	unixTime, err := convert.StringsToTimeToInt(v.ApacheAcquisitionTime)
-	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
-	}
-
-	if beforeTime[v.HostName] == 0 {
-		//data.Throughput = 0
-		result = 0
-	} else {
-		result = (v.ApacheLog - beforeTotalAccess[v.HostName]) / (unixTime - beforeTime[v.HostName])
-	}
-
-	beforeTime[v.HostName] = unixTime
-	beforeTotalAccess[v.HostName] = v.ApacheLog
-
-	//databases.ThroughputInsert(v.HostName, result, unixTime)
-
-	return result
 }

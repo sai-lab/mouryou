@@ -21,11 +21,10 @@ type State struct {
 
 // Data
 type Data struct {
-	Name       string
-	Operating  float64
-	Throughput int
-	CPU        float64
-	Error      string
+	Name      string
+	Operating float64
+	CPU       float64
+	Error     string
 }
 
 type PowerStruct struct {

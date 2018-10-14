@@ -6,10 +6,50 @@ import (
 
 	"time"
 
+	"strconv"
+
+	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
+
+func Initialize(config *models.Config) {
+	for name, machine := range config.Cluster.VirtualMachines {
+		var st monitor.State
+		st.Name = name
+		if config.DevelopLogLevel >= 4 {
+			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		}
+
+		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
+		if err != nil {
+			fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+			break
+		}
+		st.Weight = machine.Weight
+		if config.DevelopLogLevel >= 4 {
+			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		}
+
+		if config.ContainID(machine.Id) {
+			if config.DevelopLogLevel > 1 {
+				logger.PrintPlace("LogLevel 1 : set booted up " + " Machine Name: " + name +
+					" Weight: " + strconv.Itoa(machine.Weight))
+			}
+			st.Info = "booted up"
+			totalWeight += machine.Weight
+			futureTotalWeight += machine.Weight
+		} else {
+			st.Info = "shutted down"
+			if config.DevelopLogLevel > 1 {
+				logger.PrintPlace("LogLevel 1 : set shutted down " + " Machine Name: " + name +
+					" Weight: " + strconv.Itoa(machine.Weight))
+			}
+		}
+		monitor.States = append(monitor.States, st)
+	}
+}
 
 func WeightManager(config *models.Config) {
 	for informations := range monitor.DataCh {
