@@ -12,11 +12,6 @@ func (vendor *VendorStruct) Initialize() {
 	for _, v := range vendor.VirtualMachines {
 		v.Vendor = vendor
 
-		// オリジンサーバ(i==0)以外は停止する処理です。
-		// 現在は利用していないためコメントアウトしています。
-		// if i != 0 {
-		// 	vendor.VirtualMachines[i].Shutdown(0, nil)
-		// }
 	}
 }
 

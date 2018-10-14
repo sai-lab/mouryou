@@ -44,7 +44,7 @@ func (cluster *Cluster) Initialize(config *Config) []string {
 }
 
 // ServerStatuses は稼働中のサーバ配列btを受け取り、btの負荷状況を返します。
-func (cluster Cluster) ServerStatuses(bt []string) []apache.ServerStatus {
+func (cluster Cluster) ServerStatuses(bt []string, config *Config) []apache.ServerStatus {
 	var group sync.WaitGroup
 	var mutex sync.Mutex
 	statuses := make([]apache.ServerStatus, len(bt))

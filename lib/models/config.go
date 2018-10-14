@@ -2,13 +2,13 @@ package models
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"time"
-
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"reflect"
+	"time"
 
+	"github.com/influxdata/influxdb/client/v2"
 	"github.com/sai-lab/mouryou/lib/check"
 )
 
@@ -48,7 +48,13 @@ type Config struct {
 	ThroughputScaleOutTime      int             `json:"throughput_scale_out_time"`
 	ThroughputScaleInTime       int             `json:"throughput_scale_in_time"`
 	LogDB                       string          `json:"log_db"`
-	LogDSN                      string          `json:log_dsn`
+	LogDSN                      string          `json:"log_dsn"`
+	InfluxDBAddr                string          `json:"influxdb_addr"`
+	InfluxDBPort                string          `json:"influxdb_port"`
+	InfluxDBUser                string          `json:"influxdb_user"`
+	InfluxDBPasswd              string          `json:"influxdb_passwd"`
+	InfluxDBConnection          client.Client   `json:"influxdb_connection"`
+	InfluxDBServerDB            string          `json:"influxdb_serverdb"`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。

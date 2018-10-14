@@ -10,7 +10,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/apache"
 	"github.com/sai-lab/mouryou/lib/calculate"
 	"github.com/sai-lab/mouryou/lib/convert"
-	"github.com/sai-lab/mouryou/lib/db"
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 )
@@ -25,7 +25,7 @@ func LoadMonitoring(config *models.Config) {
 	}
 
 	for {
-		bootedServers := []string{}
+		var bootedServers []string
 		//
 		for _, v := range GetStates() {
 			if config.DevelopLogLevel >= 6 {
@@ -36,13 +36,17 @@ func LoadMonitoring(config *models.Config) {
 			}
 		}
 
-		statuses := config.Cluster.ServerStatuses(bootedServers)
+		statuses := config.Cluster.ServerStatuses(bootedServers, config)
+		for i, _ := range statuses {
+			databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
+		}
 		ors, arrs, orsArr := Ratios(statuses)
 
 		logger.PWArrays(config.DevelopLogLevel, arrs)
 		logger.Send(connection, err, orsArr)
 
-		LoadCh <- calculate.Sum(ors)
+		LoadORCh <- calculate.Sum(ors)
+		LoadTPCh <- calculate.Sum(ors)
 		time.Sleep(time.Second)
 	}
 }
@@ -162,7 +166,7 @@ func CalcThroughput(v apache.ServerStatus) int {
 	beforeTime[v.HostName] = unixTime
 	beforeTotalAccess[v.HostName] = v.ApacheLog
 
-	db.ThroughputInsert(v.HostName, result, unixTime)
+	//databases.ThroughputInsert(v.HostName, result, unixTime)
 
 	return result
 }

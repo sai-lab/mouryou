@@ -1,6 +1,8 @@
 package models
 
+import "time"
+
 type ThroughputWithTime struct {
-	Throughput      int
-	MeasurementTime int
+	Throughput      float64
+	MeasurementTime time.Time
 }

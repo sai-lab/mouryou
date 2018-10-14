@@ -6,7 +6,9 @@ import (
 	"os/signal"
 	"runtime"
 
-	"github.com/sai-lab/mouryou/lib/db"
+	"fmt"
+
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/engine"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -20,14 +22,23 @@ func main() {
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
 	c.Cluster.Initialize(c)
 	engine.Initialize(c)
-	db.Set(c)
-	db.Connect()
+	err := databases.Connect(c)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create database
+	_, err = databases.QueryDB(c.InfluxDBConnection, fmt.Sprintf("CREATE DATABASE %s", c.InfluxDBServerDB), "")
+	if err != nil {
+		panic(err)
+	}
 
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)
 
 	go monitor.LoadMonitoring(c)
+	go engine.LoadDetermination(c)
 	go engine.ServerManagement(c)
 	go engine.DestinationSetting(c)
 	go engine.StatusManager()

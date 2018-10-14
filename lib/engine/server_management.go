@@ -1,114 +1,34 @@
 package engine
 
 import (
-	"container/ring"
 	"fmt"
-	"strconv"
 	"sync"
 
-	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
-	"github.com/sai-lab/mouryou/lib/predictions"
 )
 
 // ServerManagement は起動状況と負荷状況に基いてオートスケールを実行します.
 // 起動状況はengine.destination_settingが設定しています.
 // 負荷状況はmonitor.LoadChから取得します.
-func ServerManagement(c *models.Config) {
-	var (
-		// totalOR means the total value of the operating ratios of the working servers
-		totalOR float64
-		// w means the number of working servers
-		w int
-		// b means the number of booting servers
-		b int
-		// s means the number of servers that are stopped
-		s int
-		// tw means the total value of the weights of the working servers
-		tw int
-		fw int
-		// nw means the necessary weights
-		nw int
-	)
-
-	r := ring.New(LING_SIZE)
-	ttlORs := make([]float64, LING_SIZE)
-
-	for totalOR = range monitor.LoadCh {
-		r.Value = totalOR
-		r = r.Next()
-		ttlORs = convert.RingToArray(r)
-
-		// Get Number of Active Servers
-		w = mutex.Read(&working, &workMutex)
-		b = mutex.Read(&booting, &bootMutex)
-		s = mutex.Read(&shuting, &shutMutex)
-		tw = mutex.Read(&totalWeight, &totalWeightMutex)
-		fw = mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
-
-		wServerManagementLog := []string{"wServerManagementLog", fmt.Sprintf("%d, %d, %d", w, b, s)}
-		logger.Write(wServerManagementLog)
-
-		// Exec Algorithm
-		if c.UseHetero {
-			nw = predictions.ExecDifferentAlgorithm(c, w, b, s, tw, fw, ttlORs)
-			switch {
-			case nw > tw:
-				go bootUpVMs(c, nw-fw)
-			case nw < tw:
-				go shutDownVMs(c, fw-nw)
-			}
-		} else {
-			startStopSameServers(c, ttlORs, w, b, s, tw, fw)
-		}
-	}
-}
-
-func ThroughputScale() {
-
-}
-
-// startStopSameServersは単一性能向けアルゴリズムのサーバ起動停止メソッドです.
-// predictions.ExecSameAlgorithmメソッドからmodels.Config.Sleep時間後に必要な台数と
-// スケールインするかの真偽値を受け取り,それらに従って起動停止処理を実行します.
-func startStopSameServers(c *models.Config, ttlORs []float64, w int, b int, s int, tw int, fw int) {
-	var (
-		scaleIn        bool
-		requiredNumber float64
-	)
-
-	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, w, b, s, tw, fw, ttlORs)
-
-	if c.DevelopLogLevel >= 1 {
-		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))
-	}
-	switch {
-	case w+b < len(c.Cluster.VirtualMachines) && int(requiredNumber) > 0 && s == 0:
-		i := 0
-		for _, status := range monitor.GetStates() {
-			if status.Info == "shutted down" && w+b+i < len(c.Cluster.VirtualMachines) && i < int(requiredNumber) {
-				go bootUpVM(c, status)
-				mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
-				if c.DevelopLogLevel >= 1 {
-					logger.PrintPlace("BootUp " + status.Name)
-				}
-			}
-			i++
-		}
-	case w > 1 && scaleIn && mutex.Read(&waiting, &waitMutex) == 0 && b == 0:
-		go shutDownVMs(c, 10)
-		if c.DevelopLogLevel >= 1 {
-			fmt.Println("working number is " + strconv.Itoa(w))
-			fmt.Println("SM: Shutdown is fired")
+func ServerManagement(config *models.Config) {
+	var order Scale
+	for order = range scaleCh {
+		switch order.Handle {
+		case "ScaleOut":
+			bootUpVMs(config, order.Weight)
+		case "ScaleIn":
+			shutDownVMs(config, order.Weight)
+		default:
+			logger.WriteMonoString("Unknown Handle is comming!")
 		}
 	}
 }
 
 // bootUpVMs
-func bootUpVMs(c *models.Config, weight int) {
+func bootUpVMs(config *models.Config, weight int) {
 	var candidate []int
 
 	statuses := monitor.GetStates()
@@ -119,7 +39,7 @@ func bootUpVMs(c *models.Config, weight int) {
 			continue
 		}
 		if status.Weight >= weight {
-			go bootUpVM(c, status)
+			go bootUpVM(config, status)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
 			return
 		}
@@ -136,12 +56,12 @@ func bootUpVMs(c *models.Config, weight int) {
 			boot = n
 		}
 	}
-	go bootUpVM(c, statuses[boot])
+	go bootUpVM(config, statuses[boot])
 	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+statuses[boot].Weight)
 }
 
 // bootUpVM
-func bootUpVM(c *models.Config, st monitor.State) {
+func bootUpVM(config *models.Config, st monitor.State) {
 	var p monitor.PowerStruct
 
 	p.Name = st.Name
@@ -153,11 +73,11 @@ func bootUpVM(c *models.Config, st monitor.State) {
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
 	}
-	if c.DevelopLogLevel >= 1 {
+	if config.DevelopLogLevel >= 1 {
 		fmt.Println(st.Name + " is booting up")
 	}
 
-	p.Info = c.Cluster.VirtualMachines[st.Name].Bootup(c.Sleep)
+	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
 	st.Info = p.Info
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
@@ -165,14 +85,14 @@ func bootUpVM(c *models.Config, st monitor.State) {
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
 	}
-	if c.DevelopLogLevel >= 1 {
+	if config.DevelopLogLevel >= 1 {
 		fmt.Println(st.Name + " is boot up")
 	}
 	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+st.Weight)
 }
 
 // shutDownVMs
-func shutDownVMs(c *models.Config, weight int) {
+func shutDownVMs(config *models.Config, weight int) {
 	var mu sync.RWMutex
 
 	mu.RLock()
@@ -184,19 +104,19 @@ func shutDownVMs(c *models.Config, weight int) {
 			continue
 		}
 		// オリジンサーバは無視
-		if c.ContainMachineName(c.OriginMachineNames, st.Name) {
+		if config.ContainMachineName(config.OriginMachineNames, st.Name) {
 			continue
 		}
 		// 常に稼働するサーバは無視
-		if c.ContainMachineName(c.AlwaysRunningMachines, st.Name) {
+		if config.ContainMachineName(config.AlwaysRunningMachines, st.Name) {
 			continue
 		}
 
 		if st.Weight <= weight {
-			go shutDownVM(c, st)
+			go shutDownVM(config, st)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-st.Weight)
-			if c.DevelopLogLevel >= 1 {
+			if config.DevelopLogLevel >= 1 {
 				fmt.Println(st.Name + " going to shutdown")
 			}
 			return
@@ -205,7 +125,7 @@ func shutDownVMs(c *models.Config, weight int) {
 }
 
 //shutDownVM
-func shutDownVM(c *models.Config, st monitor.State) {
+func shutDownVM(config *models.Config, st monitor.State) {
 	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"
@@ -217,7 +137,7 @@ func shutDownVM(c *models.Config, st monitor.State) {
 		monitor.StateCh <- st
 	}
 
-	p.Info = c.Cluster.VirtualMachines[st.Name].Shutdown(c.Sleep)
+	p.Info = config.Cluster.VirtualMachines[st.Name].Shutdown(config.Sleep)
 	st.Info = p.Info
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p

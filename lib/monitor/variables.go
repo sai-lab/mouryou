@@ -34,10 +34,11 @@ type PowerStruct struct {
 }
 
 var (
-	StateCh = make(chan State, 1)
-	PowerCh = make(chan PowerStruct, 1)
-	LoadCh  = make(chan float64, 1)
-	DataCh  = make(chan []Data, 1)
+	StateCh  = make(chan State, 1)
+	PowerCh  = make(chan PowerStruct, 1)
+	LoadORCh = make(chan float64, 1)
+	LoadTPCh = make(chan float64, 1)
+	DataCh   = make(chan []Data, 1)
 	// 稼働状態
 	States            []State
 	beforeTime        = map[string]int{}

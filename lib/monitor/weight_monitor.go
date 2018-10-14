@@ -8,7 +8,7 @@ import (
 
 // WeightMonitor は重みを計測する関数です。
 func WeightMonitor(config *models.Config) {
-	for _ = range LoadCh {
+	for _ = range LoadORCh {
 		length := len(config.Cluster.VirtualMachines)
 		weights := map[string]int{}
 		weights["weights"] = -1
