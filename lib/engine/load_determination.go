@@ -4,7 +4,6 @@ import (
 	"container/ring"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/convert"
@@ -42,23 +41,26 @@ func ORBase(config *models.Config) {
 		ttlORs = convert.RingToArray(r)
 
 		// Get Number of Active Servers
-		working := mutex.Read(&working, &workMutex)
-		booting := mutex.Read(&booting, &bootMutex)
-		shutting := mutex.Read(&shutting, &shutMutex)
+		lWorking := mutex.Read(&working, &workMutex)
+		lBooting := mutex.Read(&booting, &bootMutex)
+		lShutting := mutex.Read(&shutting, &shutMutex)
 		lTotalWeight := mutex.Read(&totalWeight, &totalWeightMutex)
 		lFutureTotalWeight := mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
-		logger.PrintPlace(fmt.Sprintf("working: %d booting: %d shutting: %d", working, booting, shutting))
 
-		wServerManagementLog := []string{"engine.ORBase Log: ",
-			fmt.Sprintf(
-				"working: %d, booting: %d, shutting: %d, totalWeight: %d, futureTotalWeight: %d",
-				working, booting, shutting, lTotalWeight, lFutureTotalWeight)}
-		logger.Write(wServerManagementLog)
+		tags := []string{"base_load:or", "parameter:working_log"}
+		fields := []string{fmt.Sprintf("working:%d", lWorking),
+			fmt.Sprintf("booting:%d", lBooting),
+			fmt.Sprintf("shutting:%d", lShutting),
+			fmt.Sprintf("total_weight:%d", lTotalWeight),
+			fmt.Sprintf("future_total_weight:%d", lFutureTotalWeight),
+		}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 		// Exec Algorithm
 		if config.UseHetero {
-			necessaryWeights = predictions.ExecDifferentAlgorithm(config, working,
-				booting, shutting, lTotalWeight, lFutureTotalWeight, ttlORs)
+			necessaryWeights = predictions.ExecDifferentAlgorithm(config, lWorking,
+				lBooting, lShutting, lTotalWeight, lFutureTotalWeight, ttlORs)
 			switch {
 			case necessaryWeights > lTotalWeight:
 				orders = append(orders, Scale{Handle: "ScaleOut",
@@ -68,8 +70,8 @@ func ORBase(config *models.Config) {
 					Weight: necessaryWeights - lFutureTotalWeight, Load: "OR"})
 			}
 		} else {
-			orders = scaleSameServers(config, ttlORs, working, booting,
-				shutting, lTotalWeight, lFutureTotalWeight)
+			orders = scaleSameServers(config, ttlORs, lWorking, lBooting,
+				lShutting, lTotalWeight, lFutureTotalWeight)
 		}
 
 		for _, order := range orders {
@@ -91,7 +93,8 @@ func scaleSameServers(c *models.Config, ttlORs []float64, working int, booting i
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, working, booting, shutting, tw, fw, ttlORs)
 	if c.DevelopLogLevel >= 2 {
-		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))
+		place := logger.Place()
+		logger.Debug(place, fmt.Sprint("required server num is ", requiredNumber))
 	}
 
 	switch {
@@ -141,23 +144,27 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' LIMIT 30"
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
-		logger.WriteMonoString(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 
 	for _, re := range res {
 		if re.Series == nil {
-			logger.WriteMonoString("database throughput is nil")
+			place := logger.Place()
+			logger.Debug(place, "database throughput is nil")
 			return 0
 		}
 	}
 	for i, row := range res[0].Series[0].Values {
 		t, err := time.Parse(time.RFC3339, row[0].(string))
 		if err != nil {
-			logger.WriteMonoString(err.Error())
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 		val, err = row[1].(json.Number).Float64()
 		if err != nil {
-			logger.WriteMonoString(err.Error())
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 		twts[i] = models.ThroughputWithTime{val, t}
 	}

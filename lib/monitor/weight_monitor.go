@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"github.com/sai-lab/mouryou/lib/convert"
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 )
@@ -11,7 +12,6 @@ func WeightMonitor(config *models.Config) {
 	for _ = range LoadORCh {
 		length := len(config.Cluster.VirtualMachines)
 		weights := map[string]int{}
-		weights["weights"] = -1
 		for i, state := range States {
 			if state.Info != "booted up" {
 				continue
@@ -21,8 +21,9 @@ func WeightMonitor(config *models.Config) {
 				break
 			}
 		}
-		ar := convert.MapToArray(weights)
-		logger.Write(ar)
-		logger.Print(ar)
+		tags := []string{"operation:weight"}
+		fields := convert.MapToArray(weights)
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 	}
 }

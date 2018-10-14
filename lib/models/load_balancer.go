@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	pipeline "github.com/mattn/go-pipeline"
+	"github.com/mattn/go-pipeline"
 	"github.com/sai-lab/mouryou/lib/check"
 	"github.com/sai-lab/mouryou/lib/logger"
 )
@@ -28,7 +28,8 @@ type LoadBalancer struct {
 // Initialize はロードバランサの初期設定を行います。
 func (lb LoadBalancer) Initialize(c *Config) {
 	if c.DevelopLogLevel >= 1 {
-		logger.PrintPlace("Load Balancer Initialize")
+		place := logger.Place()
+		logger.Debug(place, "LoadBalancer Initialize")
 	}
 	// 仮想IPを設定します。
 	exec.Command("ip", "addr", "add", lb.VirtualIP, "label", "eth0:vip", "dev", "eth0").Run()
@@ -40,7 +41,8 @@ func (lb LoadBalancer) Initialize(c *Config) {
 		err = exec.Command("ipvsadm", "-A", "-t", lb.VirtualIP+":http", "-s", lb.Algorithm).Run()
 		check.Error(err)
 	case "haproxy":
-		logger.PrintPlace("reload haproxy")
+		place := logger.Place()
+		logger.Debug(place, "reload haproxy")
 		err := exec.Command("systemctl", "reload", "haproxy").Run()
 		check.Error(err)
 	default:
@@ -91,10 +93,7 @@ func (lb *LoadBalancer) valueCheck() error {
 
 // ChangeThresholdOut は起動台数に応じて閾値を切り替えます。
 func (lb LoadBalancer) ChangeThresholdOut(working, booting, shuting, n int) {
-	var ocRate float64
-	ocRate = float64(working+booting+shuting) / float64(n)
-	ocRateLog := []string{"ocRateLog", fmt.Sprintf("%5.3f %d %d %d %d", ocRate, working, booting, shuting, n)}
-	logger.Write(ocRateLog)
+	ocRate := float64(working+booting+shuting) / float64(n)
 	switch {
 	case ocRate <= 0.3:
 		Threshold = 0.1
@@ -135,71 +134,47 @@ func (balancer LoadBalancer) Add(name string) error {
 	// if err != nil {
 	// 	return err
 	// }
-
 	return nil
 }
 
 // Remove
 func (balancer LoadBalancer) Remove(name string) error {
-	// err := exec.Command("ipvsadm", "-d", "-t", balancer.VirtualIP+":http", "-r", host+":http").Run()
-	// if err != nil {
-	// 	return err
-	// }
-
 	// TODO haproxy setting
-
 	return nil
 }
 
 // Active
 func (balancer LoadBalancer) Active(name string) error {
-	// err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "1", "-g").Run()
-
-	logger.PrintPlace("enable server " + fmt.Sprint(name))
-	logger.WriteMonoString("enable server " + fmt.Sprint(name))
 	_, err := pipeline.Output(
 		[]string{"echo", "enable", "server", "backend_servers/" + name},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
 	)
-
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
 		return err
 	}
-
 	return nil
 }
 
 // Inactive
 func (balancer LoadBalancer) Inactive(name string) error {
-	//err := exec.Command("ipvsadm", "-e", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
-
-	logger.PrintPlace("disable server " + fmt.Sprint(name))
-	logger.WriteMonoString("disable server " + fmt.Sprint(name))
 	_, err := pipeline.Output(
 		[]string{"echo", "disable", "server", "backend_servers/" + name},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
 	)
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
 		return err
 	}
-
 	return nil
 }
 
 // ChangeWeight
 func (balancer LoadBalancer) ChangeWeight(name string, weight int) error {
-	logger.PrintPlace("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
-	logger.WriteMonoString("change server weight " + fmt.Sprint(name) + ", " + fmt.Sprint(weight))
 	_, err := pipeline.Output(
 		[]string{"echo", "set", "weight", "backend_servers/" + name, strconv.FormatInt(int64(weight), 10)},
 		[]string{"socat", "stdio", "/tmp/haproxy-cli.sock"},
 	)
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
 		return err
 	}
-
 	return nil
 }

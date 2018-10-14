@@ -27,17 +27,23 @@ func (cluster *Cluster) Initialize(config *Config) []string {
 	for _, machine := range cluster.VirtualMachines {
 		cluster.LoadBalancer.Add(machine.Name)
 		if config.DevelopLogLevel >= 4 {
-			logger.PrintPlace("The name of the VM added to the cluster is " + machine.Name)
+			place := logger.Place()
+			logger.Debug(place, "The name of the VM added to the cluster is "+machine.Name)
 		}
-		if config.ContainID(machine.Id) {
+		if config.ContainID(machine.ID) {
 			if config.DevelopLogLevel >= 4 {
-				logger.PrintPlace("The name of the VM running from the start is " + machine.Name)
+				place := logger.Place()
+				logger.Debug(place, "The name of the VM running from the start is "+machine.Name)
 			}
 			startServers = append(startServers, machine.Name)
 			continue
 		}
 		// 開始時から稼働するVM以外にはリクエストを振り分けないようにしています。
-		cluster.LoadBalancer.Inactive(machine.Name)
+		err := cluster.LoadBalancer.Inactive(machine.Name)
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
 	}
 
 	return startServers

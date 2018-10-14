@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/websocket"
-
 	"github.com/sai-lab/mouryou/lib/check"
+	"golang.org/x/net/websocket"
 )
 
 func Create() *os.File {
@@ -21,16 +20,63 @@ func Create() *os.File {
 	return file
 }
 
-func Print(arr []string) {
-	fmt.Println(strings.Join(arr, "  "))
+func Record(tags []string, fields []string) {
+	var arr []string
+	for _, field := range fields {
+		arr = append(tags, field)
+	}
+	paste(arr)
+	write(arr)
 }
 
-func Write(arr []string) {
-	log.Println("," + strings.Join(arr, ","))
+func Debug(place, str string) {
+	arr := []string{place, str}
+	pasteErr(arr)
 }
 
-func WriteMonoString(str string) {
-	log.Println(str)
+func Error(place string, err error) {
+	arr := []string{"error", place, err.Error()}
+	pasteErr(arr)
+	write(arr)
+}
+
+func Send(connection *websocket.Conn, err error, data interface{}) {
+	if connection == nil {
+		return
+	}
+
+	var message string
+
+	switch data.(type) {
+	case string:
+		message = data.(string)
+	case []string:
+		message = "Loads: " + strings.Join(data.([]string), ",")
+	}
+
+	websocket.Message.Send(connection, message)
+}
+
+func Place() string {
+	var i int = 0
+	var path string
+
+	_, file, line, _ := runtime.Caller(1)
+	files := strings.Split(file, "/")
+
+	for i = 0; i < len(files); i++ {
+		if files[i] == "mouryou" {
+			break
+		}
+	}
+
+	if i+1 == len(files) {
+		path = file
+	} else {
+		path = strings.Join(files[i+1:], "/")
+	}
+
+	return path + " Line " + fmt.Sprint(line)
 }
 
 func PWArrays(developLogLevel int, arrs [11][]string) {
@@ -51,41 +97,14 @@ func PWArrays(developLogLevel int, arrs [11][]string) {
 	}
 }
 
-func PrintPlace(str string) {
-	var i int = 0
-	var path string
-
-	_, file, line, _ := runtime.Caller(1)
-	files := strings.Split(file, "/")
-
-	for i = 0; i < len(files); i++ {
-		if files[i] == "mouryou" {
-			break
-		}
-	}
-
-	if i+1 == len(files) {
-		path = file
-	} else {
-		path = strings.Join(files[i+1:], "/")
-	}
-
-	fmt.Println(path + " Line " + fmt.Sprint(line) + " " + str)
+func paste(arr []string) {
+	fmt.Println(strings.Join(arr, "  "))
 }
 
-func Send(connection *websocket.Conn, err error, data interface{}) {
-	if connection == nil {
-		return
-	}
+func pasteErr(arr []string) {
+	fmt.Fprintln(os.Stderr, strings.Join(arr, "  "))
+}
 
-	var message string
-
-	switch data.(type) {
-	case string:
-		message = data.(string)
-	case []string:
-		message = "Loads: " + strings.Join(data.([]string), ",")
-	}
-
-	websocket.Message.Send(connection, message)
+func write(arr []string) {
+	log.Println("," + strings.Join(arr, ","))
 }

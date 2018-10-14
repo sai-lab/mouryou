@@ -1,8 +1,9 @@
 package engine
 
 import (
-	"fmt"
 	"sync"
+
+	"fmt"
 
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
@@ -16,13 +17,18 @@ import (
 func ServerManagement(config *models.Config) {
 	var order Scale
 	for order = range scaleCh {
+		if config.DevelopLogLevel >= 3 {
+			place := logger.Place()
+			logger.Debug(place, fmt.Sprintf("Load: %s, Handle: %s, Weight: %d", order.Load, order.Handle, order.Weight))
+		}
 		switch order.Handle {
 		case "ScaleOut":
 			bootUpVMs(config, order.Weight)
 		case "ScaleIn":
 			shutDownVMs(config, order.Weight)
 		default:
-			logger.WriteMonoString("Unknown Handle is comming!")
+			place := logger.Place()
+			logger.Debug(place, "Unknown Handle is comming!")
 		}
 	}
 }
@@ -74,7 +80,8 @@ func bootUpVM(config *models.Config, st monitor.State) {
 		monitor.StateCh <- st
 	}
 	if config.DevelopLogLevel >= 1 {
-		fmt.Println(st.Name + " is booting up")
+		place := logger.Place()
+		logger.Debug(place, st.Name+" is booting up")
 	}
 
 	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
@@ -86,7 +93,8 @@ func bootUpVM(config *models.Config, st monitor.State) {
 		monitor.StateCh <- st
 	}
 	if config.DevelopLogLevel >= 1 {
-		fmt.Println(st.Name + " is boot up")
+		place := logger.Place()
+		logger.Debug(place, st.Name+" is boot up")
 	}
 	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+st.Weight)
 }
@@ -117,7 +125,8 @@ func shutDownVMs(config *models.Config, weight int) {
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-st.Weight)
 			if config.DevelopLogLevel >= 1 {
-				fmt.Println(st.Name + " going to shutdown")
+				place := logger.Place()
+				logger.Debug(place, st.Name+" going to shutdown")
 			}
 			return
 		}

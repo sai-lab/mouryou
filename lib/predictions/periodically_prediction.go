@@ -1,7 +1,6 @@
 package predictions
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/commands"
@@ -34,7 +33,8 @@ func PeriodicallyPrediction(w int, b int, s int, tw int, fw int) int {
 
 	hls, err := commands.TimeSeriesAnalysis(now)
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
+		place := logger.Place()
+		logger.Error(place, err)
 		return 0
 	}
 

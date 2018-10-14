@@ -8,6 +8,7 @@ import (
 
 	"strconv"
 
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
@@ -19,24 +20,32 @@ func Initialize(config *models.Config, startNum int) {
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st monitor.State
 		st.Name = name
-		if config.DevelopLogLevel >= 4 {
-			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		if config.DevelopLogLevel >= 5 {
+			place := logger.Place()
+			logger.Debug(place, "Machine ID: "+strconv.Itoa(machine.ID)+", Machine Name: "+name)
 		}
 
 		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
 		if err != nil {
-			fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+			place := logger.Place()
+			logger.Error(place, err)
 			break
 		}
+		tags := []string{"operation:change_weight", fmt.Sprintf("host:%s", machine.Name)}
+		fields := []string{fmt.Sprintf("weight:%d", machine.Weight)}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
 		st.Weight = machine.Weight
-		if config.DevelopLogLevel >= 4 {
-			logger.PrintPlace("Machine ID: " + strconv.Itoa(machine.Id) + ", Machine Name: " + name)
+		if config.DevelopLogLevel >= 5 {
+			place := logger.Place()
+			logger.Debug(place, "Machine ID: "+strconv.Itoa(machine.ID)+", Machine Name: "+name)
 		}
 
-		if config.ContainID(machine.Id) {
+		if config.ContainID(machine.ID) {
 			if config.DevelopLogLevel > 1 {
-				logger.PrintPlace("LogLevel 1 : set booted up " + " Machine Name: " + name +
-					" Weight: " + strconv.Itoa(machine.Weight))
+				place := logger.Place()
+				logger.Debug(place, "set booted up Machine Name: "+name+" Weight: "+strconv.Itoa(machine.Weight))
 			}
 			st.Info = "booted up"
 			totalWeight += machine.Weight
@@ -44,8 +53,8 @@ func Initialize(config *models.Config, startNum int) {
 		} else {
 			st.Info = "shutted down"
 			if config.DevelopLogLevel > 1 {
-				logger.PrintPlace("LogLevel 1 : set shutted down " + " Machine Name: " + name +
-					" Weight: " + strconv.Itoa(machine.Weight))
+				place := logger.Place()
+				logger.Debug(place, "set shutted down Machine Name: "+name+" Weight: "+strconv.Itoa(machine.Weight))
 			}
 		}
 		monitor.States = append(monitor.States, st)
@@ -86,7 +95,8 @@ func decreaseWeight(information monitor.Data, config *models.Config) {
 		}
 		err := config.Cluster.LoadBalancer.ChangeWeight(information.Name, lowWeight)
 		if err != nil {
-			fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 
 		// サーバの重みを変更したとき、合計の重みと最終的な重みを変更する
@@ -118,7 +128,8 @@ func increaseWeight(information monitor.Data, config *models.Config) {
 
 		err := config.Cluster.LoadBalancer.ChangeWeight(information.Name, basicWeight)
 		if err != nil {
-			fmt.Println("Error is occured! Cannot change weight. Error is : " + fmt.Sprint(err))
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 
 		// サーバの重みを変更したとき、合計の重みと最終的な重みを変更する

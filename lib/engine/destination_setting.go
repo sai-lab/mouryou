@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
@@ -20,8 +21,14 @@ func DestinationSetting(config *models.Config) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
-		workingLog := []string{"workingLog", fmt.Sprintf("%d %d %d", w, b, s)}
-		logger.Write(workingLog)
+
+		tags := []string{"parameter:working_log"}
+		fields := []string{fmt.Sprintf("working:%d", w),
+			fmt.Sprintf("booting:%d", b),
+			fmt.Sprintf("shutting:%d", s),
+		}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 		if config.DevelopLogLevel >= 1 {
 			fmt.Println("PowerCh comming ", power.Name, power.Info)
@@ -32,7 +39,11 @@ func DestinationSetting(config *models.Config) {
 			mutex.Write(&booting, &bootMutex, b+1)
 			logger.Send(connection, err, "Booting up: "+power.Name)
 		case "booted up":
-			config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[power.Name].Name)
+			err := config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[power.Name].Name)
+			if err != nil {
+				place := logger.Place()
+				logger.Error(place, err)
+			}
 			logger.Send(connection, err, "Booted up: "+power.Name)
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&booting, &bootMutex, b-1)
@@ -40,7 +51,11 @@ func DestinationSetting(config *models.Config) {
 		case "shutting down":
 			mutex.Write(&shutting, &shutMutex, s+1)
 			mutex.Write(&working, &workMutex, w-1)
-			config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
+			err := config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
+			if err != nil {
+				place := logger.Place()
+				logger.Error(place, err)
+			}
 			go timer.Set(&waiting, &waitMutex, config.Wait)
 			logger.Send(connection, err, "Shutting down: "+power.Name)
 		case "shutted down":

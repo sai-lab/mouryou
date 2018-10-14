@@ -2,8 +2,9 @@ package databases
 
 import (
 	"encoding/json"
-	"log"
 	"time"
+
+	"strings"
 
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/sai-lab/mouryou/lib/apache"
@@ -18,11 +19,52 @@ func Connect(config *models.Config) error {
 		Password: config.InfluxDBPasswd,
 	})
 	if err != nil {
-		log.Fatal(err)
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 
 	config.InfluxDBConnection = c
 	return err
+}
+
+func WriteValues(clnt client.Client, config *models.Config, tag []string, field []string) {
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  config.InfluxDBServerDB,
+		Precision: "ms",
+	})
+	if err != nil {
+		place := logger.Place()
+		logger.Error(place, err)
+	}
+
+	var tags map[string]string
+	for _, t := range tag {
+		parts := strings.Split(t, ":")
+		tags[parts[0]] = parts[1]
+	}
+
+	var fields map[string]interface{}
+	for _, f := range field {
+		parts := strings.Split(f, ":")
+		fields[parts[0]] = parts[1]
+	}
+
+	pt, err := client.NewPoint(
+		"server_status",
+		tags,
+		fields,
+		time.Now(),
+	)
+	if err != nil {
+		place := logger.Place()
+		logger.Error(place, err)
+	}
+	bp.AddPoint(pt)
+
+	if err := clnt.Write(bp); err != nil {
+		place := logger.Place()
+		logger.Error(place, err)
+	}
 }
 
 func WritePoints(clnt client.Client, config *models.Config, status apache.ServerStatus) {
@@ -34,29 +76,29 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 
 	nowApacheTime, err := time.Parse(time.RFC3339Nano, status.ApacheAcquisitionTime)
 	if err != nil {
-		logger.WriteMonoString(err.Error())
-		logger.PrintPlace(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 	nowTotalRequest = status.ApacheStat
 
 	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 LIMIT 1"
 	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
-		logger.WriteMonoString(err.Error())
-		logger.PrintPlace(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 
 	if res[0].Series != nil {
 		for _, row := range res[0].Series[0].Values {
 			beforeApacheTime, err = time.Parse(time.RFC3339Nano, row[1].(string))
 			if err != nil {
-				logger.WriteMonoString(err.Error())
-				logger.PrintPlace(err.Error())
+				place := logger.Place()
+				logger.Error(place, err)
 			}
 			beforeTotalRequest, err = row[2].(json.Number).Float64()
 			if err != nil {
-				logger.WriteMonoString(err.Error())
-				logger.PrintPlace(err.Error())
+				place := logger.Place()
+				logger.Error(place, err)
 			}
 		}
 		throughput = (nowTotalRequest - beforeTotalRequest) / (nowApacheTime.Sub(beforeApacheTime).Seconds())
@@ -69,8 +111,8 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 		Precision: "ms",
 	})
 	if err != nil {
-		logger.WriteMonoString(err.Error())
-		logger.PrintPlace(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 
 	tags := map[string]string{
@@ -97,8 +139,8 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 
 	t, err := time.Parse(time.RFC3339Nano, status.Time)
 	if err != nil {
-		logger.WriteMonoString(err.Error())
-		logger.PrintPlace(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 	pt, err := client.NewPoint(
 		"server_status",
@@ -107,12 +149,14 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 		t,
 	)
 	if err != nil {
-		log.Fatal(err)
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 	bp.AddPoint(pt)
 
 	if err := clnt.Write(bp); err != nil {
-		logger.WriteMonoString(err.Error())
+		place := logger.Place()
+		logger.Error(place, err)
 	}
 }
 

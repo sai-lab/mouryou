@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/sai-lab/mouryou/lib/apache"
@@ -11,7 +10,7 @@ import (
 )
 
 type VirtualMachine struct {
-	Id        int    `json:"id"`
+	ID        int    `json:"id"`
 	Name      string `json:"name"`
 	Host      string `json:"host"`
 	Operation string `json:"operation"`
@@ -41,10 +40,11 @@ func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
 	} else {
 		err = json.Unmarshal(board, &status)
 		if err != nil {
-			logger.PrintPlace(fmt.Sprint(err))
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 	}
-	status.Id = machine.Id
+	status.Id = machine.ID
 
 	return status
 }

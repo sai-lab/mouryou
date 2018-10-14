@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -22,11 +21,13 @@ func TimeSeriesAnalysis(t time.Time) ([]float64, error) {
 	end = t.Add(time.Duration(2) * time.Hour)
 	start = t.Add(time.Duration(-24) * time.Hour)
 
-	logger.PrintPlace("exec TimeSeriesAnalysis script")
+	place := logger.Place()
+	logger.Debug(place, "exec TimeSeriesAnalysis script")
 	out, err := exec.Command("../../modules/time_series_analysis.py",
 		start.Format(dateparse), end.Format(dateparse)).Output()
 	if err != nil {
-		logger.PrintPlace(fmt.Sprint(err))
+		place := logger.Place()
+		logger.Error(place, err)
 		return nil, err
 	}
 
@@ -38,7 +39,8 @@ func TimeSeriesAnalysis(t time.Time) ([]float64, error) {
 		}
 		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			logger.PrintPlace(fmt.Sprint(err))
+			place := logger.Place()
+			logger.Error(place, err)
 		}
 		hls[i] = f
 	}
