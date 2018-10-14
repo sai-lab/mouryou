@@ -14,7 +14,8 @@ import (
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
-func Initialize(config *models.Config) {
+func Initialize(config *models.Config, startNum int) {
+	mutex.Write(&working, &workMutex, startNum)
 	for name, machine := range config.Cluster.VirtualMachines {
 		var st monitor.State
 		st.Name = name

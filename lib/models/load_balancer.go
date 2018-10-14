@@ -112,7 +112,7 @@ func (lb LoadBalancer) ChangeThresholdOut(working, booting, shuting, n int) {
 // ThHigh
 func (balancer LoadBalancer) ThHigh(c *Config, w, n int) float64 {
 	switch c.Algorithm {
-	case "basic_spike":
+	case "BasicSpike":
 		return balancer.ThresholdOut
 	default:
 		return Threshold
@@ -123,9 +123,9 @@ func (balancer LoadBalancer) ThHigh(c *Config, w, n int) float64 {
 func (balancer LoadBalancer) ThLow(c *Config, w, n int) float64 {
 	switch c.Algorithm {
 	case "BasicSpike":
-		return balancer.ThresholdIn*float64(w) - balancer.Margin
+		return balancer.ThresholdIn * float64(w)
 	default:
-		return (Threshold-balancer.Diff)*(float64(w)) - balancer.Margin
+		return (Threshold - balancer.Diff) * (float64(w))
 	}
 }
 

@@ -27,16 +27,6 @@ func ORBase(config *models.Config) {
 	var (
 		// totalOR means the total value of the operating ratios of the working servers
 		totalOR float64
-		// working means the number of working servers
-		working int
-		// booting means the number of booting servers
-		booting int
-		// shutting means the number of servers that are stopped
-		shutting int
-		// lTotalWeight means the total value of the weights of the working servers
-		lTotalWeight int
-		// lFutureTotalWeight means the weight that will change due to bootup etc
-		lFutureTotalWeight int
 		// necessaryWeights means the necessary weights
 		necessaryWeights int
 		// orders is auto scale order
@@ -52,11 +42,12 @@ func ORBase(config *models.Config) {
 		ttlORs = convert.RingToArray(r)
 
 		// Get Number of Active Servers
-		working = mutex.Read(&working, &workMutex)
-		booting = mutex.Read(&booting, &bootMutex)
-		shutting = mutex.Read(&shutting, &shutMutex)
-		lTotalWeight = mutex.Read(&totalWeight, &totalWeightMutex)
-		lFutureTotalWeight = mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
+		working := mutex.Read(&working, &workMutex)
+		booting := mutex.Read(&booting, &bootMutex)
+		shutting := mutex.Read(&shutting, &shutMutex)
+		lTotalWeight := mutex.Read(&totalWeight, &totalWeightMutex)
+		lFutureTotalWeight := mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
+		logger.PrintPlace(fmt.Sprintf("working: %d booting: %d shutting: %d", working, booting, shutting))
 
 		wServerManagementLog := []string{"engine.ORBase Log: ",
 			fmt.Sprintf(
@@ -99,7 +90,7 @@ func scaleSameServers(c *models.Config, ttlORs []float64, working int, booting i
 	)
 
 	requiredNumber, scaleIn = predictions.ExecSameAlgorithm(c, working, booting, shutting, tw, fw, ttlORs)
-	if c.DevelopLogLevel >= 1 {
+	if c.DevelopLogLevel >= 2 {
 		logger.PrintPlace("required server num is " + strconv.Itoa(int(requiredNumber)))
 	}
 
@@ -185,7 +176,6 @@ func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [3
 	TPHigh := config.Cluster.VirtualMachines[serverName].Average
 	c := 0
 	for i, twt := range twts {
-		fmt.Println(twt.Throughput, twt.MeasurementTime)
 		if twt.Throughput > float64(TPHigh) {
 			c++
 		}
@@ -206,7 +196,6 @@ func judgeLowLoadByThroughput(config *models.Config, serverName string, twts [30
 	rate := config.ThroughputScaleInRate
 	c := 0
 	for i, twt := range twts {
-		fmt.Println(twt.Throughput, twt.MeasurementTime)
 		if twt.Throughput > float64(TPHigh)*rate {
 			c++
 		} else {

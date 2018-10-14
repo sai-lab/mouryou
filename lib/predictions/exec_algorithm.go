@@ -35,11 +35,11 @@ func ExecSameAlgorithm(c *models.Config, w int, b int, s int, tw int, fw int, tt
 		n, scaleIn = basicSpike(c, w, b, s, tw, fw, ttlORs)
 	}
 
-	weights := []string{"weights", fmt.Sprintf("%3.5f, %3.5f", tw, fw)}
+	weights := []string{"weights", fmt.Sprintf("%3d, %3d", tw, fw)}
 	logger.Print(weights)
 	logger.Write(weights)
 
-	requiredNum := []string{"requiredNum", fmt.Sprintf("%3.5f, %3.5f", n)}
+	requiredNum := []string{"requiredNum", fmt.Sprintf("%3.5f", n)}
 	logger.Print(requiredNum)
 	logger.Write(requiredNum)
 

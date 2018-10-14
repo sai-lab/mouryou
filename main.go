@@ -1,12 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
-
-	"fmt"
 
 	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/engine"
@@ -20,8 +19,8 @@ func main() {
 
 	c := new(models.Config)
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
-	c.Cluster.Initialize(c)
-	engine.Initialize(c)
+	startServers := c.Cluster.Initialize(c)
+	engine.Initialize(c, len(startServers))
 	err := databases.Connect(c)
 	if err != nil {
 		panic(err)

@@ -26,7 +26,7 @@ func basicSpike(c *models.Config, w int, b int, s int, tw int, fw int, ttlORs []
 	logger.Print(logData)
 	logger.Write(logData)
 
-	scaleInLog := []string{"scaleInLog", fmt.Sprintf("%3.5f, %3.5f, %b, %d, %d, %f", in, ThLow, in < ThLow, w, num, models.Threshold)}
+	scaleInLog := []string{"scaleInLog", fmt.Sprintf("%3.5f, %3.5f, %t, %d, %d, %f", in, ThLow, in < ThLow, w, num, models.Threshold)}
 	logger.Print(scaleInLog)
 	logger.Write(scaleInLog)
 

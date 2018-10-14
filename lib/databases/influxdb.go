@@ -1,8 +1,8 @@
 package databases
 
 import (
+	"encoding/json"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
@@ -29,12 +29,13 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	var throughput float64
 	var beforeApacheTime time.Time
 	var beforeTotalRequest float64
-	var nowApacheTIme time.Time
+	var nowApacheTime time.Time
 	var nowTotalRequest float64
 
-	nowApacheTIme, err := time.Parse(time.RFC3339, status.ApacheAcquisitionTime)
+	nowApacheTime, err := time.Parse(time.RFC3339Nano, status.ApacheAcquisitionTime)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
+		logger.PrintPlace(err.Error())
 	}
 	nowTotalRequest = status.ApacheStat
 
@@ -42,20 +43,23 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
+		logger.PrintPlace(err.Error())
 	}
 
 	if res[0].Series != nil {
 		for _, row := range res[0].Series[0].Values {
-			beforeApacheTime, err = time.Parse(time.RFC3339, row[0].(string))
+			beforeApacheTime, err = time.Parse(time.RFC3339Nano, row[1].(string))
 			if err != nil {
 				logger.WriteMonoString(err.Error())
+				logger.PrintPlace(err.Error())
 			}
-			beforeTotalRequest, err = strconv.ParseFloat(row[1].(string), 64)
+			beforeTotalRequest, err = row[2].(json.Number).Float64()
 			if err != nil {
 				logger.WriteMonoString(err.Error())
+				logger.PrintPlace(err.Error())
 			}
 		}
-		throughput = (nowTotalRequest - beforeTotalRequest) / (nowApacheTIme.Sub(beforeApacheTime).Seconds())
+		throughput = (nowTotalRequest - beforeTotalRequest) / (nowApacheTime.Sub(beforeApacheTime).Seconds())
 	} else {
 		throughput = nowTotalRequest
 	}
@@ -66,6 +70,7 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	})
 	if err != nil {
 		logger.WriteMonoString(err.Error())
+		logger.PrintPlace(err.Error())
 	}
 
 	tags := map[string]string{
@@ -90,9 +95,10 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 		"memory_acquisition_time": status.MemoryAcquisitionTime,
 	}
 
-	t, err := time.Parse(time.RFC3339, status.Time)
+	t, err := time.Parse(time.RFC3339Nano, status.Time)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
+		logger.PrintPlace(err.Error())
 	}
 	pt, err := client.NewPoint(
 		"server_status",
