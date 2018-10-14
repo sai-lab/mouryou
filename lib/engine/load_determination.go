@@ -19,7 +19,9 @@ import (
 func LoadDetermination(config *models.Config) {
 	for {
 		go ORBase(config)
-		go TPBase(config)
+		if config.UseThroughput {
+			go TPBase(config)
+		}
 	}
 }
 
@@ -151,6 +153,9 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 		logger.WriteMonoString(err.Error())
 	}
 
+	if res == nil {
+		return 0
+	}
 	for i, row := range res[0].Series[0].Values {
 		t, err := time.Parse(time.RFC3339, row[0].(string))
 		if err != nil {
