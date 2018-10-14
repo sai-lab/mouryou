@@ -147,7 +147,7 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 	var val float64
 	var twts [30]models.ThroughputWithTime
 
-	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + "WHERE host = '" + serverName + "' LIMIT 30"
+	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' LIMIT 30"
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBPasswd)
 	if err != nil {
 		logger.WriteMonoString(err.Error())

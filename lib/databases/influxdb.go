@@ -38,7 +38,7 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	}
 	nowTotalRequest = status.ApacheStat
 
-	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + "WHERE host = '" + status.HostName + "AND total_request > 0' LIMIT 1"
+	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "AND total_request > 0' LIMIT 1"
 	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBPasswd)
 	if err != nil {
 		logger.WriteMonoString(err.Error())
