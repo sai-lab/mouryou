@@ -28,6 +28,7 @@ func LoadMonitoring(config *models.Config) {
 	for {
 		var bootedServers []string
 		throughputs := make([]float64, len(config.Cluster.VirtualMachines))
+		tw := 0
 		//
 		for _, v := range GetStates() {
 			if config.DevelopLogLevel >= 6 {
@@ -36,25 +37,28 @@ func LoadMonitoring(config *models.Config) {
 			}
 			if v.Info == "booted up" {
 				bootedServers = append(bootedServers, v.Name)
+				tw += v.Weight
 			}
 		}
 
 		statuses := config.Cluster.ServerStatuses(bootedServers, config)
-		for i, _ := range statuses {
+		for i := range statuses {
 			throughputs[i] = databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
 		}
-		ors, arrays, orsArr := Ratios(statuses, throughputs)
+		ors, arrays, orsArr := Ratios(statuses, throughputs, tw)
 
 		logger.PWArrays(config.DevelopLogLevel, arrays)
 		logger.Send(connection, err, orsArr)
 
 		LoadORCh <- calculate.Sum(ors)
-		LoadTPCh <- calculate.Sum(ors)
+		if config.UseThroughput {
+			LoadTPCh <- calculate.Sum(ors)
+		}
 		time.Sleep(time.Second)
 	}
 }
 
-func Ratios(states []apache.ServerStatus, ths []float64) ([]float64, [11][]string, []string) {
+func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12][]string, []string) {
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
@@ -67,16 +71,17 @@ func Ratios(states []apache.ServerStatus, ths []float64) ([]float64, [11][]strin
 		acquisitionTime   = 8
 		critical          = 9
 		reqPerSec         = 10 // reqPerSecは起動してからの平均の1秒間のリクエスト数
+		totalWeight       = 11
 		group             sync.WaitGroup
 		mutex             sync.Mutex
 		ds                []Data       // dataはオートスケールに用いる
-		arrs              [11][]string // arrsはログ記録や重み調整に用いる
+		arrs              [12][]string // arrsはログ記録や重み調整に用いる
 	)
 
 	length := len(states)
 	ors := make([]float64, length)
 
-	for i := 0; i < 11; i++ {
+	for i := 0; i < 12; i++ {
 		arrs[i] = make([]string, length+1)
 	}
 
@@ -92,6 +97,9 @@ func Ratios(states []apache.ServerStatus, ths []float64) ([]float64, [11][]strin
 	arrs[acquisitionTime][0] = "times"
 	arrs[critical][0] = "critical"
 	arrs[reqPerSec][0] = "rpss"
+	arrs[totalWeight][0] = "we"
+
+	arrs[totalWeight][1] = strconv.Itoa(tw)
 
 	for i, v := range states {
 		group.Add(1)

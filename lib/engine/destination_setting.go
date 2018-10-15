@@ -22,10 +22,11 @@ func DestinationSetting(config *models.Config) {
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
 
-		tags := []string{"parameter:working_log"}
+		tags := []string{"parameter:working_log", "operation:power", fmt.Sprintf("host:%s", power.Name)}
 		fields := []string{fmt.Sprintf("working:%d", w),
 			fmt.Sprintf("booting:%d", b),
 			fmt.Sprintf("shutting:%d", s),
+			fmt.Sprintf("power:%s", power.Info),
 		}
 		logger.Record(tags, fields)
 		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)

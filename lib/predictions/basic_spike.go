@@ -34,7 +34,7 @@ func basicSpike(config *models.Config, w int, b int, s int, tw int, fw int, ttlO
 		fmt.Sprintf("th_low:%3.5f", ThLow),
 		fmt.Sprintf("need_scale_in:%t", in < ThLow),
 		fmt.Sprintf("working:%d", w),
-		fmt.Sprintf("vm_num:%d, threshold:%f", num),
+		fmt.Sprintf("vm_num:%d", num),
 		fmt.Sprintf("threshold:%f", models.Threshold),
 	}
 	logger.Record(tags, fields)

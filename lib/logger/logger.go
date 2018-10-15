@@ -79,7 +79,7 @@ func Place() string {
 	return path + " Line " + fmt.Sprint(line)
 }
 
-func PWArrays(developLogLevel int, arrs [11][]string) {
+func PWArrays(developLogLevel int, arrs [12][]string) {
 	for i := 0; i < 11; i++ {
 		if i == 3 {
 			continue
