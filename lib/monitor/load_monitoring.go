@@ -16,6 +16,7 @@ import (
 )
 
 func LoadMonitoring(config *models.Config) {
+
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
 	connection, err := config.WebSocket.Dial()
 	if err != nil {
@@ -26,6 +27,7 @@ func LoadMonitoring(config *models.Config) {
 
 	for {
 		var bootedServers []string
+		throughputs := make([]float64, len(config.Cluster.VirtualMachines))
 		//
 		for _, v := range GetStates() {
 			if config.DevelopLogLevel >= 6 {
@@ -39,11 +41,11 @@ func LoadMonitoring(config *models.Config) {
 
 		statuses := config.Cluster.ServerStatuses(bootedServers, config)
 		for i, _ := range statuses {
-			databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
+			throughputs[i] = databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
 		}
-		ors, arrs, orsArr := Ratios(statuses)
+		ors, arrays, orsArr := Ratios(statuses, throughputs)
 
-		logger.PWArrays(config.DevelopLogLevel, arrs)
+		logger.PWArrays(config.DevelopLogLevel, arrays)
 		logger.Send(connection, err, orsArr)
 
 		LoadORCh <- calculate.Sum(ors)
@@ -52,7 +54,7 @@ func LoadMonitoring(config *models.Config) {
 	}
 }
 
-func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
+func Ratios(states []apache.ServerStatus, ths []float64) ([]float64, [11][]string, []string) {
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
@@ -103,6 +105,7 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
 			data.Name = v.HostName
 			id := "[" + strconv.FormatInt(int64(v.Id), 10) + "]"
 
+			arrs[throughput][i+1] = id + fmt.Sprintf("%f", ths[i])
 			// Otherはタイムアウトした場合"Connection is timeout."が入る。
 			if v.Other == "Connection is timeout." {
 				// タイムアウトした場合、稼働率を1にほかを0にする。
@@ -124,7 +127,6 @@ func Ratios(states []apache.ServerStatus) ([]float64, [11][]string, []string) {
 
 				arrs[operatingRatio][i+1] = id + fmt.Sprintf("%.5f", ors[i])
 				arrs[cpuUsedPercent][i+1] = id + fmt.Sprintf("%3.5f", v.CpuUsedPercent[0])
-				arrs[throughput][i+1] = id + fmt.Sprintf("%5d", v.ApacheLog)
 				arrs[dstatLog][i+1] = id + v.DstatLog
 				arrs[memoryUsedPersent][i+1] = id + fmt.Sprintf("%3.5f", v.MemStat.UsedPercent)
 				arrs[memoryBuffer][i+1] = id + fmt.Sprintf("%3.5d", v.MemStat.Buffers)

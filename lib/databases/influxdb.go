@@ -66,7 +66,7 @@ func WriteValues(clnt client.Client, config *models.Config, tag []string, field 
 	}
 }
 
-func WritePoints(clnt client.Client, config *models.Config, status apache.ServerStatus) {
+func WritePoints(clnt client.Client, config *models.Config, status apache.ServerStatus) float64 {
 	var throughput float64
 	var beforeApacheTime time.Time
 	var beforeTotalRequest float64
@@ -83,7 +83,7 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	}
 	nowTotalRequest = float64(status.ApacheLog)
 
-	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 ORDER BY time DESC LIMIT 1"
+	query := "SELECT apache_acquisition_time, total_request, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 ORDER BY time DESC LIMIT 1"
 	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -166,6 +166,8 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 		place := logger.Place()
 		logger.Error(place, err)
 	}
+
+	return throughput
 }
 
 // QueryDB convenience function to query the database
