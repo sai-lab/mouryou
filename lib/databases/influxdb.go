@@ -2,9 +2,8 @@ package databases
 
 import (
 	"encoding/json"
-	"time"
-
 	"strings"
+	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/sai-lab/mouryou/lib/apache"
@@ -37,13 +36,13 @@ func WriteValues(clnt client.Client, config *models.Config, tag []string, field 
 		logger.Error(place, err)
 	}
 
-	var tags map[string]string
+	tags := map[string]string{}
 	for _, t := range tag {
 		parts := strings.Split(t, ":")
 		tags[parts[0]] = parts[1]
 	}
 
-	var fields map[string]interface{}
+	fields := map[string]interface{}{}
 	for _, f := range field {
 		parts := strings.Split(f, ":")
 		fields[parts[0]] = parts[1]
@@ -71,17 +70,20 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	var throughput float64
 	var beforeApacheTime time.Time
 	var beforeTotalRequest float64
+	var beforeThroughput float64
 	var nowApacheTime time.Time
 	var nowTotalRequest float64
+	var isTimeout bool
 
 	nowApacheTime, err := time.Parse(time.RFC3339Nano, status.ApacheAcquisitionTime)
 	if err != nil {
 		place := logger.Place()
 		logger.Error(place, err)
+		isTimeout = true
 	}
-	nowTotalRequest = status.ApacheStat
+	nowTotalRequest = float64(status.ApacheLog)
 
-	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 LIMIT 1"
+	query := "SELECT apache_acquisition_time, total_request FROM " + config.InfluxDBServerDB + " WHERE host = '" + status.HostName + "' AND total_request > 0 ORDER BY time DESC LIMIT 1"
 	res, err := QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -100,10 +102,16 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 				place := logger.Place()
 				logger.Error(place, err)
 			}
+			beforeThroughput, err = row[3].(json.Number).Float64()
 		}
 		throughput = (nowTotalRequest - beforeTotalRequest) / (nowApacheTime.Sub(beforeApacheTime).Seconds())
-	} else {
-		throughput = nowTotalRequest
+	}
+
+	if isTimeout {
+		throughput = beforeThroughput
+	}
+	if throughput < 1 {
+		throughput = 1
 	}
 
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{

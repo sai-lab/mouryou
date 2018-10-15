@@ -8,7 +8,6 @@ import (
 
 	"strconv"
 
-	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
@@ -34,7 +33,7 @@ func Initialize(config *models.Config, startNum int) {
 		tags := []string{"operation:change_weight", fmt.Sprintf("host:%s", machine.Name)}
 		fields := []string{fmt.Sprintf("weight:%d", machine.Weight)}
 		logger.Record(tags, fields)
-		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+		//databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 		st.Weight = machine.Weight
 		if config.DevelopLogLevel >= 5 {

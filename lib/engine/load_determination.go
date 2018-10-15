@@ -115,7 +115,20 @@ func TPBase(config *models.Config) {
 		needScaleOut := false
 		needScaleIn := false
 
-		for name, value := range config.Cluster.VirtualMachines {
+		var bootedServers []string
+		//
+		for _, v := range monitor.GetStates() {
+			if config.DevelopLogLevel >= 6 {
+				place := logger.Place()
+				logger.Debug(place, "GetStates() Machine Name: "+v.Name+"Machine Info: "+v.Info)
+			}
+			if v.Info == "booted up" {
+				bootedServers = append(bootedServers, v.Name)
+			}
+		}
+
+		for _, name := range bootedServers {
+			value := config.Cluster.VirtualMachines[name]
 			value.LoadStatus = judgeEachStatus(name, value.Average, config)
 			// 0:普通 1:高負荷 2:低負荷
 			switch value.LoadStatus {
