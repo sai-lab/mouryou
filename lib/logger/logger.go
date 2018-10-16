@@ -22,8 +22,11 @@ func Create() *os.File {
 
 func Record(tags []string, fields []string) {
 	var arr []string
-	for i := range fields {
-		arr = append(tags, fields[i])
+	for i := range tags {
+		arr = append(arr, tags[i])
+	}
+	for j := range fields {
+		arr = append(arr, fields[j])
 	}
 	paste(arr)
 	write(arr)

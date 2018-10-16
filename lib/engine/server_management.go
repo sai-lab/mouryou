@@ -16,7 +16,7 @@ import (
 // 起動状況はengine.destination_settingが設定しています.
 // 負荷状況はmonitor.LoadChから取得します.
 func ServerManagement(config *models.Config) {
-	var b, s, w int
+	var b, s, w, wait int
 	var order Scale
 
 	vmNum := len(config.Cluster.VirtualMachines)
@@ -26,11 +26,15 @@ func ServerManagement(config *models.Config) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
+		wait = mutex.Read(&waiting, &waitMutex)
 
 		tags := []string{"parameter:working_log", "operation:server_management"}
 		fields := []string{fmt.Sprintf("working:%d", w),
 			fmt.Sprintf("booting:%d", b),
 			fmt.Sprintf("shutting:%d", s),
+			fmt.Sprintf("load:%s", order.Load),
+			fmt.Sprintf("handle:%s", order.Handle),
+			fmt.Sprintf("weight:%d", order.Weight),
 		}
 		logger.Record(tags, fields)
 		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
@@ -45,7 +49,7 @@ func ServerManagement(config *models.Config) {
 				bootUpVMs(config, order.Weight)
 			}
 		case "ScaleIn":
-			if w > arm && b == 0 {
+			if w > arm && b == 0 && wait == 0 {
 				shutDownVMs(config, order.Weight)
 			}
 		default:
