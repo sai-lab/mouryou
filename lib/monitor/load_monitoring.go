@@ -120,6 +120,9 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 				ors[i] = 1
 				arrs[operatingRatio][i+1] = id + "1"
 				for k := 1; k < 9; k++ {
+					if k == 2 {
+						continue
+					}
 					arrs[k][i+1] = id + "0"
 				}
 				arrs[critical][i+1] = id + v.Other
