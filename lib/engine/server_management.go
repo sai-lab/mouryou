@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
@@ -15,17 +16,38 @@ import (
 // 起動状況はengine.destination_settingが設定しています.
 // 負荷状況はmonitor.LoadChから取得します.
 func ServerManagement(config *models.Config) {
+	var b, s, w int
 	var order Scale
+
+	vmNum := len(config.Cluster.VirtualMachines)
+	arm := len(config.AlwaysRunningMachines)
+
 	for order = range scaleCh {
+		w = mutex.Read(&working, &workMutex)
+		b = mutex.Read(&booting, &bootMutex)
+		s = mutex.Read(&shutting, &shutMutex)
+
+		tags := []string{"parameter:working_log", "operation:server_management"}
+		fields := []string{fmt.Sprintf("working:%d", w),
+			fmt.Sprintf("booting:%d", b),
+			fmt.Sprintf("shutting:%d", s),
+		}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
 		if config.DevelopLogLevel >= 3 {
 			place := logger.Place()
 			logger.Debug(place, fmt.Sprintf("Load: %s, Handle: %s, Weight: %d", order.Load, order.Handle, order.Weight))
 		}
 		switch order.Handle {
 		case "ScaleOut":
-			bootUpVMs(config, order.Weight)
+			if w+b < vmNum && s == 0 {
+				bootUpVMs(config, order.Weight)
+			}
 		case "ScaleIn":
-			shutDownVMs(config, order.Weight)
+			if w > arm && b == 0 {
+				shutDownVMs(config, order.Weight)
+			}
 		default:
 			place := logger.Place()
 			logger.Debug(place, "Unknown Handle is comming!")
