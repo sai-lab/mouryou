@@ -34,10 +34,24 @@ func ORBase(config *models.Config) {
 
 	r := ring.New(LING_SIZE)
 	ttlORs := make([]float64, LING_SIZE)
+	suspectedNoise := 0.0
 
 	for totalOR = range monitor.LoadORCh {
-		r.Value = totalOR
-		r = r.Next()
+		if totalOR >= 1.0 {
+			if suspectedNoise >= 1.0 {
+				r.Value = suspectedNoise
+				r = r.Next()
+				r.Value = totalOR
+				r = r.Next()
+				suspectedNoise = 0.0
+			} else {
+				suspectedNoise = totalOR
+			}
+		} else {
+			r.Value = totalOR
+			r = r.Next()
+		}
+
 		ttlORs = convert.RingToArray(r)
 
 		// Get Number of Active Servers
