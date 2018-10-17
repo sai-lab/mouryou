@@ -10,12 +10,17 @@ import (
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/timer"
+	"golang.org/x/net/websocket"
 )
 
 func DestinationSetting(config *models.Config) {
 	var b, s, w, o int
+	var connection *websocket.Conn
+	var err error
 
-	connection, err := config.WebSocket.Dial()
+	if config.UseWeb {
+		connection, err = config.WebSocket.Dial()
+	}
 
 	for power := range monitor.PowerCh {
 		w = mutex.Read(&working, &workMutex)
@@ -38,14 +43,18 @@ func DestinationSetting(config *models.Config) {
 		switch power.Info {
 		case "booting up":
 			mutex.Write(&booting, &bootMutex, b+1)
-			logger.Send(connection, err, "Booting up: "+power.Name)
+			if config.UseWeb {
+				logger.Send(connection, err, "Booting up: "+power.Name)
+			}
 		case "booted up":
 			err := config.Cluster.LoadBalancer.Active(config.Cluster.VirtualMachines[power.Name].Name)
 			if err != nil {
 				place := logger.Place()
 				logger.Error(place, err)
 			}
-			logger.Send(connection, err, "Booted up: "+power.Name)
+			if config.UseWeb {
+				logger.Send(connection, err, "Booted up: "+power.Name)
+			}
 			mutex.Write(&working, &workMutex, w+1)
 			mutex.Write(&booting, &bootMutex, b-1)
 			go timer.Set(&waiting, &waitMutex, config.Wait)
@@ -58,10 +67,14 @@ func DestinationSetting(config *models.Config) {
 				logger.Error(place, err)
 			}
 			go timer.Set(&waiting, &waitMutex, config.Wait)
-			logger.Send(connection, err, "Shutting down: "+power.Name)
+			if config.UseWeb {
+				logger.Send(connection, err, "Shutting down: "+power.Name)
+			}
 		case "shutted down":
 			mutex.Write(&shutting, &shutMutex, s-1)
-			logger.Send(connection, err, "Shutted down: "+power.Name)
+			if config.UseWeb {
+				logger.Send(connection, err, "Shutted down: "+power.Name)
+			}
 		default:
 			fmt.Println("Error:", power)
 			switch {

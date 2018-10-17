@@ -13,16 +13,20 @@ import (
 	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"golang.org/x/net/websocket"
 )
 
 func LoadMonitoring(config *models.Config) {
-
+	var connection *websocket.Conn
+	var err error
 	http.DefaultClient.Timeout = time.Duration(config.Timeout * time.Second)
-	connection, err := config.WebSocket.Dial()
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("ok")
+	if config.UseWeb {
+		connection, err = config.WebSocket.Dial()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("ok")
+		}
 	}
 
 	for {
@@ -48,7 +52,9 @@ func LoadMonitoring(config *models.Config) {
 		ors, arrays, orsArr := Ratios(statuses, throughputs, tw)
 
 		logger.PWArrays(config.DevelopLogLevel, arrays)
-		logger.Send(connection, err, orsArr)
+		if config.UseWeb {
+			logger.Send(connection, err, orsArr)
+		}
 
 		LoadORCh <- calculate.Sum(ors)
 		if config.UseThroughput {

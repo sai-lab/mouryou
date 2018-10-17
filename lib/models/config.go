@@ -20,7 +20,8 @@ type Config struct {
 	// DevelopLogLevel>=2: 各サーバの重み情報を出力
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
-	DevelopLogLevel int `json:"develop_log_level"`
+	UseWeb          bool `json:"use_web"`
+	DevelopLogLevel int  `json:"develop_log_level"`
 	// 負荷取得がタイムアウトしたと判断するまでの時間
 	Timeout time.Duration `json:"timeout"`
 	Sleep   time.Duration `json:"sleep"`
