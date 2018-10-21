@@ -18,6 +18,7 @@ import (
 )
 
 func LoadDetermination(config *models.Config) {
+	logger.Debug(logger.Place(), "LoadDetermination is coming")
 	if config.UseOperatingRatio {
 		go ORBase(config)
 	}
@@ -116,6 +117,7 @@ func scaleSameServers(c *models.Config, ttlORs []float64, working int, booting i
 
 func TPBase(config *models.Config) {
 	for _ = range monitor.LoadTPCh {
+		logger.Debug(logger.Place(), "TPBase is coming")
 		needScaleOut := false
 		needScaleIn := false
 
@@ -148,12 +150,8 @@ func TPBase(config *models.Config) {
 					needScaleOut = false
 				}
 			}
-			if needScaleOut {
-				scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
-			} else if needScaleIn {
-				scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
-			}
 		case "MovingAverage":
+			logger.Debug(logger.Place(), "MovingAverage is coming")
 			totalTPRatioMovingAverage := 0.0
 			num := 0
 			for i, name := range bootedServers {
@@ -166,10 +164,14 @@ func TPBase(config *models.Config) {
 				needScaleOut = true
 			} else if ratioAverage <= config.ThroughputScaleInRatio {
 				needScaleIn = true
-
 			}
 		default:
 			panic("unknown algorithm")
+		}
+		if needScaleOut {
+			scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
+		} else if needScaleIn {
+			scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
 		}
 	}
 }
