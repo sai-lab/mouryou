@@ -43,6 +43,7 @@ type Config struct {
 	WebSocket                   WebSocketStruct `json:"web_socket"`
 	Cluster                     Cluster         `json:"cluster"`
 	UseThroughput               bool            `json:"use_throughput"`
+	UseOperatingRatio           bool            `json:"use_operating_ratio"`
 	ThroughputScaleOutThreshold int             `json:"throughput_scale_out_threshold"`
 	ThroughputScaleInThreshold  int             `json:"throughput_scale_in_threshold"`
 	ThroughputScaleInRate       float64         `json:"throughput_scale_in_rate"`

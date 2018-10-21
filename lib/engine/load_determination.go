@@ -16,7 +16,9 @@ import (
 )
 
 func LoadDetermination(config *models.Config) {
-	go ORBase(config)
+	if config.UseOperatingRatio {
+		go ORBase(config)
+	}
 	if config.UseThroughput {
 		go TPBase(config)
 	}

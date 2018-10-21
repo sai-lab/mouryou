@@ -56,7 +56,9 @@ func LoadMonitoring(config *models.Config) {
 			logger.Send(connection, err, orsArr)
 		}
 
-		LoadORCh <- calculate.Sum(ors)
+		if config.UseOperatingRatio {
+			LoadORCh <- calculate.Sum(ors)
+		}
 		if config.UseThroughput {
 			LoadTPCh <- calculate.Sum(ors)
 		}
@@ -68,7 +70,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
-		throughput        = 2 // throughputs is ApacheLog in apache.ServerStatus
+		throughput        = 2 // throughput is ApacheLog in apache.ServerStatus
 		dstatLog          = 3
 		memoryUsedPersent = 4
 		memoryBuffer      = 5
