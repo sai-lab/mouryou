@@ -42,8 +42,9 @@ type Config struct {
 	StartMachineIDs             []int           `json:"start_machine_ids"`
 	WebSocket                   WebSocketStruct `json:"web_socket"`
 	Cluster                     Cluster         `json:"cluster"`
-	UseThroughput               bool            `json:"use_throughput"`
 	UseOperatingRatio           bool            `json:"use_operating_ratio"`
+	UseThroughput               bool            `json:"use_throughput"`
+	ThroughputAlgorithm         string          `json:"throughput_algorithm"`
 	ThroughputScaleOutThreshold int             `json:"throughput_scale_out_threshold"`
 	ThroughputScaleInThreshold  int             `json:"throughput_scale_in_threshold"`
 	ThroughputScaleInRate       float64         `json:"throughput_scale_in_rate"`

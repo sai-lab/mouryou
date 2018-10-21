@@ -129,25 +129,30 @@ func TPBase(config *models.Config) {
 			}
 		}
 
-		for _, name := range bootedServers {
-			value := config.Cluster.VirtualMachines[name]
-			value.LoadStatus = judgeEachStatus(name, value.Average, config)
-			// 0:普通 1:高負荷 2:低負荷
-			switch value.LoadStatus {
-			case 1:
-				needScaleOut = true
-			case 2:
-				needScaleIn = true
-			default:
-				needScaleIn = false
-				needScaleOut = false
-			}
-		}
+		switch config.ThroughputAlgorithm {
+		case "All":
+			for _, name := range bootedServers {
+				value := config.Cluster.VirtualMachines[name]
 
-		if needScaleOut {
-			scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
-		} else if needScaleIn {
-			scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
+				value.LoadStatus = judgeEachStatus(name, value.Average, config)
+				// 0:普通 1:高負荷 2:低負荷
+				switch value.LoadStatus {
+				case 1:
+					needScaleOut = true
+				case 2:
+					needScaleIn = true
+				default:
+					needScaleIn = false
+					needScaleOut = false
+				}
+			}
+			if needScaleOut {
+				scaleCh <- Scale{Handle: "ScaleOut", Weight: 10, Load: "TP"}
+			} else if needScaleIn {
+				scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
+			}
+		case "Average":
+		default:
 		}
 	}
 }
