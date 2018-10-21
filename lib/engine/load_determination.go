@@ -18,16 +18,15 @@ import (
 )
 
 func LoadDetermination(config *models.Config) {
-	logger.Debug(logger.Place(), "LoadDetermination is coming")
 	if config.UseOperatingRatio {
-		go ORBase(config)
+		go operatingRatioBase(config)
 	}
 	if config.UseThroughput {
-		go TPBase(config)
+		go throughputBase(config)
 	}
 }
 
-func ORBase(config *models.Config) {
+func operatingRatioBase(config *models.Config) {
 	var (
 		// totalOR means the total value of the operating ratios of the working servers
 		totalOR float64
@@ -115,9 +114,8 @@ func scaleSameServers(c *models.Config, ttlORs []float64, working int, booting i
 	return orders
 }
 
-func TPBase(config *models.Config) {
+func throughputBase(config *models.Config) {
 	for _ = range monitor.LoadTPCh {
-		logger.Debug(logger.Place(), "TPBase is coming")
 		needScaleOut := false
 		needScaleIn := false
 
@@ -153,13 +151,26 @@ func TPBase(config *models.Config) {
 		case "MovingAverage":
 			logger.Debug(logger.Place(), "MovingAverage is coming")
 			totalTPRatioMovingAverage := 0.0
-			num := 0
-			for i, name := range bootedServers {
+			for _, name := range bootedServers {
 				value := config.Cluster.VirtualMachines[name]
 				totalTPRatioMovingAverage += movingAverageOfThroughputRatio(name, value.ThroughputUpperLimit, config)
-				num = i
+				tags := []string{"parameter:working_log", "operation:load_determination"}
+				fields := []string{
+					fmt.Sprintf("throughput_upper_limit:%f", value.ThroughputUpperLimit),
+					fmt.Sprintf("total_of_moving_average_of_throughput_ratio:%d", totalTPRatioMovingAverage),
+				}
+				logger.Record(tags, fields)
+				databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 			}
-			ratioAverage := totalTPRatioMovingAverage / float64(num)
+			ratioAverage := totalTPRatioMovingAverage / float64(len(bootedServers))
+
+			tags := []string{"parameter:working_log", "operation:load_determination"}
+			fields := []string{
+				fmt.Sprintf("ratio_average:%f", ratioAverage),
+			}
+			logger.Record(tags, fields)
+			databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
 			if ratioAverage >= 1.0 {
 				needScaleOut = true
 			} else if ratioAverage <= config.ThroughputScaleInRatio {
@@ -180,7 +191,7 @@ func TPBase(config *models.Config) {
 // upperLimitは各VMのUpperLimit, 移動平均の区間は config.ThroughputMovingAverageInterval で指定します
 func movingAverageOfThroughputRatio(serverName string, upperLimit float64, config *models.Config) float64 {
 	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB +
-		" WHERE host = '" + serverName + "' ORDER BY time DESC LIMIT " + strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
+		" WHERE host = '" + serverName + "' AND operation = 'measurement' ORDER BY time DESC LIMIT " + strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -208,7 +219,13 @@ func movingAverageOfThroughputRatio(serverName string, upperLimit float64, confi
 		interval = i
 	}
 
-	movingAverage := totalRatioInInterval / float64(interval)
+	movingAverage := totalRatioInInterval / float64(interval+1)
+	tags := []string{"parameter:working_log", "operation:load_determination", "host"}
+	fields := []string{
+		fmt.Sprintf("moving_average:%f", movingAverage),
+	}
+	logger.Record(tags, fields)
+	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 	return movingAverage
 }
@@ -219,7 +236,7 @@ func judgeEachStatus(serverName string, average float64, config *models.Config) 
 	var val float64
 	var twts [30]models.ThroughputWithTime
 
-	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' ORDER BY time DESC LIMIT 30"
+	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' AND operation = 'measurement' ORDER BY time DESC LIMIT 30"
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
