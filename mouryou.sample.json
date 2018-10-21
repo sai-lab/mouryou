@@ -11,9 +11,19 @@
   "adjust_server_num": true,
   "use_operating_ratio": true,
   "use_throughput": false,
-  "throughput_algorithm": "Average",
+  "throughput_algorithm": "MovingAverage",
+  "throughput_moving_average_interval": 3,
+  "throughput_scale_in_ratio": 0.3,
+  "throughput_scale_out_threshold": 1,
+  "throughput_scale_out_time": 5,
+  "throughput_scale_in_threshold": 3,
+  "throughput_scale_in_time": 5,
   "log_db": "mysql",
   "log_dsb": "root:@tcp(127.0.0.1:3306)/mouryou?parseTime=true",
+  "influxdb_addr": "",
+  "influxdb_port": "",
+  "influxdb_user": "",
+  "influxdb_passwd": "",
   "origin_machine_names": [
     "origin-01",
     "origin-02"
@@ -50,7 +60,7 @@
             "operation": "booted up",
             "unit_time": 30,
             "unit_cost": 10,
-            "average": 250,
+            "throughput_upper_limit": 200,
             "basic_weight": 10,
             "weight": 10
           },
@@ -61,7 +71,7 @@
             "operation": "booted up",
             "unit_time": 30,
             "unit_cost": 10,
-            "average": 250,
+            "throughput_upper_limit": 200,
             "basic_weight": 10,
             "weight": 10
           }

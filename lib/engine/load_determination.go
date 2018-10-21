@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"strconv"
+
 	"github.com/sai-lab/mouryou/lib/convert"
 	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
@@ -134,7 +136,7 @@ func TPBase(config *models.Config) {
 			for _, name := range bootedServers {
 				value := config.Cluster.VirtualMachines[name]
 
-				value.LoadStatus = judgeEachStatus(name, value.Average, config)
+				value.LoadStatus = judgeEachStatus(name, value.ThroughputUpperLimit, config)
 				// 0:普通 1:高負荷 2:低負荷
 				switch value.LoadStatus {
 				case 1:
@@ -151,15 +153,67 @@ func TPBase(config *models.Config) {
 			} else if needScaleIn {
 				scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
 			}
-		case "Average":
+		case "MovingAverage":
+			totalTPRatioMovingAverage := 0.0
+			num := 0
+			for i, name := range bootedServers {
+				value := config.Cluster.VirtualMachines[name]
+				totalTPRatioMovingAverage += movingAverageOfThroughputRatio(name, value.ThroughputUpperLimit, config)
+				num = i
+			}
+			ratioAverage := totalTPRatioMovingAverage / float64(num)
+			if ratioAverage >= 1.0 {
+				needScaleOut = true
+			} else if ratioAverage <= config.ThroughputScaleInRatio {
+				needScaleIn = true
+
+			}
 		default:
+			panic("unknown algorithm")
 		}
 	}
 }
 
+// movingAverageOfThroughputRatio は 上限スループットupperLimitに対するその時点でのスループットの割合 の移動平均を算出します
+// upperLimitは各VMのUpperLimit, 移動平均の区間は config.ThroughputMovingAverageInterval で指定します
+func movingAverageOfThroughputRatio(serverName string, upperLimit float64, config *models.Config) float64 {
+	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB +
+		" WHERE host = '" + serverName + "' ORDER BY time DESC LIMIT " + strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
+	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
+	if err != nil {
+		place := logger.Place()
+		logger.Error(place, err)
+	}
+	for _, re := range res {
+		if re.Series == nil {
+			place := logger.Place()
+			logger.Debug(place, "database throughput is nil")
+			return 0
+		}
+	}
+
+	// 上限スループットupperLimitに対するその時点でのthroughputの割合 を
+	// intervalで指定した区間分合計したもの
+	totalRatioInInterval := 0.0
+	interval := 0
+	for i, row := range res[0].Series[0].Values {
+		throughput, err := row[1].(json.Number).Float64()
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
+		totalRatioInInterval += throughput / upperLimit
+		interval = i
+	}
+
+	movingAverage := totalRatioInInterval / float64(interval)
+
+	return movingAverage
+}
+
 // スループットを用いて各サーバの負荷状況を判断する
 // 0:普通 1:高負荷 2:低負荷
-func judgeEachStatus(serverName string, average int, config *models.Config) int {
+func judgeEachStatus(serverName string, average float64, config *models.Config) int {
 	var val float64
 	var twts [30]models.ThroughputWithTime
 
@@ -202,7 +256,7 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 
 // 規定回数以上上限スループットを超えれば高負荷と判断
 func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [30]models.ThroughputWithTime) bool {
-	TPHigh := config.Cluster.VirtualMachines[serverName].Average
+	TPHigh := config.Cluster.VirtualMachines[serverName].ThroughputUpperLimit
 	c := 0
 	for i, twt := range twts {
 		if twt.Throughput == 0 {
@@ -224,14 +278,14 @@ func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [3
 
 // 規定回数以上連続して下限スループットを下回れば低負荷と判断
 func judgeLowLoadByThroughput(config *models.Config, serverName string, twts [30]models.ThroughputWithTime) bool {
-	TPHigh := config.Cluster.VirtualMachines[serverName].Average
-	rate := config.ThroughputScaleInRate
+	TPHigh := config.Cluster.VirtualMachines[serverName].ThroughputUpperLimit
+	ratio := config.ThroughputScaleInRatio
 	c := 0
 	for i, twt := range twts {
 		if twt.Throughput == 0 {
 			break // これ以上データが無いため
 		}
-		if twt.Throughput > float64(TPHigh)*rate {
+		if twt.Throughput > float64(TPHigh)*ratio {
 			c++
 		} else {
 			c = 0
