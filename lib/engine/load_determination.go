@@ -137,6 +137,8 @@ func TPBase(config *models.Config) {
 			case 2:
 				needScaleIn = true
 			default:
+				needScaleIn = false
+				needScaleOut = false
 			}
 		}
 
@@ -154,7 +156,7 @@ func judgeEachStatus(serverName string, average int, config *models.Config) int 
 	var val float64
 	var twts [30]models.ThroughputWithTime
 
-	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' LIMIT 30"
+	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB + " WHERE host = '" + serverName + "' ORDER BY time DESC LIMIT 30"
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -196,6 +198,9 @@ func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [3
 	TPHigh := config.Cluster.VirtualMachines[serverName].Average
 	c := 0
 	for i, twt := range twts {
+		if twt.Throughput == 0 {
+			break // これ以上データが無いため
+		}
 		if twt.Throughput > float64(TPHigh) {
 			c++
 		}
@@ -216,6 +221,9 @@ func judgeLowLoadByThroughput(config *models.Config, serverName string, twts [30
 	rate := config.ThroughputScaleInRate
 	c := 0
 	for i, twt := range twts {
+		if twt.Throughput == 0 {
+			break // これ以上データが無いため
+		}
 		if twt.Throughput > float64(TPHigh)*rate {
 			c++
 		} else {
