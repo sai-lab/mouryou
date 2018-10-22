@@ -91,9 +91,13 @@ func PWArrays(developLogLevel int, arrs [12][]string) {
 			log.Println("," + strings.Join(arrs[i], ","))
 			continue
 		}
-		if developLogLevel >= 3 {
+		if developLogLevel >= 5 {
 			// サーバのパラメータを全て標準出力に出力
 			fmt.Println(strings.Join(arrs[i], " "))
+		} else {
+			if i == 2 {
+				fmt.Println(strings.Join(arrs[i], " "))
+			}
 		}
 
 		log.Println("," + strings.Join(arrs[i], ","))
