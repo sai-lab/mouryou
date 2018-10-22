@@ -149,7 +149,6 @@ func throughputBase(config *models.Config) {
 				}
 			}
 		case "MovingAverage":
-			logger.Debug(logger.Place(), "MovingAverage is coming")
 			totalTPRatioMovingAverage := 0.0
 			for _, name := range bootedServers {
 				value := config.Cluster.VirtualMachines[name]
@@ -157,7 +156,7 @@ func throughputBase(config *models.Config) {
 				tags := []string{"parameter:working_log", "operation:load_determination"}
 				fields := []string{
 					fmt.Sprintf("throughput_upper_limit:%f", value.ThroughputUpperLimit),
-					fmt.Sprintf("total_of_moving_average_of_throughput_ratio:%d", totalTPRatioMovingAverage),
+					fmt.Sprintf("total_of_moving_average_of_throughput_ratio:%f", totalTPRatioMovingAverage),
 				}
 				logger.Record(tags, fields)
 				databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
@@ -220,7 +219,7 @@ func movingAverageOfThroughputRatio(serverName string, upperLimit float64, confi
 	}
 
 	movingAverage := totalRatioInInterval / float64(interval+1)
-	tags := []string{"parameter:working_log", "operation:load_determination", "host"}
+	tags := []string{"parameter:working_log", "operation:load_determination", "host:" + serverName}
 	fields := []string{
 		fmt.Sprintf("moving_average:%f", movingAverage),
 	}
