@@ -46,11 +46,11 @@ func ServerManagement(config *models.Config) {
 		switch order.Handle {
 		case "ScaleOut":
 			if w+b < vmNum && s == 0 {
-				bootUpVMs(config, order.Weight)
+				bootUpVMs(config, order.Weight, order.Load)
 			}
 		case "ScaleIn":
 			if w > arm && b == 0 && wait == 0 {
-				shutDownVMs(config, order.Weight)
+				shutDownVMs(config, order.Weight, order.Load)
 			}
 		default:
 			place := logger.Place()
@@ -60,7 +60,7 @@ func ServerManagement(config *models.Config) {
 }
 
 // bootUpVMs
-func bootUpVMs(config *models.Config, weight int) {
+func bootUpVMs(config *models.Config, weight int, load string) {
 	var candidate []int
 
 	statuses := monitor.GetStates()
@@ -71,7 +71,7 @@ func bootUpVMs(config *models.Config, weight int) {
 			continue
 		}
 		if status.Weight >= weight {
-			go bootUpVM(config, status)
+			go bootUpVM(config, status, load)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
 			return
 		}
@@ -88,16 +88,17 @@ func bootUpVMs(config *models.Config, weight int) {
 			boot = n
 		}
 	}
-	go bootUpVM(config, statuses[boot])
+	go bootUpVM(config, statuses[boot], load)
 	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+statuses[boot].Weight)
 }
 
 // bootUpVM
-func bootUpVM(config *models.Config, st monitor.State) {
+func bootUpVM(config *models.Config, st monitor.State, load string) {
 	var p monitor.PowerStruct
 
 	p.Name = st.Name
 	p.Info = "booting up"
+	p.Load = load
 	st.Info = "booting up"
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p
@@ -126,7 +127,7 @@ func bootUpVM(config *models.Config, st monitor.State) {
 }
 
 // shutDownVMs
-func shutDownVMs(config *models.Config, weight int) {
+func shutDownVMs(config *models.Config, weight int, load string) {
 	var mu sync.RWMutex
 
 	mu.RLock()
@@ -147,7 +148,7 @@ func shutDownVMs(config *models.Config, weight int) {
 		}
 
 		if st.Weight <= weight {
-			go shutDownVM(config, st)
+			go shutDownVM(config, st, load)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-st.Weight)
 			if config.DevelopLogLevel >= 1 {
@@ -160,10 +161,11 @@ func shutDownVMs(config *models.Config, weight int) {
 }
 
 //shutDownVM
-func shutDownVM(config *models.Config, st monitor.State) {
+func shutDownVM(config *models.Config, st monitor.State, load string) {
 	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"
+	p.Load = load
 	st.Info = "shutting down"
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- p

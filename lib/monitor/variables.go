@@ -30,6 +30,7 @@ type Data struct {
 type PowerStruct struct {
 	Name string
 	Info string
+	Load string
 }
 
 var (

@@ -27,7 +27,7 @@ func DestinationSetting(config *models.Config) {
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
 
-		tags := []string{"parameter:working_log", "operation:power", fmt.Sprintf("host:%s", power.Name)}
+		tags := []string{"parameter:working_log", "operation:power", fmt.Sprintf("host:%s", power.Name), fmt.Sprintf("load:%s", power.Load)}
 		fields := []string{fmt.Sprintf("working:%d", w),
 			fmt.Sprintf("booting:%d", b),
 			fmt.Sprintf("shutting:%d", s),
