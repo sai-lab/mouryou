@@ -120,6 +120,7 @@ func throughputBase(config *models.Config) {
 		needScaleIn := false
 
 		var bootedServers []string
+		var bootingServers []string
 		//
 		for _, v := range monitor.GetStates() {
 			if config.DevelopLogLevel >= 6 {
@@ -128,6 +129,8 @@ func throughputBase(config *models.Config) {
 			}
 			if v.Info == "booted up" {
 				bootedServers = append(bootedServers, v.Name)
+			} else if v.Info == "booting up" {
+				bootingServers = append(bootingServers, v.Name)
 			}
 		}
 
@@ -163,6 +166,7 @@ func throughputBase(config *models.Config) {
 			}
 			ratioAverage := totalTPRatioMovingAverage / float64(len(bootedServers))
 
+			// ログにratioAverageを記録
 			tags := []string{"parameter:working_log", "operation:load_determination"}
 			fields := []string{
 				fmt.Sprintf("ratio_average:%f", ratioAverage),
@@ -170,9 +174,38 @@ func throughputBase(config *models.Config) {
 			logger.Record(tags, fields)
 			databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
+			// 判定
 			if ratioAverage >= 1.0 {
 				needScaleOut = true
 			} else if ratioAverage <= config.ThroughputScaleInRatio {
+				needScaleIn = true
+			}
+		case "MovingAverageV1.2":
+			totalThroughput := 0.0
+			totalUpperLimit := 0.0
+			for _, name := range bootedServers {
+				value := config.Cluster.VirtualMachines[name]
+				totalThroughput += intervalThroughputTotal(name, config)
+				totalUpperLimit += value.ThroughputUpperLimit
+			}
+			for _, name := range bootingServers {
+				// 起動処理中のサーバの上限スループットも考慮
+				totalUpperLimit += config.Cluster.VirtualMachines[name].ThroughputUpperLimit
+			}
+			movingAverage := totalThroughput / (float64(config.ThroughputMovingAverageInterval) * totalUpperLimit)
+
+			// ログにmovingAverageを記録
+			tags := []string{"parameter:working_log", "operation:load_determination"}
+			fields := []string{
+				fmt.Sprintf("moving_average:%f", movingAverage),
+			}
+			logger.Record(tags, fields)
+			databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
+			// 判定
+			if movingAverage >= 1.0 {
+				needScaleOut = true
+			} else if movingAverage <= config.ThroughputScaleInRatio {
 				needScaleIn = true
 			}
 		default:
@@ -184,6 +217,35 @@ func throughputBase(config *models.Config) {
 			scaleCh <- Scale{Handle: "ScaleIn", Weight: 10, Load: "TP"}
 		}
 	}
+}
+
+func intervalThroughputTotal(serverName string, config *models.Config) float64 {
+	query := "SELECT time, throughput FROM " + config.InfluxDBServerDB +
+		" WHERE host = '" + serverName + "' AND operation = 'measurement' ORDER BY time DESC LIMIT " + strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
+	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
+	if err != nil {
+		place := logger.Place()
+		logger.Error(place, err)
+	}
+	for _, re := range res {
+		if re.Series == nil {
+			place := logger.Place()
+			logger.Debug(place, "database throughput is nil")
+			return 0
+		}
+	}
+
+	total := 0.0
+	for _, row := range res[0].Series[0].Values {
+		throughput, err := row[1].(json.Number).Float64()
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
+		total += throughput
+	}
+
+	return total
 }
 
 // movingAverageOfThroughputRatio は 上限スループットupperLimitに対するその時点でのスループットの割合 の移動平均を算出します
