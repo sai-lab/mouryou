@@ -49,6 +49,7 @@ type Config struct {
 	ThroughputScaleOutThreshold     int             `json:"throughput_scale_out_threshold"`
 	ThroughputScaleInThreshold      int             `json:"throughput_scale_in_threshold"`
 	ThroughputScaleInRatio          float64         `json:"throughput_scale_in_ratio"`
+	ThroughputScaleOutRatio         float64         `json:"throughput_scale_out_ratio"`
 	ThroughputScaleOutTime          int             `json:"throughput_scale_out_time"`
 	ThroughputScaleInTime           int             `json:"throughput_scale_in_time"`
 	LogDB                           string          `json:"log_db"`

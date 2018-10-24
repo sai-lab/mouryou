@@ -175,7 +175,7 @@ func throughputBase(config *models.Config) {
 			databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 			// 判定
-			if ratioAverage >= 1.0 {
+			if ratioAverage >= config.ThroughputScaleOutRatio {
 				needScaleOut = true
 			} else if ratioAverage <= config.ThroughputScaleInRatio {
 				needScaleIn = true
@@ -203,7 +203,7 @@ func throughputBase(config *models.Config) {
 			databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 			// 判定
-			if movingAverage >= 1.0 {
+			if movingAverage >= config.ThroughputScaleOutRatio {
 				needScaleOut = true
 			} else if movingAverage <= config.ThroughputScaleInRatio {
 				needScaleIn = true
