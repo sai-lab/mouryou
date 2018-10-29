@@ -62,6 +62,7 @@ func LoadMonitoring(config *models.Config) {
 		if config.UseThroughput {
 			LoadTPCh <- calculate.Sum(ors)
 		}
+
 		time.Sleep(time.Second)
 	}
 }

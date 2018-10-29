@@ -121,6 +121,24 @@ func throughputBase(config *models.Config) {
 
 		var bootedServers []string
 		var bootingServers []string
+
+		// Get Number of Active Servers
+		lWorking := mutex.Read(&working, &workMutex)
+		lBooting := mutex.Read(&booting, &bootMutex)
+		lShutting := mutex.Read(&shutting, &shutMutex)
+		lTotalWeight := mutex.Read(&totalWeight, &totalWeightMutex)
+		lFutureTotalWeight := mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
+
+		tags := []string{"base_load:th", "parameter:working_log", "operation:throughput_base_load_determination"}
+		fields := []string{fmt.Sprintf("working:%d", lWorking),
+			fmt.Sprintf("booting:%d", lBooting),
+			fmt.Sprintf("shutting:%d", lShutting),
+			fmt.Sprintf("total_weight:%d", lTotalWeight),
+			fmt.Sprintf("future_total_weight:%d", lFutureTotalWeight),
+		}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
 		//
 		for _, v := range monitor.GetStates() {
 			if config.DevelopLogLevel >= 6 {
