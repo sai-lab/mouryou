@@ -17,21 +17,25 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	// 初期設定
 	c := new(models.Config)
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
 	startServers := c.Cluster.Initialize(c)
 	engine.Initialize(c, len(startServers))
+
+	// InfluxDBに接続
 	err := databases.Connect(c)
 	if err != nil {
 		panic(err)
 	}
 
-	// Create database
+	// データベースを作成
 	_, err = databases.QueryDB(c.InfluxDBConnection, fmt.Sprintf("CREATE DATABASE %s", c.InfluxDBServerDB), "")
 	if err != nil {
 		panic(err)
 	}
 
+	// ログ出力設定
 	file := logger.Create()
 	log.SetOutput(file)
 	log.SetFlags(log.Ltime)

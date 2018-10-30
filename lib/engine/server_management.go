@@ -17,12 +17,12 @@ import (
 // 負荷状況はmonitor.LoadChから取得します.
 func ServerManagement(config *models.Config) {
 	var b, s, w, wait int
-	var order Scale
+	var order autoScaleOrder
 
 	vmNum := len(config.Cluster.VirtualMachines)
 	arm := len(config.AlwaysRunningMachines)
 
-	for order = range scaleCh {
+	for order = range autoScaleOrderCh {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
