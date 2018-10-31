@@ -30,7 +30,7 @@ func (cluster *Cluster) Initialize(config *Config) []string {
 			place := logger.Place()
 			logger.Debug(place, "The name of the VM added to the cluster is "+machine.Name)
 		}
-		if config.ContainID(machine.ID) {
+		if config.IsStartMachineID(machine.ID) {
 			if config.DevelopLogLevel >= 4 {
 				place := logger.Place()
 				logger.Debug(place, "The name of the VM running from the start is "+machine.Name)

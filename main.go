@@ -21,7 +21,7 @@ func main() {
 	c := new(models.Config)
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
 	startServers := c.Cluster.Initialize(c)
-	engine.Initialize(c, len(startServers))
+	engine.ServerWeightInitialize(c, len(startServers))
 
 	// InfluxDBに接続
 	err := databases.Connect(c)

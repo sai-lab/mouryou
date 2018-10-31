@@ -134,9 +134,9 @@ func (c *Config) valueCheck() error {
 	return err
 }
 
-// ContainID は受け取ったVMのIDが開始時から稼動状態とするサーバに
+// IsStartMachineID は受け取ったVMのIDが開始時から稼動状態とするサーバに
 // 指定されているかどうか検証します。
-func (c *Config) ContainID(i int) bool {
+func (c *Config) IsStartMachineID(i int) bool {
 	for _, v := range c.StartMachineIDs {
 		if i == v {
 			return true

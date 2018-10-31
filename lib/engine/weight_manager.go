@@ -8,45 +8,59 @@ import (
 
 	"strconv"
 
+	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
-func Initialize(config *models.Config, startNum int) {
+// ServerWeightInitialize はmouryou起動時にmouryou.jsonから得た情報を元に各サーバの重さを初期化します．
+func ServerWeightInitialize(config *models.Config, startNum int) {
+	// 起動中と認識している台数をstartNumの値で更新
 	mutex.Write(&working, &workMutex, startNum)
 	for name, machine := range config.Cluster.VirtualMachines {
-		var st monitor.State
+		var st monitor.State // サーバの状態を格納する構造体
 		st.Name = name
-		if config.DevelopLogLevel >= 5 {
+		if config.DevelopLogLevel > 5 {
 			place := logger.Place()
 			logger.Debug(place, "Machine ID: "+strconv.Itoa(machine.ID)+", Machine Name: "+name)
 		}
 
+		// mouryou.jsonで指定した重さでロードバランサに登録
 		err := config.Cluster.LoadBalancer.ChangeWeight(name, machine.Weight)
 		if err != nil {
 			place := logger.Place()
 			logger.Error(place, err)
 			break
 		}
-		tags := []string{"operation:change_weight", fmt.Sprintf("host:%s", machine.Name)}
-		fields := []string{fmt.Sprintf("weight:%d", machine.Weight)}
-		logger.Record(tags, fields)
-		//databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
+		// ログとデータベースに記録
+		tags := []string{
+			"operation:change_weight",
+			fmt.Sprintf("host:%s", machine.Name),
+		}
+		fields := []string{
+			fmt.Sprintf("weight:%d", machine.Weight),
+		}
+		logger.Record(tags, fields)
+		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+
+		// 登録完了後，stateの重さを更新
 		st.Weight = machine.Weight
-		if config.DevelopLogLevel >= 5 {
+		if config.DevelopLogLevel > 5 {
 			place := logger.Place()
-			logger.Debug(place, "Machine ID: "+strconv.Itoa(machine.ID)+", Machine Name: "+name)
+			logger.Debug(place, "Machine ID: "+strconv.Itoa(machine.ID)+", Machine Name: "+name+", Machine Weight:"+fmt.Sprint(st.Weight))
 		}
 
-		if config.ContainID(machine.ID) {
+		if config.IsStartMachineID(machine.ID) {
 			if config.DevelopLogLevel > 1 {
 				place := logger.Place()
 				logger.Debug(place, "set booted up Machine Name: "+name+" Weight: "+strconv.Itoa(machine.Weight))
 			}
 			st.Info = "booted up"
+			// 初期化処理中で他のメソッドはtotalWeightとfutureTotalWeightを参照していないため，
+			// ここではMutex処理を行わずに代入
 			totalWeight += machine.Weight
 			futureTotalWeight += machine.Weight
 		} else {
@@ -56,28 +70,31 @@ func Initialize(config *models.Config, startNum int) {
 				logger.Debug(place, "set shutted down Machine Name: "+name+" Weight: "+strconv.Itoa(machine.Weight))
 			}
 		}
+		// monitorで管理しているサーバ情報構造体Stateの配列Statesに追加
 		monitor.States = append(monitor.States, st)
 	}
 }
 
+// 重さの操作を取り扱うメソッド
+// タイムアウトなどのエラーがあれば重さを減らして負荷を低下させ，通常なら元の重さに戻す
 func WeightManager(config *models.Config) {
-	for informations := range monitor.DataCh {
-		for _, information := range informations {
+	for conditions := range monitor.ConditionCh {
+		for _, condition := range conditions {
 			// エラーがあればdecreaseWeight, なければincreaseWeight
 			// Connection is Timeout や Operating Ratio and CPU UsedPercent is MAX! など
 			if !config.IsWeightChange {
 				continue
 			}
-			if information.Error != "" {
-				decreaseWeight(information, config)
+			if condition.Error != "" {
+				decreaseWeight(condition, config)
 			} else {
-				increaseWeight(information, config)
+				increaseWeight(condition, config)
 			}
 		}
 	}
 }
 
-func decreaseWeight(information monitor.Data, config *models.Config) {
+func decreaseWeight(information monitor.Condition, config *models.Config) {
 	var rwMutex sync.RWMutex
 	name := information.Name
 
@@ -110,7 +127,7 @@ func decreaseWeight(information monitor.Data, config *models.Config) {
 	rwMutex.RUnlock()
 }
 
-func increaseWeight(information monitor.Data, config *models.Config) {
+func increaseWeight(information monitor.Condition, config *models.Config) {
 	var rwMutex sync.RWMutex
 	name := information.Name
 

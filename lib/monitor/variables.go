@@ -19,8 +19,9 @@ type State struct {
 	Changed time.Time
 }
 
-// Data
-type Data struct {
+// Condition はサーバの状態を格納する構造体です．
+// 稼働率，CPU利用率，タイムアウトなどのエラー情報を格納します．
+type Condition struct {
 	Name      string
 	Operating float64
 	CPU       float64
@@ -34,15 +35,13 @@ type PowerStruct struct {
 }
 
 var (
-	StateCh  = make(chan State, 1)
-	PowerCh  = make(chan PowerStruct, 1)
-	LoadORCh = make(chan float64, 1)
-	LoadTPCh = make(chan float64, 1)
-	DataCh   = make(chan []Data, 1)
+	StateCh     = make(chan State, 1)
+	PowerCh     = make(chan PowerStruct, 1)
+	LoadORCh    = make(chan float64, 1)
+	LoadTPCh    = make(chan float64, 1)
+	ConditionCh = make(chan []Condition, 1)
 	// 稼働状態
-	States            []State
-	beforeTime        = map[string]int{}
-	beforeTotalAccess = map[string]int{}
+	States []State
 )
 
 // GetStatusesはVMの名前，重さ，起動情報を保持する配列を返却します.

@@ -83,7 +83,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 		totalWeight       = 11
 		group             sync.WaitGroup
 		mutex             sync.Mutex
-		ds                []Data       // dataはオートスケールに用いる
+		ds                []Condition  // dataはオートスケールに用いる
 		arrs              [12][]string // arrsはログ記録や重み調整に用いる
 	)
 
@@ -112,7 +112,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 
 	for i, v := range states {
 		group.Add(1)
-		var data Data
+		var data Condition
 		// 各サーバの付加情報毎に実行
 		go func(i int, v apache.ServerStatus) {
 			defer group.Done()
@@ -163,6 +163,6 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 	}
 
 	group.Wait()
-	DataCh <- ds
+	ConditionCh <- ds
 	return ors, arrs, convert.FloatsToStringsSimple(ors)
 }
