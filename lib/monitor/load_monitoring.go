@@ -34,10 +34,10 @@ func LoadMonitoring(config *models.Config) {
 		throughputs := make([]float64, len(config.Cluster.VirtualMachines))
 		tw := 0
 		//
-		for _, v := range GetStates() {
+		for _, v := range GetServerStates() {
 			if config.DevelopLogLevel >= 6 {
 				place := logger.Place()
-				logger.Debug(place, "GetStates() Machine Name: "+v.Name+"Machine Info: "+v.Info)
+				logger.Debug(place, "GetServerStates() Machine Name: "+v.Name+"Machine Info: "+v.Info)
 			}
 			if v.Info == "booted up" {
 				bootedServers = append(bootedServers, v.Name)

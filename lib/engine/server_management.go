@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"sync"
-
 	"fmt"
 
 	"github.com/sai-lab/mouryou/lib/databases"
@@ -63,9 +61,9 @@ func ServerManagement(config *models.Config) {
 func bootUpVMs(config *models.Config, weight int, load string) {
 	var candidate []int
 
-	statuses := monitor.GetStates()
+	serverStates := monitor.GetServerStates()
 
-	for i, status := range statuses {
+	for i, status := range serverStates {
 		// 停止中のサーバ以外は無視
 		if status.Info != "shutted down" {
 			continue
@@ -84,16 +82,16 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 
 	boot := candidate[0]
 	for _, n := range candidate {
-		if statuses[n].Weight > statuses[boot].Weight {
+		if serverStates[n].Weight > serverStates[boot].Weight {
 			boot = n
 		}
 	}
-	go bootUpVM(config, statuses[boot], load)
-	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+statuses[boot].Weight)
+	go bootUpVM(config, serverStates[boot], load)
+	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[boot].Weight)
 }
 
 // bootUpVM
-func bootUpVM(config *models.Config, st monitor.State, load string) {
+func bootUpVM(config *models.Config, st monitor.ServerState, load string) {
 	var p monitor.PowerStruct
 
 	p.Name = st.Name
@@ -128,12 +126,7 @@ func bootUpVM(config *models.Config, st monitor.State, load string) {
 
 // shutDownVMs
 func shutDownVMs(config *models.Config, weight int, load string) {
-	var mu sync.RWMutex
-
-	mu.RLock()
-	defer mu.RUnlock()
-
-	for _, st := range monitor.States {
+	for _, st := range monitor.GetServerStates() {
 		// 稼働中のサーバ以外は無視
 		if st.Info != "booted up" {
 			continue
@@ -161,7 +154,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 }
 
 //shutDownVM
-func shutDownVM(config *models.Config, st monitor.State, load string) {
+func shutDownVM(config *models.Config, st monitor.ServerState, load string) {
 	var p monitor.PowerStruct
 	p.Name = st.Name
 	p.Info = "shutting down"

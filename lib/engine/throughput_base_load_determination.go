@@ -53,10 +53,10 @@ func throughputBase(config *models.Config) {
 		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 		// 稼働中のサーバ名や起動処理中のサーバ名を取得
-		for _, v := range monitor.GetStates() {
+		for _, v := range monitor.GetServerStates() {
 			if config.DevelopLogLevel >= 6 {
 				place := logger.Place()
-				logger.Debug(place, "GetStates() Machine Name: "+v.Name+"Machine Info: "+v.Info)
+				logger.Debug(place, "GetServerStates() Machine Name: "+v.Name+"Machine Info: "+v.Info)
 			}
 			if v.Info == "booted up" {
 				bootedServersName = append(bootedServersName, v.Name)

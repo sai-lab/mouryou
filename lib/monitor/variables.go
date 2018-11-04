@@ -1,12 +1,13 @@
 package monitor
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
 
-// State
-type State struct {
+// ServerState はサーバの名前，重み，状態，変更を保持します．
+type ServerState struct {
 	Name   string
 	Weight int
 	// Infoはサーバの状態を示します。
@@ -35,21 +36,64 @@ type PowerStruct struct {
 }
 
 var (
-	StateCh     = make(chan State, 1)
-	PowerCh     = make(chan PowerStruct, 1)
-	LoadORCh    = make(chan float64, 1)
-	LoadTPCh    = make(chan float64, 1)
+	// StateCh は，engine/server_management.goから送信され，
+	// engine.StatusManager()で受信されます．
+	StateCh  = make(chan ServerState, 1)
+	PowerCh  = make(chan PowerStruct, 1)
+	LoadORCh = make(chan float64, 1)
+	LoadTPCh = make(chan float64, 1)
+	// ConditionCh は，engine.Ratios()から送信され，
+	// engine.WeightManager()で受信されます．
 	ConditionCh = make(chan []Condition, 1)
-	// 稼働状態
-	States []State
+	// TODO ローカル変数にしたい
+	ServerStates []ServerState
 )
 
-// GetStatusesはVMの名前，重さ，起動情報を保持する配列を返却します.
-func GetStates() []State {
+// AddServerState は ServerStates に新しい要素を追加します．
+func AddServerState(state ServerState) error {
 	var mu sync.RWMutex
 	mu.RLock()
-	states := States
+	ServerStates = append(ServerStates, state)
 	mu.RUnlock()
 
-	return states
+	return nil
+}
+
+// GetServerStates はVMの名前，重さ，起動情報を保持する配列を返却します.
+func GetServerStates() []ServerState {
+	var mu sync.RWMutex
+	mu.RLock()
+	serverStates := ServerStates
+	mu.RUnlock()
+
+	return serverStates
+}
+
+// UpdateServerStates は ServerState の情報を更新します．
+func UpdateServerStates(hostName string, weight int, info string, changed time.Time) error {
+
+	isUpdated := false
+	for i, state := range ServerStates {
+		if state.Name == hostName {
+			if weight >= 0 {
+				// 0以上ならば有効な値と仮定
+				ServerStates[i].Weight = weight
+			}
+			if info != "" {
+				// 空文字でなければ有効な値と仮定
+				ServerStates[i].Info = info
+			}
+			if changed.IsZero() == false {
+				ServerStates[i].Changed = changed
+			}
+			isUpdated = true
+			break
+		}
+	}
+
+	if !isUpdated {
+		return errors.New("hostName is not found.")
+	}
+
+	return nil
 }

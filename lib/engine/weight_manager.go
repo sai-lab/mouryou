@@ -2,8 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"sync"
-
 	"time"
 
 	"strconv"
@@ -20,7 +18,7 @@ func ServerWeightInitialize(config *models.Config, startNum int) {
 	// 起動中と認識している台数をstartNumの値で更新
 	mutex.Write(&working, &workMutex, startNum)
 	for name, machine := range config.Cluster.VirtualMachines {
-		var st monitor.State // サーバの状態を格納する構造体
+		var st monitor.ServerState // サーバの状態を格納する構造体
 		st.Name = name
 		if config.DevelopLogLevel > 5 {
 			place := logger.Place()
@@ -70,8 +68,11 @@ func ServerWeightInitialize(config *models.Config, startNum int) {
 				logger.Debug(place, "set shutted down Machine Name: "+name+" Weight: "+strconv.Itoa(machine.Weight))
 			}
 		}
-		// monitorで管理しているサーバ情報構造体Stateの配列Statesに追加
-		monitor.States = append(monitor.States, st)
+		// monitorで管理しているServerStatesに追加
+		err = monitor.AddServerState(st)
+		if err != nil {
+			logger.Error(logger.Place(), err)
+		}
 	}
 }
 
@@ -95,18 +96,14 @@ func WeightManager(config *models.Config) {
 }
 
 func decreaseWeight(information monitor.Condition, config *models.Config) {
-	var rwMutex sync.RWMutex
-	name := information.Name
-
-	rwMutex.RLock()
-	for i, v := range monitor.States {
-		if v.Name != name {
+	for _, serverState := range monitor.GetServerStates() {
+		if serverState.Name != information.Name {
 			continue
 		}
-		lowWeight := config.Cluster.VirtualMachines[v.Name].BasicWeight / 2
-		basicWeight := config.Cluster.VirtualMachines[v.Name].BasicWeight
+		lowWeight := config.Cluster.VirtualMachines[serverState.Name].BasicWeight / 2
+		basicWeight := config.Cluster.VirtualMachines[serverState.Name].BasicWeight
 		// 重さがすでに下がっていれば break
-		if v.Weight <= basicWeight-lowWeight {
+		if serverState.Weight <= basicWeight-lowWeight {
 			break
 		}
 		err := config.Cluster.LoadBalancer.ChangeWeight(information.Name, lowWeight)
@@ -116,29 +113,22 @@ func decreaseWeight(information monitor.Condition, config *models.Config) {
 		}
 
 		// サーバの重みを変更したとき、合計の重みと最終的な重みを変更する
-		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-(monitor.States[i].Weight-lowWeight))
-		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-(monitor.States[i].Weight-lowWeight))
-		// 共有変数の重みを変更する
-		monitor.States[i].Weight = lowWeight
-		// 共有変数の変更時間を変更する
-		monitor.States[i].Changed = time.Now()
+		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-(serverState.Weight-lowWeight))
+		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-(serverState.Weight-lowWeight))
+		// 共有変数の重みと変更時間を更新
+		monitor.UpdateServerStates(information.Name, lowWeight, "", time.Now())
 		break
 	}
-	rwMutex.RUnlock()
 }
 
 func increaseWeight(information monitor.Condition, config *models.Config) {
-	var rwMutex sync.RWMutex
-	name := information.Name
-
-	rwMutex.RLock()
-	for i, v := range monitor.States {
+	for _, serverState := range monitor.GetServerStates() {
 		// 名前が違う or 前回重さを変更した時間がconfig.RestorationTime秒より後なら continue
-		if v.Name != name || v.Changed.After(time.Now().Add(time.Second*-config.RestorationTime)) {
+		if serverState.Name != information.Name || serverState.Changed.After(time.Now().Add(time.Second*-config.RestorationTime)) {
 			continue
 		}
-		basicWeight := config.Cluster.VirtualMachines[v.Name].BasicWeight
-		if v.Weight >= basicWeight {
+		basicWeight := config.Cluster.VirtualMachines[serverState.Name].BasicWeight
+		if serverState.Weight >= basicWeight {
 			break
 		}
 
@@ -149,14 +139,10 @@ func increaseWeight(information monitor.Condition, config *models.Config) {
 		}
 
 		// サーバの重みを変更したとき、合計の重みと最終的な重みを変更する
-		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+(basicWeight-monitor.States[i].Weight))
-		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+(basicWeight-monitor.States[i].Weight))
-		// 共有変数の重みを変更する
-		monitor.States[i].Weight = basicWeight
-		// 共有変数の変更時間を変更する
-		monitor.States[i].Changed = time.Now()
+		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+(basicWeight-serverState.Weight))
+		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+(basicWeight-serverState.Weight))
+		// 共有変数の重みと更新時間を変更する
+		monitor.UpdateServerStates(information.Name, basicWeight, "", time.Now())
 		break
 	}
-	rwMutex.RUnlock()
-
 }
