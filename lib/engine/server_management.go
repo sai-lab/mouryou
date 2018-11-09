@@ -63,14 +63,14 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 
 	serverStates := monitor.GetServerStates()
 
-	for i, status := range serverStates {
+	for i, serverState := range serverStates {
 		// 停止中のサーバ以外は無視
-		if status.Info != "shutted down" {
+		if serverState.Info != "shutted down" {
 			continue
 		}
-		if status.Weight >= weight {
-			go bootUpVM(config, status, load)
-			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+status.Weight)
+		if serverState.Weight >= weight {
+			go bootUpVM(config, serverState, load)
+			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverState.Weight)
 			return
 		}
 		candidate = append(candidate, i)
