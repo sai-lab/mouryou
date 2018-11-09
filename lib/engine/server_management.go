@@ -57,49 +57,55 @@ func ServerManagement(config *models.Config) {
 	}
 }
 
-// bootUpVMs
+// bootUpVMs は引数に 設定値用構造体 config, 起動したいサーバの重み weight, 判断基準にした負荷量 load をとります．
+// 複数形だけど一台ずつ起動処理をbootUpVMに投げます．
 func bootUpVMs(config *models.Config, weight int, load string) {
+	// 充分な重みを持つ単体のサーバが存在しない場合に，起動する候補となる重みの小さいサーバの添字を格納する配列
 	var candidate []int
-
 	serverStates := monitor.GetServerStates()
 
 	for i, serverState := range serverStates {
-		// 停止中のサーバ以外は無視
 		if serverState.Info != "shutted down" {
+			// 停止中のサーバ以外は無視
 			continue
 		}
+
 		if serverState.Weight >= weight {
+			// サーバの重さが必要な重み以上なら起動処理を任せてreturn
 			go bootUpVM(config, serverState, load)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverState.Weight)
 			return
 		}
+		// サーバの重さが必要な重み未満の場合candidateに追加
 		candidate = append(candidate, i)
 	}
 
 	if len(candidate) == 0 {
+		// 起動候補が存在しない場合何もせずreturn
 		return
 	}
 
-	boot := candidate[0]
+	// 起動候補サーバの中から最も重みの大きいサーバを起動
+	toBootUp := candidate[0]
 	for _, n := range candidate {
-		if serverStates[n].Weight > serverStates[boot].Weight {
-			boot = n
+		if serverStates[n].Weight > serverStates[toBootUp].Weight {
+			toBootUp = n
 		}
 	}
-	go bootUpVM(config, serverStates[boot], load)
-	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[boot].Weight)
+	go bootUpVM(config, serverStates[toBootUp], load)
+	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
 }
 
 // bootUpVM
 func bootUpVM(config *models.Config, st monitor.ServerState, load string) {
-	var p monitor.PowerStruct
+	var power monitor.PowerStruct
 
-	p.Name = st.Name
-	p.Info = "booting up"
-	p.Load = load
+	power.Name = st.Name
+	power.Info = "booting up"
+	power.Load = load
 	st.Info = "booting up"
 	if monitor.PowerCh != nil {
-		monitor.PowerCh <- p
+		monitor.PowerCh <- power
 	}
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
@@ -109,10 +115,10 @@ func bootUpVM(config *models.Config, st monitor.ServerState, load string) {
 		logger.Debug(place, st.Name+" is booting up")
 	}
 
-	p.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
-	st.Info = p.Info
+	power.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
+	st.Info = power.Info
 	if monitor.PowerCh != nil {
-		monitor.PowerCh <- p
+		monitor.PowerCh <- power
 	}
 	if monitor.StateCh != nil {
 		monitor.StateCh <- st
