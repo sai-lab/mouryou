@@ -96,38 +96,40 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
 }
 
-// bootUpVM
-func bootUpVM(config *models.Config, st monitor.ServerState, load string) {
+// bootUpVM は引数に 設定値用構造体 config, 起動するサーバの情報 serverState, 判断基準にした負荷量 load をとります．
+func bootUpVM(config *models.Config, serverState monitor.ServerState, load string) {
 	var power monitor.PowerStruct
 
-	power.Name = st.Name
+	// これから起動処理を発行することを通知
+	power.Name = serverState.Name
 	power.Info = "booting up"
 	power.Load = load
-	st.Info = "booting up"
+	serverState.Info = "booting up"
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- power
 	}
 	if monitor.StateCh != nil {
-		monitor.StateCh <- st
+		monitor.StateCh <- serverState
 	}
 	if config.DevelopLogLevel >= 1 {
 		place := logger.Place()
-		logger.Debug(place, st.Name+" is booting up")
+		logger.Debug(place, serverState.Name+" is booting up")
 	}
 
-	power.Info = config.Cluster.VirtualMachines[st.Name].Bootup(config.Sleep)
-	st.Info = power.Info
+	// 起動処理を発行，完了後の返却値受け取り
+	power.Info = config.Cluster.VirtualMachines[serverState.Name].Bootup(config.Sleep)
+	serverState.Info = power.Info
 	if monitor.PowerCh != nil {
 		monitor.PowerCh <- power
 	}
 	if monitor.StateCh != nil {
-		monitor.StateCh <- st
+		monitor.StateCh <- serverState
 	}
 	if config.DevelopLogLevel >= 1 {
 		place := logger.Place()
-		logger.Debug(place, st.Name+" is boot up")
+		logger.Debug(place, serverState.Name+" is boot up")
 	}
-	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+st.Weight)
+	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+serverState.Weight)
 }
 
 // shutDownVMs

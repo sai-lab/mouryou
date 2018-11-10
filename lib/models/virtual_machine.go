@@ -43,9 +43,10 @@ func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
 	return status
 }
 
-// Bootup はVMの起動処理を行います。
-// 現在は実際に起動停止は行わないため起動にかかる時間分sleepします。
+// Bootup はVMの起動処理を行う．
+// 現在は実際に起動停止は行わないため起動にかかる時間分sleepして擬似的な起動処理としている．
 func (machine VirtualMachine) Bootup(sleep time.Duration) string {
+
 	// connection, err := machine.Hypervisor.Connect()
 	// if err != nil {
 	// 	power <- err.Error()
