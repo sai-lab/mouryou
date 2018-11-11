@@ -12,11 +12,11 @@ func WeightMonitor(config *models.Config) {
 	for _ = range LoadORCh {
 		length := len(config.Cluster.VirtualMachines)
 		weights := map[string]int{}
-		for i, state := range ServerStates {
-			if state.Info != "booted up" {
+		for i, serverState := range GetServerStates() {
+			if serverState.Info != "booted up" {
 				continue
 			}
-			weights[state.Name] = state.Weight
+			weights[serverState.Name] = serverState.Weight
 			if i == length-1 {
 				break
 			}

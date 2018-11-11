@@ -92,7 +92,7 @@ func UpdateServerStates(hostName string, weight int, info string, changed time.T
 	}
 
 	if !isUpdated {
-		return errors.New("hostName is not found.")
+		return errors.New("hostName is not found")
 	}
 
 	return nil

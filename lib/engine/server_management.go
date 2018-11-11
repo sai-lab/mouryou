@@ -10,9 +10,9 @@ import (
 	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
-// ServerManagement は起動状況と負荷状況に基いてオートスケールを実行します.
-// 起動状況はengine.destination_settingが設定しています.
-// 負荷状況はmonitor.LoadChから取得します.
+// ServerManagement は稼働状況と負荷状況に基いてオートスケールを実行します.
+// 稼働状況はengine/destination_setting.goが設定しています.
+// 負荷状況はengine/load_determination.goが判断します.
 func ServerManagement(config *models.Config) {
 	var b, s, w, wait int
 	var order autoScaleOrder
@@ -132,55 +132,59 @@ func bootUpVM(config *models.Config, serverState monitor.ServerState, load strin
 	mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+serverState.Weight)
 }
 
-// shutDownVMs
+// shutDownVMs は引数に 設定値用構造体 config, 停止したいサーバの重み weight, 判断基準にした負荷量 load をとります．
 func shutDownVMs(config *models.Config, weight int, load string) {
-	for _, st := range monitor.GetServerStates() {
+	for _, serverState := range monitor.GetServerStates() {
 		// 稼働中のサーバ以外は無視
-		if st.Info != "booted up" {
+		if serverState.Info != "booted up" {
 			continue
 		}
 		// オリジンサーバは無視
-		if config.ContainMachineName(config.OriginMachineNames, st.Name) {
+		if config.ContainMachineName(config.OriginMachineNames, serverState.Name) {
 			continue
 		}
 		// 常に稼働するサーバは無視
-		if config.ContainMachineName(config.AlwaysRunningMachines, st.Name) {
+		if config.ContainMachineName(config.AlwaysRunningMachines, serverState.Name) {
 			continue
 		}
 
-		if st.Weight <= weight {
-			go shutDownVM(config, st, load)
-			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-st.Weight)
-			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-st.Weight)
+		if serverState.Weight <= weight {
+			// サーバの重さが必要な重み以下なら停止処理を発行
+			go shutDownVM(config, serverState, load)
+			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-serverState.Weight)
+			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-serverState.Weight)
 			if config.DevelopLogLevel >= 1 {
 				place := logger.Place()
-				logger.Debug(place, st.Name+" going to shutdown")
+				logger.Debug(place, serverState.Name+" going to shutdown")
 			}
 			return
 		}
 	}
 }
 
-//shutDownVM
-func shutDownVM(config *models.Config, st monitor.ServerState, load string) {
-	var p monitor.PowerStruct
-	p.Name = st.Name
-	p.Info = "shutting down"
-	p.Load = load
-	st.Info = "shutting down"
+//shutDownVM は引数に 設定値用構造体 config, 停止するサーバの情報 serverState, 判断基準にした負荷量 load をとります．
+func shutDownVM(config *models.Config, serverState monitor.ServerState, load string) {
+	var power monitor.PowerStruct
+	power.Name = serverState.Name
+	power.Info = "shutting down"
+	power.Load = load
 	if monitor.PowerCh != nil {
-		monitor.PowerCh <- p
-	}
-	if monitor.StateCh != nil {
-		monitor.StateCh <- st
+		monitor.PowerCh <- power
 	}
 
-	p.Info = config.Cluster.VirtualMachines[st.Name].Shutdown(config.Sleep)
-	st.Info = p.Info
-	if monitor.PowerCh != nil {
-		monitor.PowerCh <- p
-	}
+	serverState.Info = "shutting down"
 	if monitor.StateCh != nil {
-		monitor.StateCh <- st
+		monitor.StateCh <- serverState
+	}
+
+	// 停止処理を発行，完了後の返却値受け取り
+	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- power
+	}
+
+	serverState.Info = power.Info
+	if monitor.StateCh != nil {
+		monitor.StateCh <- serverState
 	}
 }
