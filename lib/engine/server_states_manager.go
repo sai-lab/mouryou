@@ -15,7 +15,7 @@ func ServerStatesManager() {
 	for state := range monitor.StateCh {
 		mutex.Lock()
 		// TODO これは本当に0なのか確認
-		zeroTime, err := time.Parse("January 2, year 2006, 15:04:05 MST", "January 1, year 1, 00:00:00 UTC")
+		zeroTime, err := time.Parse("January 2, year 2006, 15:04:05 MST", "January 1, year 0001, 00:00:00 UTC")
 		if err != nil {
 			logger.Error(logger.Place(), err)
 		}
