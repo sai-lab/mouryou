@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
+
+	"fmt"
 
 	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/engine"
@@ -20,20 +21,20 @@ func main() {
 	// 初期設定
 	c := new(models.Config)
 	c.LoadSetting(os.Getenv("HOME") + "/.mouryou.json")
-	startServers := c.Cluster.Initialize(c)
-	engine.ServerWeightInitialize(c, len(startServers))
 
 	// InfluxDBに接続
 	err := databases.Connect(c)
 	if err != nil {
 		panic(err)
 	}
-
 	// データベースを作成
 	_, err = databases.QueryDB(c.InfluxDBConnection, fmt.Sprintf("CREATE DATABASE %s", c.InfluxDBServerDB), "")
 	if err != nil {
 		panic(err)
 	}
+
+	startServers := c.Cluster.Initialize(c)
+	engine.ServerWeightInitialize(c, len(startServers))
 
 	// ログ出力設定
 	file := logger.Create()
