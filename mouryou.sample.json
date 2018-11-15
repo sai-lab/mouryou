@@ -25,7 +25,10 @@
     "mirror-01",
     "mirror-02"
   ],
-  "start_machine_ids": [1, 2],
+  "start_machine_ids": [
+    1,
+    2
+  ],
   "web_socket": {
     "origin": "http://0.0.0.0/",
     "url": "ws://0.0.0.0:8000/ws"
@@ -51,10 +54,22 @@
       "throughput_scale_in_time": 5,
       "use_throughput_dynamic_threshold": true,
       "throughput_dynamic_threshold": {
-        "0.3": [0, 30],
-        "0.5": [30, 60],
-        "0.7": [60, 80],
-        "0.9": [80, 100]
+        "0.3": [
+          0,
+          30
+        ],
+        "0.5": [
+          30,
+          60
+        ],
+        "0.7": [
+          60,
+          80
+        ],
+        "0.9": [
+          80,
+          100
+        ]
       }
     },
     "vendors": [
