@@ -74,12 +74,15 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 	var nowApacheTime time.Time
 	var nowTotalRequest float64
 	var isTimeout bool
+	var err error
 
-	nowApacheTime, err := time.Parse(time.RFC3339Nano, status.ApacheAcquisitionTime)
-	if err != nil {
-		place := logger.Place()
-		logger.Error(place, err)
+	if status.ApacheAcquisitionTime == "" {
 		isTimeout = true
+	} else {
+		if nowApacheTime, err = time.Parse(time.RFC3339Nano, status.ApacheAcquisitionTime); err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
 	}
 	nowTotalRequest = float64(status.ApacheLog)
 
@@ -146,16 +149,20 @@ func WritePoints(clnt client.Client, config *models.Config, status apache.Server
 		"memory_acquisition_time": status.MemoryAcquisitionTime,
 	}
 
-	t, err := time.Parse(time.RFC3339Nano, status.Time)
-	if err != nil {
-		place := logger.Place()
-		logger.Error(place, err)
+	var metricsTime time.Time
+	if !isTimeout {
+		metricsTime, err = time.Parse(time.RFC3339Nano, status.Time)
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
 	}
+
 	pt, err := client.NewPoint(
 		"server_status",
 		tags,
 		fields,
-		t,
+		metricsTime,
 	)
 	if err != nil {
 		place := logger.Place()
