@@ -120,19 +120,19 @@ func (lb LoadBalancer) ChangeThresholdOut(working, booting, shutting, n int) {
 
 // ChangeThresholdOutInThroughputAlgorithm は起動台数に応じて閾値を切り替えます。
 // 変更がない場合0.0を返します.
-func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, n int) float64 {
+func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, n int) (float64, int) {
 	ocRate := (working + booting) / n * 100
 	for rangeThresholdString, operatingUnitRange := range lb.ThroughputDynamicThreshold {
 		if ocRate > operatingUnitRange[0] && ocRate <= operatingUnitRange[1] {
 			if rangeThresholdFloat64, err := strconv.ParseFloat(rangeThresholdString, 64); err == nil {
 				lb.ThroughputScaleOutRatio = rangeThresholdFloat64
-				return lb.ThroughputScaleOutRatio
+				return lb.ThroughputScaleOutRatio, ocRate
 			} else {
 				logger.Error(logger.Place(), err)
 			}
 		}
 	}
-	return 0.0
+	return 0.0, ocRate
 }
 
 // ThHigh
