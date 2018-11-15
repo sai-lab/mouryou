@@ -10,7 +10,7 @@ run:
 imports:
 	go get -u golang.org/x/tools/cmd/goimports
 
-fmt:imports
+fmt:
 	goimports -w *.go lib/*/*.go
 
 build: fmt
