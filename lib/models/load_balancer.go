@@ -14,15 +14,25 @@ import (
 
 // LoadBalancer はロードバランサの設定情報を格納します。
 type LoadBalancer struct {
-	Name         string  `json:"name"`
-	VirtualIP    string  `json:"virtual_ip"`
-	Algorithm    string  `json:"algorithm"`
-	ThresholdOut float64 `json:"threshold_out"`
-	ThresholdIn  float64 `json:"threshold_in"`
-	Margin       float64 `json:"margin"`
-	ScaleOut     int     `json:"scale_out"`
-	ScaleIn      int     `json:"scale_in"`
-	Diff         float64 `json:"diff"`
+	Name                            string           `json:"name"`
+	VirtualIP                       string           `json:"virtual_ip"`
+	Algorithm                       string           `json:"algorithm"`
+	ThresholdOut                    float64          `json:"threshold_out"`
+	ThresholdIn                     float64          `json:"threshold_in"`
+	Margin                          float64          `json:"margin"`
+	ScaleOut                        int              `json:"scale_out"`
+	ScaleIn                         int              `json:"scale_in"`
+	Diff                            float64          `json:"diff"`
+	ThroughputAlgorithm             string           `json:"throughput_algorithm"`
+	ThroughputMovingAverageInterval int64            `json:"throughput_moving_average_interval"`
+	ThroughputScaleOutThreshold     int              `json:"throughput_scale_out_threshold"`
+	ThroughputScaleInThreshold      int              `json:"throughput_scale_in_threshold"`
+	ThroughputScaleInRatio          float64          `json:"throughput_scale_in_ratio"`
+	ThroughputScaleOutRatio         float64          `json:"throughput_scale_out_ratio"`
+	ThroughputScaleOutTime          int              `json:"throughput_scale_out_time"`
+	ThroughputScaleInTime           int              `json:"throughput_scale_in_time"`
+	UseThroughputDynamicThreshold   bool             `json:"use_throughput_dynamic_threshold"`
+	ThroughputDynamicThreshold      map[string][]int `json:"throughput_dynamic_threshold"`
 }
 
 // Initialize はロードバランサの初期設定を行います。
@@ -92,8 +102,8 @@ func (lb *LoadBalancer) valueCheck() error {
 }
 
 // ChangeThresholdOut は起動台数に応じて閾値を切り替えます。
-func (lb LoadBalancer) ChangeThresholdOut(working, booting, shuting, n int) {
-	ocRate := float64(working+booting+shuting) / float64(n)
+func (lb LoadBalancer) ChangeThresholdOut(working, booting, shutting, n int) {
+	ocRate := float64(working+booting+shutting) / float64(n)
 	switch {
 	case ocRate <= 0.3:
 		Threshold = 0.1
@@ -106,6 +116,23 @@ func (lb LoadBalancer) ChangeThresholdOut(working, booting, shuting, n int) {
 	case ocRate <= 1.0:
 		Threshold = 0.7
 	}
+}
+
+// ChangeThresholdOutInThroughputAlgorithm は起動台数に応じて閾値を切り替えます。
+// 変更がない場合0.0を返します.
+func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, n int) float64 {
+	ocRate := (working + booting) / n * 100
+	for rangeThresholdString, operatingUnitRange := range lb.ThroughputDynamicThreshold {
+		if ocRate > operatingUnitRange[0] && ocRate <= operatingUnitRange[1] {
+			if rangeThresholdFloat64, err := strconv.ParseFloat(rangeThresholdString, 64); err == nil {
+				lb.ThroughputScaleOutRatio = rangeThresholdFloat64
+				return lb.ThroughputScaleOutRatio
+			} else {
+				logger.Error(logger.Place(), err)
+			}
+		}
+	}
+	return 0.0
 }
 
 // ThHigh

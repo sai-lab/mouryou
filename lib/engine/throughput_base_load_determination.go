@@ -10,7 +10,6 @@ import (
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
 	"github.com/sai-lab/mouryou/lib/monitor"
-	"github.com/sai-lab/mouryou/lib/mutex"
 )
 
 func throughputBase(config *models.Config) {
@@ -25,17 +24,6 @@ func throughputBase(config *models.Config) {
 		// 起動処理中のサーバ名を格納
 		var bootingServersName []string
 
-		// 稼働中の台数
-		lWorking := mutex.Read(&working, &workMutex)
-		// 起動処理中の台数
-		lBooting := mutex.Read(&booting, &bootMutex)
-		// 停止処理中の台数
-		lShutting := mutex.Read(&shutting, &shutMutex)
-		// 稼働中サーバの重みの合計値
-		lTotalWeight := mutex.Read(&totalWeight, &totalWeightMutex)
-		// サーバの起動・停止処理完了後の重みの合計値
-		lFutureTotalWeight := mutex.Read(&futureTotalWeight, &futureTotalWeightMutex)
-
 		// データベースとログに稼働状況を記録
 		tags := []string{
 			"base_load:th",
@@ -43,11 +31,11 @@ func throughputBase(config *models.Config) {
 			"operation:throughput_base_load_determination",
 		}
 		fields := []string{
-			fmt.Sprintf("working:%d", lWorking),
-			fmt.Sprintf("booting:%d", lBooting),
-			fmt.Sprintf("shutting:%d", lShutting),
-			fmt.Sprintf("total_weight:%d", lTotalWeight),
-			fmt.Sprintf("future_total_weight:%d", lFutureTotalWeight),
+			fmt.Sprintf("working:%d", working),
+			fmt.Sprintf("booting:%d", booting),
+			fmt.Sprintf("shutting:%d", shutting),
+			fmt.Sprintf("total_weight:%d", totalWeight),
+			fmt.Sprintf("future_total_weight:%d", futureTotalWeight),
 		}
 		logger.Record(tags, fields)
 		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
@@ -65,7 +53,12 @@ func throughputBase(config *models.Config) {
 			}
 		}
 
-		switch config.ThroughputAlgorithm {
+		// 動的閾値を用いる場合
+		if config.Cluster.LoadBalancer.UseThroughputDynamicThreshold {
+			changedThreshold := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, len(config.Cluster.VirtualMachines))
+			loggingThreshold(config, changedThreshold)
+		}
+		switch config.Cluster.LoadBalancer.ThroughputAlgorithm {
 		case "MovingAverageV1.2":
 			// 稼働中，起動処理中のサーバを一まとまりのクラスタと仮定して移動平均を計算する負荷判定機能
 			// 20181024以降利用
@@ -89,6 +82,19 @@ func throughputBase(config *models.Config) {
 	}
 }
 
+func loggingThreshold(config *models.Config, thresholdOut float64) {
+	tags := []string{
+		"base_load:th",
+		"operation:throughput_base_load_determination",
+		"parameter:threshold_out_log",
+	}
+	fields := []string{
+		fmt.Sprintf("threshold_out %f", thresholdOut),
+	}
+	logger.Record(tags, fields)
+	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
+}
+
 // 稼働中，起動処理中のサーバを一まとまりのクラスタと仮定して移動平均を計算する負荷判定機能
 // 20181024以降利用
 func judgeByMovingAverageForCluster(config *models.Config, bootedServersName []string, bootingServersName []string) (bool, bool) {
@@ -108,7 +114,7 @@ func judgeByMovingAverageForCluster(config *models.Config, bootedServersName []s
 		// 起動処理中のサーバの上限スループットも考慮
 		totalUpperLimit += config.Cluster.VirtualMachines[name].ThroughputUpperLimit
 	}
-	movingAverage := totalThroughput / (float64(config.ThroughputMovingAverageInterval) * totalUpperLimit)
+	movingAverage := totalThroughput / (float64(config.Cluster.LoadBalancer.ThroughputMovingAverageInterval) * totalUpperLimit)
 
 	// ログにmovingAverageを記録
 	tags := []string{"parameter:working_log", "operation:load_determination"}
@@ -119,9 +125,9 @@ func judgeByMovingAverageForCluster(config *models.Config, bootedServersName []s
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 	// 判定
-	if movingAverage >= config.ThroughputScaleOutRatio {
+	if movingAverage >= config.Cluster.LoadBalancer.ThroughputScaleOutRatio {
 		shouldScaleOut = true
-	} else if movingAverage <= config.ThroughputScaleInRatio {
+	} else if movingAverage <= config.Cluster.LoadBalancer.ThroughputScaleInRatio {
 		shouldScaleIn = true
 	}
 
@@ -134,7 +140,7 @@ func intervalThroughputTotal(serverName string, config *models.Config) float64 {
 		" WHERE host = '" +
 		serverName +
 		"' AND operation = 'measurement' ORDER BY time DESC LIMIT " +
-		strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
+		strconv.FormatInt(config.Cluster.LoadBalancer.ThroughputMovingAverageInterval, 10)
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -193,9 +199,9 @@ func judgeByMovingAverageForEachServer(config *models.Config, bootedServersName 
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 	// 判定
-	if ratioAverage >= config.ThroughputScaleOutRatio {
+	if ratioAverage >= config.Cluster.LoadBalancer.ThroughputScaleOutRatio {
 		shouldScaleOut = true
-	} else if ratioAverage <= config.ThroughputScaleInRatio {
+	} else if ratioAverage <= config.Cluster.LoadBalancer.ThroughputScaleInRatio {
 		shouldScaleIn = true
 	}
 
@@ -210,7 +216,7 @@ func movingAverageOfThroughputRatio(serverName string, upperLimit float64, confi
 		" WHERE host = '" +
 		serverName +
 		"' AND operation = 'measurement' ORDER BY time DESC LIMIT " +
-		strconv.FormatInt(config.ThroughputMovingAverageInterval, 10)
+		strconv.FormatInt(config.Cluster.LoadBalancer.ThroughputMovingAverageInterval, 10)
 	res, err := databases.QueryDB(config.InfluxDBConnection, query, config.InfluxDBServerDB)
 	if err != nil {
 		place := logger.Place()
@@ -339,12 +345,12 @@ func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [3
 		if twt.Throughput > float64(TPHigh) {
 			c++
 		}
-		if i+1 == config.ThroughputScaleOutTime {
+		if i+1 == config.Cluster.LoadBalancer.ThroughputScaleOutTime {
 			break
 		}
 	}
 
-	if c >= config.ThroughputScaleOutThreshold {
+	if c >= config.Cluster.LoadBalancer.ThroughputScaleOutThreshold {
 		return true
 	}
 	return false
@@ -354,7 +360,7 @@ func judgeHighLoadByThroughput(config *models.Config, serverName string, twts [3
 // judgeByAllServerSameLoad 内で使用
 func judgeLowLoadByThroughput(config *models.Config, serverName string, twts [30]models.ThroughputWithTime) bool {
 	TPHigh := config.Cluster.VirtualMachines[serverName].ThroughputUpperLimit
-	ratio := config.ThroughputScaleInRatio
+	ratio := config.Cluster.LoadBalancer.ThroughputScaleInRatio
 	c := 0
 	for i, twt := range twts {
 		if twt.Throughput == 0 {
@@ -365,12 +371,12 @@ func judgeLowLoadByThroughput(config *models.Config, serverName string, twts [30
 		} else {
 			c = 0
 		}
-		if i+1 == config.ThroughputScaleInTime {
+		if i+1 == config.Cluster.LoadBalancer.ThroughputScaleInTime {
 			break
 		}
 	}
 
-	if c >= config.ThroughputScaleInThreshold {
+	if c >= config.Cluster.LoadBalancer.ThroughputScaleInThreshold {
 		return true
 	}
 	return false

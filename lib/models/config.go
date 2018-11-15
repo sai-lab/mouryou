@@ -35,31 +35,23 @@ type Config struct {
 	// 重さを変更するか
 	IsWeightChange bool `json:"is_weight_change"`
 	// ヘテロな環境を使用するか
-	UseHetero                       bool            `json:"use_hetero"`
-	AdjustServerNum                 bool            `json:"adjust_server_num"`
-	OriginMachineNames              []string        `json:"origin_machine_names"`
-	AlwaysRunningMachines           []string        `json:"always_running_machines"`
-	StartMachineIDs                 []int           `json:"start_machine_ids"`
-	WebSocket                       WebSocketStruct `json:"web_socket"`
-	Cluster                         Cluster         `json:"cluster"`
-	UseOperatingRatio               bool            `json:"use_operating_ratio"`
-	UseThroughput                   bool            `json:"use_throughput"`
-	ThroughputAlgorithm             string          `json:"throughput_algorithm"`
-	ThroughputMovingAverageInterval int64           `json:"throughput_moving_average_interval"`
-	ThroughputScaleOutThreshold     int             `json:"throughput_scale_out_threshold"`
-	ThroughputScaleInThreshold      int             `json:"throughput_scale_in_threshold"`
-	ThroughputScaleInRatio          float64         `json:"throughput_scale_in_ratio"`
-	ThroughputScaleOutRatio         float64         `json:"throughput_scale_out_ratio"`
-	ThroughputScaleOutTime          int             `json:"throughput_scale_out_time"`
-	ThroughputScaleInTime           int             `json:"throughput_scale_in_time"`
-	LogDB                           string          `json:"log_db"`
-	LogDSN                          string          `json:"log_dsn"`
-	InfluxDBAddr                    string          `json:"influxdb_addr"`
-	InfluxDBPort                    string          `json:"influxdb_port"`
-	InfluxDBUser                    string          `json:"influxdb_user"`
-	InfluxDBPasswd                  string          `json:"influxdb_passwd"`
-	InfluxDBConnection              client.Client   `json:"influxdb_connection"`
-	InfluxDBServerDB                string          `json:"influxdb_serverdb"`
+	UseHetero             bool            `json:"use_hetero"`
+	AdjustServerNum       bool            `json:"adjust_server_num"`
+	OriginMachineNames    []string        `json:"origin_machine_names"`
+	AlwaysRunningMachines []string        `json:"always_running_machines"`
+	StartMachineIDs       []int           `json:"start_machine_ids"`
+	WebSocket             WebSocketStruct `json:"web_socket"`
+	Cluster               Cluster         `json:"cluster"`
+	UseOperatingRatio     bool            `json:"use_operating_ratio"`
+	UseThroughput         bool            `json:"use_throughput"`
+	LogDB                 string          `json:"log_db"`
+	LogDSN                string          `json:"log_dsn"`
+	InfluxDBAddr          string          `json:"influxdb_addr"`
+	InfluxDBPort          string          `json:"influxdb_port"`
+	InfluxDBUser          string          `json:"influxdb_user"`
+	InfluxDBPasswd        string          `json:"influxdb_passwd"`
+	InfluxDBConnection    client.Client   `json:"influxdb_connection"`
+	InfluxDBServerDB      string          `json:"influxdb_serverdb"`
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
