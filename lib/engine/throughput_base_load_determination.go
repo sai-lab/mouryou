@@ -89,7 +89,7 @@ func loggingThreshold(config *models.Config, thresholdOut float64) {
 		"parameter:threshold_out_log",
 	}
 	fields := []string{
-		fmt.Sprintf("threshold_out %f", thresholdOut),
+		fmt.Sprintf("threshold_out:%f", thresholdOut),
 	}
 	logger.Record(tags, fields)
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
