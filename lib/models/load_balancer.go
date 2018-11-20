@@ -60,7 +60,7 @@ func (lb LoadBalancer) Initialize(c *Config) {
 		check.Error(err)
 	}
 
-	time.Sleep(time.Duration(1) * 3)
+	time.Sleep(time.Duration(3) * time.Second)
 }
 
 func (lb *LoadBalancer) valueCheck() error {
