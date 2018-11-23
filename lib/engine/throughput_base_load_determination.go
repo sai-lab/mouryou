@@ -85,7 +85,7 @@ func throughputBase(config *models.Config) {
 
 func loggingThreshold(config *models.Config, thresholdOut float64, operatingUnitRatio, work, boot, shut int) {
 	tags := []string{
-		"base_load:th",
+		"base_load:tp",
 		"operation:throughput_base_load_determination",
 		"parameter:threshold_out_log",
 	}

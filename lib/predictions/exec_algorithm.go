@@ -50,8 +50,8 @@ func ExecSameAlgorithm(config *models.Config, w int, b int, s int, tw int, fw in
 
 func loggingThreshold(config *models.Config, thresholdOut float64, operatingUnitRatio, work, boot, shut int) {
 	tags := []string{
-		"base_load:th",
-		"operation:throughput_base_load_determination",
+		"base_load:or",
+		"operation:operating_ratio_base_load_determination",
 		"parameter:threshold_out_log",
 	}
 	fields := []string{

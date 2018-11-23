@@ -152,7 +152,7 @@ func (balancer LoadBalancer) ThLowInOperatingRatioAlgorithm(c *Config, w, n int)
 	case "BasicSpike":
 		return balancer.OperatingRatioThresholdIn * float64(w)
 	default:
-		return balancer.OperatingRatioThresholdIn * (float64(w))
+		return balancer.OperatingRatioThresholdIn * float64(w)
 		//return (Threshold - balancer.OperatingRatioDynamicThresholdDiff) * (float64(w))
 	}
 }
