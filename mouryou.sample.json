@@ -4,15 +4,11 @@
   "sleep": 30,
   "wait": 30,
   "restoration_time": 30,
-  "margin": 0.007,
-  "algorithm": "BasicSpike",
   "is_weight_change": true,
   "use_hetero": false,
-  "adjust_server_num": true,
+  "is_adjust_server_num": true,
   "use_operating_ratio": true,
   "use_throughput": false,
-  "log_db": "mysql",
-  "log_dsb": "root:@tcp(127.0.0.1:3306)/mouryou?parseTime=true",
   "influxdb_addr": "",
   "influxdb_port": "",
   "influxdb_user": "",
@@ -37,13 +33,36 @@
     "load_balancer": {
       "name": "haproxy",
       "virtual_ip": "192.168.11.11",
-      "algorithm": "wlc",
-      "threshold_out": 0.8,
-      "threshold_in": 0.5,
-      "margin": 0.05,
-      "scale_out": 2,
-      "scale_in": 6,
-      "diff": 0.2,
+      "load_balancing_algorithm": "wlc",
+      "operating_ratio_algorithm": "BasicSpike",
+      "operating_ratio_threshold_out": 0.8,
+      "operating_ratio_threshold_in": 0.1,
+      "operating_ratio_margin": 0.05,
+      "operating_ratio_scale_out_interval": 2,
+      "operating_ratio_scale_in_interval": 6,
+      "operating_ratio_dynamic_threshold_diff": 0.2,
+      "operating_ratio_dynamic_threshold": {
+        "0.1": [
+          0,
+          30
+        ],
+        "0.3": [
+          30,
+          50
+        ],
+        "0.5": [
+          50,
+          70
+        ],
+        "0.6": [
+          70,
+          90
+        ],
+        "0.7": [
+          90,
+          100
+        ]
+      },
       "throughput_algorithm": "MovingAverageV1.2",
       "throughput_moving_average_interval": 3,
       "throughput_scale_in_ratio": 0.1,

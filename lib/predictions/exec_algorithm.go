@@ -9,9 +9,9 @@ import (
 )
 
 //ExecDifferentAlgorithm exec algorithm for server with same performance
-func ExecDifferentAlgorithm(c *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) int {
+func ExecDifferentAlgorithm(config *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) int {
 	var nw int // Necessary Weight
-	switch c.Algorithm {
+	switch config.Cluster.LoadBalancer.OperatingRatioAlgorithm {
 	case "PeriodicallyUseARMA":
 		// 長期間のログデータを使ったARMAモデルに基づくオートスケールアルゴリズム
 		nw = PeriodicallyPrediction(w, b, s, tw, fw)
@@ -23,13 +23,14 @@ func ExecDifferentAlgorithm(c *models.Config, w int, b int, s int, tw int, fw in
 func ExecSameAlgorithm(config *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) (float64, bool) {
 	var n float64
 	var scaleIn bool
-	switch config.Algorithm {
+	switch config.Cluster.LoadBalancer.OperatingRatioAlgorithm {
 	case "BasicSpike":
 		// 短期間の移動平均に基づくオートスケールアルゴリズム
 		n, scaleIn = basicSpike(config, w, b, s, tw, fw, ttlORs)
 	case "ServerNumDependSpike":
 		// 台数依存オートスケールアルゴリズム
-		config.Cluster.LoadBalancer.ChangeThresholdOut(w, b, s, len(config.Cluster.VirtualMachines))
+		changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInOperatingRatioAlgorithm(w, b, len(config.Cluster.VirtualMachines))
+		loggingThreshold(config, changedThreshold, operatingUnitRatio, w, b, s)
 		n, scaleIn = basicSpike(config, w, b, s, tw, fw, ttlORs)
 	case "DecreaseWeightFromBasicSpike":
 		// 過負荷となったサーバの重みを下げるオートスケールアルゴリズム
@@ -45,4 +46,21 @@ func ExecSameAlgorithm(config *models.Config, w int, b int, s int, tw int, fw in
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
 	return n, scaleIn
+}
+
+func loggingThreshold(config *models.Config, thresholdOut float64, operatingUnitRatio, work, boot, shut int) {
+	tags := []string{
+		"base_load:th",
+		"operation:throughput_base_load_determination",
+		"parameter:threshold_out_log",
+	}
+	fields := []string{
+		fmt.Sprintf("threshold_out:%f", thresholdOut),
+		fmt.Sprintf("operating_unit_ratio:%d", operatingUnitRatio),
+		fmt.Sprintf("working:%d", work),
+		fmt.Sprintf("booting:%d", boot),
+		fmt.Sprintf("shutting:%d", shut),
+	}
+	logger.Record(tags, fields)
+	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 }

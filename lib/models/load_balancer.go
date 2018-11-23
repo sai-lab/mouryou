@@ -14,25 +14,27 @@ import (
 
 // LoadBalancer はロードバランサの設定情報を格納します。
 type LoadBalancer struct {
-	Name                            string           `json:"name"`
-	VirtualIP                       string           `json:"virtual_ip"`
-	Algorithm                       string           `json:"algorithm"`
-	ThresholdOut                    float64          `json:"threshold_out"`
-	ThresholdIn                     float64          `json:"threshold_in"`
-	Margin                          float64          `json:"margin"`
-	ScaleOut                        int              `json:"scale_out"`
-	ScaleIn                         int              `json:"scale_in"`
-	Diff                            float64          `json:"diff"`
-	ThroughputAlgorithm             string           `json:"throughput_algorithm"`
-	ThroughputMovingAverageInterval int64            `json:"throughput_moving_average_interval"`
-	ThroughputScaleOutThreshold     int              `json:"throughput_scale_out_threshold"`
-	ThroughputScaleInThreshold      int              `json:"throughput_scale_in_threshold"`
-	ThroughputScaleInRatio          float64          `json:"throughput_scale_in_ratio"`
-	ThroughputScaleOutRatio         float64          `json:"throughput_scale_out_ratio"`
-	ThroughputScaleOutTime          int              `json:"throughput_scale_out_time"`
-	ThroughputScaleInTime           int              `json:"throughput_scale_in_time"`
-	UseThroughputDynamicThreshold   bool             `json:"use_throughput_dynamic_threshold"`
-	ThroughputDynamicThreshold      map[string][]int `json:"throughput_dynamic_threshold"`
+	Name                               string           `json:"name"`
+	VirtualIP                          string           `json:"virtual_ip"`
+	LoadBalancingAlgorithm             string           `json:"load_balancing_algorithm"`
+	OperatingRatioAlgorithm            string           `json:"operating_ratio_algorithm"`
+	OperatingRatioThresholdOut         float64          `json:"operating_ratio_threshold_out"`
+	OperatingRatioThresholdIn          float64          `json:"operating_ratio_threshold_in"`
+	OperatingRatioMargin               float64          `json:"operating_ratio_margin"`
+	OperatingRatioScaleOutInterval     int              `json:"operating_ratio_scale_out_interval"`
+	OperatingRatioScaleInInterval      int              `json:"operating_ratio_scale_in_interval"`
+	OperatingRatioDynamicThresholdDiff float64          `json:"operating_ratio_dynamic_threshold_diff"`
+	OperatingRatioDynamicThreshold     map[string][]int `json:"operating_ratio_dynamic_threshold"`
+	ThroughputAlgorithm                string           `json:"throughput_algorithm"`
+	ThroughputMovingAverageInterval    int64            `json:"throughput_moving_average_interval"`
+	ThroughputScaleOutThreshold        int              `json:"throughput_scale_out_threshold"`
+	ThroughputScaleInThreshold         int              `json:"throughput_scale_in_threshold"`
+	ThroughputScaleInRatio             float64          `json:"throughput_scale_in_ratio"`
+	ThroughputScaleOutRatio            float64          `json:"throughput_scale_out_ratio"`
+	ThroughputScaleOutTime             int              `json:"throughput_scale_out_time"`
+	ThroughputScaleInTime              int              `json:"throughput_scale_in_time"`
+	UseThroughputDynamicThreshold      bool             `json:"use_throughput_dynamic_threshold"`
+	ThroughputDynamicThreshold         map[string][]int `json:"throughput_dynamic_threshold"`
 }
 
 // Initialize はロードバランサの初期設定を行います。
@@ -48,7 +50,7 @@ func (lb LoadBalancer) Initialize(c *Config) {
 	case "ipvs":
 		err := exec.Command("ipvsadm", "-C").Run()
 		check.Error(err)
-		err = exec.Command("ipvsadm", "-A", "-t", lb.VirtualIP+":http", "-s", lb.Algorithm).Run()
+		err = exec.Command("ipvsadm", "-A", "-t", lb.VirtualIP+":http", "-s", lb.LoadBalancingAlgorithm).Run()
 		check.Error(err)
 	case "haproxy":
 		place := logger.Place()
@@ -78,17 +80,17 @@ func (lb *LoadBalancer) valueCheck() error {
 		fmt.Println(e)
 		errTxt = errTxt + e
 	}
-	if lb.Algorithm == "" {
+	if lb.LoadBalancingAlgorithm == "" {
 		e = "please set load_balancer algorithm for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + e
 	}
-	if lb.ThresholdOut == float64(0) {
+	if lb.OperatingRatioThresholdOut == float64(0) {
 		e = "please set load_balancer threshold_out for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + e
 	}
-	if lb.ThresholdIn == float64(0) {
+	if lb.OperatingRatioThresholdIn == float64(0) {
 		e = "please set load_balancer timeout value for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + e
@@ -101,26 +103,25 @@ func (lb *LoadBalancer) valueCheck() error {
 	return err
 }
 
-// ChangeThresholdOut は起動台数に応じて閾値を切り替えます。
-func (lb LoadBalancer) ChangeThresholdOut(working, booting, shutting, n int) {
-	ocRate := float64(working+booting+shutting) / float64(n)
-	switch {
-	case ocRate <= 0.3:
-		Threshold = 0.1
-	case ocRate <= 0.5:
-		Threshold = 0.3
-	case ocRate <= 0.7:
-		Threshold = 0.5
-	case ocRate <= 0.9:
-		Threshold = 0.6
-	case ocRate <= 1.0:
-		Threshold = 0.7
+// ChangeThresholdOutInOperatingRatioAlgorithm は起動台数に応じて閾値を切り替えます。
+func (lb LoadBalancer) ChangeThresholdOutInOperatingRatioAlgorithm(working, booting, n int) (float64, int) {
+	ocRate := int(float32(working+booting) / float32(n) * 100.0)
+	for rangeThresholdString, operatingUnitRange := range lb.OperatingRatioDynamicThreshold {
+		if ocRate > operatingUnitRange[0] && ocRate <= operatingUnitRange[1] {
+			if rangeThresholdFloat64, err := strconv.ParseFloat(rangeThresholdString, 64); err == nil {
+				Threshold = rangeThresholdFloat64
+				return Threshold, ocRate
+			} else {
+				logger.Error(logger.Place(), err)
+			}
+		}
 	}
+	return 0.0, ocRate
 }
 
 // ChangeThresholdOutInThroughputAlgorithm は起動台数に応じて閾値を切り替えます。
 // 変更がない場合0.0を返します.
-func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, n int) (float64, int) {
+func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting, n int) (float64, int) {
 	ocRate := int(float32(working+booting) / float32(n) * 100.0)
 	for rangeThresholdString, operatingUnitRange := range lb.ThroughputDynamicThreshold {
 		if ocRate > operatingUnitRange[0] && ocRate <= operatingUnitRange[1] {
@@ -135,28 +136,30 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting,
 	return 0.0, ocRate
 }
 
-// ThHigh
-func (balancer LoadBalancer) ThHigh(c *Config, w, n int) float64 {
-	switch c.Algorithm {
+// ThHighInOperatingRatioAlgorithm は稼働率ベースのアルゴリズムで使われる高負荷判定(スケールアウト)の閾値です。
+func (balancer LoadBalancer) ThHighInOperatingRatioAlgorithm(c *Config, w, n int) float64 {
+	switch c.Cluster.LoadBalancer.OperatingRatioAlgorithm {
 	case "BasicSpike":
-		return balancer.ThresholdOut
+		return balancer.OperatingRatioThresholdOut
 	default:
 		return Threshold
 	}
 }
 
-// ThLow
-func (balancer LoadBalancer) ThLow(c *Config, w, n int) float64 {
-	switch c.Algorithm {
+// ThLowInOperatingRatioAlgorithm は稼働率ベースのアルゴリズムで使われる低負荷判定(スケールイン)の閾値です。
+func (balancer LoadBalancer) ThLowInOperatingRatioAlgorithm(c *Config, w, n int) float64 {
+	switch c.Cluster.LoadBalancer.OperatingRatioAlgorithm {
 	case "BasicSpike":
-		return balancer.ThresholdIn * float64(w)
+		return balancer.OperatingRatioThresholdIn * float64(w)
 	default:
-		return (Threshold - balancer.Diff) * (float64(w))
+		return balancer.OperatingRatioThresholdIn * (float64(w))
+		//return (Threshold - balancer.OperatingRatioDynamicThresholdDiff) * (float64(w))
 	}
 }
 
 // Add
 func (balancer LoadBalancer) Add(name string) error {
+	// TODO haproxy setting
 	// err := exec.Command("ipvsadm", "-a", "-t", balancer.VirtualIP+":http", "-r", host+":http", "-w", "0", "-g").Run()
 	// if err != nil {
 	// 	return err

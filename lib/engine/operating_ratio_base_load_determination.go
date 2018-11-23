@@ -57,7 +57,7 @@ func operatingRatioBase(config *models.Config) {
 		logger.Record(tags, fields)
 		databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
 
-		// Exec Algorithm
+		// 負荷判定アルゴリズム実行
 		if config.UseHetero {
 			necessaryWeights = predictions.ExecDifferentAlgorithm(config, lWorking,
 				lBooting, lShutting, lTotalWeight, lFutureTotalWeight, ttlORs)

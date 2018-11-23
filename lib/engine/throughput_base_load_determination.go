@@ -55,7 +55,8 @@ func throughputBase(config *models.Config) {
 
 		// 動的閾値を用いる場合
 		if config.Cluster.LoadBalancer.UseThroughputDynamicThreshold {
-			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, shutting, len(config.Cluster.VirtualMachines))
+			serverNum := len(config.Cluster.VirtualMachines)
+			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
 			loggingThreshold(config, changedThreshold, operatingUnitRatio, working, booting, shutting)
 		}
 		switch config.Cluster.LoadBalancer.ThroughputAlgorithm {

@@ -20,38 +20,28 @@ type Config struct {
 	// DevelopLogLevel>=2: 各サーバの重み情報を出力
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
-	UseWeb          bool `json:"use_web"`
-	DevelopLogLevel int  `json:"develop_log_level"`
-	// 負荷取得がタイムアウトしたと判断するまでの時間
-	Timeout time.Duration `json:"timeout"`
-	Sleep   time.Duration `json:"sleep"`
-	Wait    time.Duration `json:"wait"`
-	// タイムアウトなどして重さを下げた後、復元するまでの時間
-	RestorationTime time.Duration `json:"restoration_time"`
-	// 起動までのMargin
-	Margin float64 `json:"margin"`
-	// 利用するアルゴリズム
-	Algorithm string `json:"algorithm"`
-	// 重さを変更するか
-	IsWeightChange bool `json:"is_weight_change"`
-	// ヘテロな環境を使用するか
-	UseHetero             bool            `json:"use_hetero"`
-	AdjustServerNum       bool            `json:"adjust_server_num"`
-	OriginMachineNames    []string        `json:"origin_machine_names"`
-	AlwaysRunningMachines []string        `json:"always_running_machines"`
-	StartMachineIDs       []int           `json:"start_machine_ids"`
-	WebSocket             WebSocketStruct `json:"web_socket"`
-	Cluster               Cluster         `json:"cluster"`
-	UseOperatingRatio     bool            `json:"use_operating_ratio"`
-	UseThroughput         bool            `json:"use_throughput"`
-	LogDB                 string          `json:"log_db"`
-	LogDSN                string          `json:"log_dsn"`
-	InfluxDBAddr          string          `json:"influxdb_addr"`
-	InfluxDBPort          string          `json:"influxdb_port"`
-	InfluxDBUser          string          `json:"influxdb_user"`
-	InfluxDBPasswd        string          `json:"influxdb_passwd"`
-	InfluxDBConnection    client.Client   `json:"influxdb_connection"`
-	InfluxDBServerDB      string          `json:"influxdb_serverdb"`
+	DevelopLogLevel       int             `json:"develop_log_level"`
+	Timeout               time.Duration   `json:"timeout"`                 // 負荷取得がタイムアウトしたと判断するまでの時間
+	Sleep                 time.Duration   `json:"sleep"`                   // サーバの起動処理発行後、稼働し始めるまでの時間
+	Wait                  time.Duration   `json:"wait"`                    // 起動処理発行後、停止処理を実行しない時間
+	RestorationTime       time.Duration   `json:"restoration_time"`        // タイムアウトなどして重さを下げた後、復元するまでの時間
+	IsWeightChange        bool            `json:"is_weight_change"`        // 重さを変更するか
+	UseHetero             bool            `json:"use_hetero"`              // ヘテロな環境を使用するか
+	IsAdjustServerNum     bool            `json:"is_adjust_server_num"`    // オートスケールを行うか(現状未使用)
+	UseWeb                bool            `json:"use_web"`                 // mouryou-webに情報を送るか
+	UseOperatingRatio     bool            `json:"use_operating_ratio"`     // 稼働率ベースの負荷判定アルゴリズムを使うか
+	UseThroughput         bool            `json:"use_throughput"`          // スループットベースの負荷判定アルゴリズムを使うか
+	InfluxDBAddr          string          `json:"influxdb_addr"`           // InfluxDBのアドレス
+	InfluxDBPort          string          `json:"influxdb_port"`           // InfluxDBのポート
+	InfluxDBUser          string          `json:"influxdb_user"`           // InfluxDBのユーザ
+	InfluxDBPasswd        string          `json:"influxdb_passwd"`         // InfluxDBのパスワード
+	InfluxDBConnection    client.Client   `json:"influxdb_connection"`     // InfluxDBへのコネクション
+	InfluxDBServerDB      string          `json:"influxdb_serverdb"`       // InfluxDBで利用するDB名
+	OriginMachineNames    []string        `json:"origin_machine_names"`    // オリジンサーバの名称
+	AlwaysRunningMachines []string        `json:"always_running_machines"` // 常に稼働するサーバの名称
+	StartMachineIDs       []int           `json:"start_machine_ids"`       // はじめから稼働するサーバのID
+	WebSocket             WebSocketStruct `json:"web_socket"`              // models.WebSocketの構造体
+	Cluster               Cluster         `json:"cluster"`                 // models.Clusterの構造体
 }
 
 // LoadConfig は設定ファイル(~/.mouryou.json)を読み込みます。
@@ -66,7 +56,7 @@ func (c *Config) LoadSetting(path string) {
 	err = c.valueCheck()
 	check.Error(err)
 
-	Threshold = c.Cluster.LoadBalancer.ThresholdOut
+	Threshold = c.Cluster.LoadBalancer.OperatingRatioThresholdOut
 }
 
 // valueCheck は設定ファイル(~/.mouryou.json)に各設定値が記述されているかチェックします。
@@ -90,16 +80,6 @@ func (c *Config) valueCheck() error {
 	}
 	if c.Wait == time.Duration(0) {
 		e := "please set wait for mouryou.json"
-		fmt.Println(e)
-		errTxt = errTxt + ", " + e
-	}
-	if c.Margin == float64(0) {
-		e := "please set margin for mouryou.json"
-		fmt.Println(e)
-		errTxt = errTxt + ", " + e
-	}
-	if c.Algorithm == "" {
-		e := "please set algorithm for mouryou.json"
 		fmt.Println(e)
 		errTxt = errTxt + ", " + e
 	}

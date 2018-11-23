@@ -12,14 +12,14 @@ import (
 
 // basicSpike
 func basicSpike(config *models.Config, w int, b int, s int, tw int, fw int, ttlORs []float64) (float64, bool) {
-	out := calculate.MovingAverage(ttlORs, config.Cluster.LoadBalancer.ScaleOut)
-	in := calculate.MovingAverage(ttlORs, config.Cluster.LoadBalancer.ScaleIn)
+	out := calculate.MovingAverage(ttlORs, config.Cluster.LoadBalancer.OperatingRatioScaleOutInterval)
+	in := calculate.MovingAverage(ttlORs, config.Cluster.LoadBalancer.OperatingRatioScaleInInterval)
 	num := len(config.Cluster.VirtualMachines)
 
-	ThHigh := config.Cluster.LoadBalancer.ThHigh(config, w, num)
-	ThLow := config.Cluster.LoadBalancer.ThLow(config, w, num)
+	ThHigh := config.Cluster.LoadBalancer.ThHighInOperatingRatioAlgorithm(config, w, num)
+	ThLow := config.Cluster.LoadBalancer.ThLowInOperatingRatioAlgorithm(config, w, num)
 
-	ir := ratio.Increase(ttlORs, config.Cluster.LoadBalancer.ScaleOut)
+	ir := ratio.Increase(ttlORs, config.Cluster.LoadBalancer.OperatingRatioScaleOutInterval)
 	predictedValue := out + ir*float64(config.Sleep)
 	n := (predictedValue / ThHigh) - float64(w+b)
 
