@@ -1,4 +1,5 @@
 {
+  "use_web": false,
   "develop_log_level": 0,
   "timeout": 1,
   "sleep": 30,
@@ -39,7 +40,7 @@
       "operating_ratio_threshold_out": 0.8,
       "operating_ratio_threshold_in": 0.1,
       "operating_ratio_margin": 0.05,
-      "operating_ratio_scale_out_interval": 2,
+      "operating_ratio_scale_out_interval": 1,
       "operating_ratio_scale_in_interval": 6,
       "operating_ratio_dynamic_threshold_diff": 0.2,
       "operating_ratio_dynamic_threshold": {
@@ -69,8 +70,8 @@
       "throughput_scale_in_ratio": 0.1,
       "throughput_scale_out_ratio": 0.5,
       "throughput_scale_out_threshold": 1,
-      "throughput_scale_out_time": 5,
       "throughput_scale_in_threshold": 3,
+      "throughput_scale_out_time": 5,
       "throughput_scale_in_time": 5,
       "use_throughput_dynamic_threshold": true,
       "throughput_dynamic_threshold": {
