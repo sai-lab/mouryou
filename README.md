@@ -2,9 +2,12 @@
 
 #### Requirements
 
-  - [Golang](https://golang.org/) >= 1
-  - [Apache HTTP Server](http://httpd.apache.org/) with [mod_status](http://httpd.apache.org/docs/2.4/mod/mod_status.html)
-  - [IP Virtual Server](http://www.linuxvirtualserver.org/software/ipvs.html)
+  - [Golang](https://golang.org/) >= 1.11.*
+  - [Apache HTTP Server](http://httpd.apache.org/) == 2.4
+    - with [mod_status](http://httpd.apache.org/docs/2.4/mod/mod_status.html)
+  - [HAproxy](http://www.haproxy.org/) == 1.6.3
+  - [InfluxDB](https://github.com/influxdata/influxdb) == 1.6.3
+  - [server-status](https://github.com/sai-lab/server-status) >= 3c1f8fa
 
 #### Installation
 
@@ -25,19 +28,16 @@
   "sleep": 30,
   "wait": 30,
   "restoration_time": 30,
-  "margin": 0.007,
-  "algorithm": "BasicSpike",
   "is_weight_change": true,
   "use_hetero": false,
-  "adjust_server_num": true,
-  "use_operating_ratio": true,
-  "use_throughput": false,
-  "log_db": "mysql",
-  "log_dsb": "root:@tcp(127.0.0.1:3306)/mouryou?parseTime=true",
-  "influxdb_addr": "",
-  "influxdb_port": "",
-  "influxdb_user": "",
-  "influxdb_passwd": "",
+  "is_adjust_server_num": true,
+  "use_operating_ratio": false,
+  "use_throughput": true,
+  "influxdb_addr": "http://localhost",
+  "influxdb_port": "8086",
+  "influxdb_user": "root",
+  "influxdb_passwd": "password",
+  "influxdb_serverdb": "server_log",
   "origin_machine_names": [
     "origin-01",
     "origin-02"
@@ -58,13 +58,36 @@
     "load_balancer": {
       "name": "haproxy",
       "virtual_ip": "192.168.11.11",
-      "algorithm": "wlc",
-      "threshold_out": 0.8,
-      "threshold_in": 0.5,
-      "margin": 0.05,
-      "scale_out": 2,
-      "scale_in": 6,
-      "diff": 0.2,
+      "load_balancing_algorithm": "wlc",
+      "operating_ratio_algorithm": "ServerNumDependSpike",
+      "operating_ratio_threshold_out": 0.8,
+      "operating_ratio_threshold_in": 0.1,
+      "operating_ratio_margin": 0.05,
+      "operating_ratio_scale_out_interval": 2,
+      "operating_ratio_scale_in_interval": 6,
+      "operating_ratio_dynamic_threshold_diff": 0.2,
+      "operating_ratio_dynamic_threshold": {
+        "0.1": [
+          0,
+          30
+        ],
+        "0.3": [
+          30,
+          50
+        ],
+        "0.5": [
+          50,
+          70
+        ],
+        "0.6": [
+          70,
+          90
+        ],
+        "0.7": [
+          90,
+          100
+        ]
+      },
       "throughput_algorithm": "MovingAverageV1.2",
       "throughput_moving_average_interval": 3,
       "throughput_scale_in_ratio": 0.1,
@@ -145,7 +168,7 @@
             "id": 5,
             "name": "mirror-03",
             "host": "192.168.11.05",
-            "operation": "booted up",
+            "operation": "shutted down",
             "unit_time": 30,
             "unit_cost": 10,
             "throughput_upper_limit": 200,
