@@ -34,6 +34,8 @@ type LoadBalancer struct {
 	ThroughputScaleOutTime             int              `json:"throughput_scale_out_time"`
 	ThroughputScaleInTime              int              `json:"throughput_scale_in_time"`
 	UseThroughputDynamicThreshold      bool             `json:"use_throughput_dynamic_threshold"`
+	ThroughputScaleOutRate             float64          `json:"throughput_scale_out_rate"`
+	ThroughputScaleInRate              float64          `json:"throughput_scale_in_rate"`
 	ThroughputDynamicThreshold         map[string][]int `json:"throughput_dynamic_threshold"`
 }
 
@@ -134,6 +136,16 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting,
 		}
 	}
 	return 0.0, ocRate
+}
+
+func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, int) {
+    ocRate := int(float32(working+booting) / float32(n) * 100.0)
+    lb.ThroughputScaleOutRatio = float64((float64(working) - lb.ThroughputScaleOutRate) / float64(working))
+    lb.ThroughputScaleInRatio = float64(float64(float64(working) - 1 - lb.ThroughputScaleInRate) / float64(working))
+    if lb.ThroughputScaleInRatio < 0.0 {
+        lb.ThroughputScaleInRatio = 0.0
+    }
+    return lb.ThroughputScaleOutRatio, ocRate
 }
 
 // ThHighInOperatingRatioAlgorithm は稼働率ベースのアルゴリズムで使われる高負荷判定(スケールアウト)の閾値です。
