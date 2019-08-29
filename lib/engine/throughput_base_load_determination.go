@@ -56,8 +56,8 @@ func throughputBase(config *models.Config) {
 		// 動的閾値を用いる場合
 		if config.Cluster.LoadBalancer.UseThroughputDynamicThreshold {
 			serverNum := len(config.Cluster.VirtualMachines)
-//			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
-                        changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughput(working, booting, serverNum)
+			//			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
+			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughput(working, booting, serverNum)
 			loggingThreshold(config, changedThreshold, operatingUnitRatio, working, booting, shutting)
 		}
 		switch config.Cluster.LoadBalancer.ThroughputAlgorithm {
@@ -126,6 +126,8 @@ func judgeByMovingAverageForCluster(config *models.Config, bootedServersName []s
 	tags := []string{"parameter:working_log", "operation:load_determination"}
 	fields := []string{
 		fmt.Sprintf("moving_average:%f", movingAverage),
+		fmt.Sprintf("throughput_out:%f", config.Cluster.LoadBalancer.ThroughputScaleOutRatio),
+		fmt.Sprintf("throughput_in:%f", config.Cluster.LoadBalancer.ThroughputScaleInRatio),
 	}
 	logger.Record(tags, fields)
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
