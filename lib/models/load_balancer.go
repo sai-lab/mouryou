@@ -138,14 +138,13 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting,
 	return 0.0, ocRate
 }
 
-func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, int) {
-    ocRate := int(float32(working+booting) / float32(n) * 100.0)
-    lb.ThroughputScaleOutRatio = float64((float64(working) - lb.ThroughputScaleOutRate) / float64(working))
-    lb.ThroughputScaleInRatio = float64(float64(float64(working) - 1 - lb.ThroughputScaleInRate) / float64(working))
-    if lb.ThroughputScaleInRatio < 0.0 {
-        lb.ThroughputScaleInRatio = 0.0
-    }
-    return lb.ThroughputScaleOutRatio, ocRate
+func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, float64) {
+	lb.ThroughputScaleOutRatio = float64((float64(working) - lb.ThroughputScaleOutRate) / float64(working))
+	lb.ThroughputScaleInRatio = float64(float64(float64(working)-1-lb.ThroughputScaleInRate) / float64(working))
+	if lb.ThroughputScaleInRatio < 0.0 {
+		lb.ThroughputScaleInRatio = 0.0
+	}
+	return lb.ThroughputScaleOutRatio, lb.ThroughputScaleInRatio
 }
 
 // ThHighInOperatingRatioAlgorithm は稼働率ベースのアルゴリズムで使われる高負荷判定(スケールアウト)の閾値です。
