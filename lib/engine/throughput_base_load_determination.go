@@ -94,7 +94,7 @@ func loggingThreshold(config *models.Config, thresholdOut, changedThreshold_in f
 	}
 	fields := []string{
 		fmt.Sprintf("threshold_out:%f", thresholdOut),
-		fmt.Sprintf("threshold_in:%d", changedThreshold_in),
+		fmt.Sprintf("threshold_in:%F", changedThreshold_in),
 		fmt.Sprintf("working:%d", work),
 		fmt.Sprintf("booting:%d", boot),
 		fmt.Sprintf("shutting:%d", shut),
