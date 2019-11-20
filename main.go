@@ -44,7 +44,7 @@ func main() {
 	go monitor.LoadMonitoring(c)
 	go engine.LoadDetermination(c)
 	go engine.ServerManagement(c)
-	go engine.DestinationSetting(c)
+	//go engine.DestinationSetting(c)
 	go engine.ServerStatesManager()
 	//go engine.WeightOperator(c)
 	go engine.WeightManager(c)
