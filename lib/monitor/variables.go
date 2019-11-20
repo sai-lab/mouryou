@@ -18,6 +18,7 @@ type ServerState struct {
 	// shutted down は停止中を示します。
 	Info    string
 	Changed time.Time
+	WaitTime time.Time
 }
 
 // Condition はサーバの状態を格納する構造体です．
