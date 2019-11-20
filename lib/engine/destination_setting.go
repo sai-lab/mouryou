@@ -109,7 +109,7 @@ import (
 }
 */
 
-func DestinationSetting(config *models.Config, power PowerStruct) {
+func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 	var b, s, w, o int
 	var connection *websocket.Conn
 	var err error
