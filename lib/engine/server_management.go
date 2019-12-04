@@ -75,7 +75,7 @@ func ServerManagement(config *models.Config) {
 		fields := []string{fmt.Sprintf("working:%d", w),
 			fmt.Sprintf("booting:%d", b),
 			fmt.Sprintf("shutting:%d", s),
-			fmt.Sprintf("waiting:%s", wait),
+			fmt.Sprintf("waiting:%d", wait),
 			fmt.Sprintf("load:%s", order.Load),
 			fmt.Sprintf("handle:%s", order.Handle),
 			fmt.Sprintf("weight:%d", order.Weight),
@@ -332,14 +332,16 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		}
 	}
 	// サーバの重さが必要な重み以下なら停止処理を発行
-	sS.WaitTime = time.Now().Add(30 * time.Second)
-	sS.Info = "RMWait"
-	go waitVM(config, sS, load)
-	if config.DevelopLogLevel >= 1 {
-		place := logger.Place()
-		logger.Debug(place, serverState.Name+" going to wait")
+	if sS != nil {
+		sS.WaitTime = time.Now().Add(30 * time.Second)
+		sS.Info = "RMWait"
+		go waitVM(config, sS, load)
+		if config.DevelopLogLevel >= 1 {
+			place := logger.Place()
+			logger.Debug(place, serverState.Name+" going to wait")
+		}
+		return
 	}
-	return
 }
 
 //shutDownVM は引数に 設定値用構造体 config, 停止するサーバの情報 serverState, 判断基準にした負荷量 load をとります．
@@ -348,9 +350,7 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 	power.Name = serverState.Name
 	power.Info = "shutting down"
 	power.Load = load
-	if monitor.PowerCh != nil {
-		monitor.PowerCh <- power
-	}
+	go DestinationSetting(config, power)
 
 	serverState.Info = "shutting down"
 	if monitor.StateCh != nil {
@@ -374,9 +374,6 @@ func waitVM(config *models.Config, serverState monitor.ServerState, load string)
 	power.Name = serverState.Name
 	power.Info = "shutting down"
 	power.Load = load
-	if monitor.PowerCh != nil {
-		monitor.PowerCh <- power
-	}
 
 	serverState.Info = "shutting down"
 	if monitor.StateCh != nil {
@@ -385,9 +382,6 @@ func waitVM(config *models.Config, serverState monitor.ServerState, load string)
 
 	// 停止処理を発行，完了後の返却値受け取り
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
-	if monitor.PowerCh != nil {
-		monitor.PowerCh <- power
-	}
 
 	serverState.Info = power.Info
 	if monitor.StateCh != nil {
