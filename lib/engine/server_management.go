@@ -331,7 +331,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		}
 
 		if serverState.Weight <= weight {
-			sS := serverState
+			sS = serverState
 		}
 	}
 	// サーバの重さが必要な重み以下なら停止処理を発行
