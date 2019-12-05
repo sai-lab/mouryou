@@ -184,7 +184,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 			}
 		}
 		// サーバの重さが必要な重み以上なら起動処理を任せてreturn
-		go bootUpVM(config, serverState[toBootUp], load)
+		go bootUpVM(config, serverStates[toBootUp], load)
 		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
 		return
 	}
