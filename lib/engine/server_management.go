@@ -244,7 +244,7 @@ func bootWaiting(config *models.Config, serverState monitor.ServerState, load st
 	power.Info = "booting up"
 	power.Load = load
 	serverState.Info = "booting up"
-	
+
 	go DestinationSetting(config, power)
 
 	if monitor.StateCh != nil {
