@@ -7,6 +7,7 @@ import (
 	"github.com/sai-lab/mouryou/lib/databases"
 	"github.com/sai-lab/mouryou/lib/logger"
 	"github.com/sai-lab/mouryou/lib/models"
+	"github.com/sai-lab/mouryou/lib/monitor"
 	"github.com/sai-lab/mouryou/lib/mutex"
 	"github.com/sai-lab/mouryou/lib/timer"
 	"golang.org/x/net/websocket"
@@ -109,8 +110,8 @@ import (
 }
 */
 
-func DestinationSetting(config *models.Config, power PowerStruct) {
-	var b, s, w, o, waits int
+func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
+	var b, s, w, o int
 	var connection *websocket.Conn
 	var err error
 
