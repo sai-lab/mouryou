@@ -111,7 +111,7 @@ import (
 */
 
 func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
-	var b, s, w, o int
+	var b, s, w, o, waits int
 	var connection *websocket.Conn
 	var err error
 
