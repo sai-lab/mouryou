@@ -111,7 +111,7 @@ import (
 */
 
 func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
-	var b, s, w, o int
+	var b, s, w, o, waits int
 	var connection *websocket.Conn
 	var err error
 
@@ -125,6 +125,8 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 	b = mutex.Read(&booting, &bootMutex)
 	// 停止処理中の台数
 	s = mutex.Read(&shutting, &shutMutex)
+	// 待ち状態の台数
+	waits = mutex.Read(&waiting, &waitMutex)
 
 	// データベースとログに稼働状況を記録
 	tags := []string{
@@ -137,6 +139,7 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 		fmt.Sprintf("working:%d", w),
 		fmt.Sprintf("booting:%d", b),
 		fmt.Sprintf("shutting:%d", s),
+		fmt.Sprintf("waiting:%d", waits),
 		fmt.Sprintf("power:%s", power.Info),
 	}
 	logger.Record(tags, fields)
@@ -190,6 +193,21 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 		mutex.Write(&shutting, &shutMutex, s-1)
 		if config.UseWeb {
 			logger.Send(connection, err, "Shutted down: "+power.Name)
+		}
+	case "RMWait": // 停止処理を開始した
+		// 停止処理中の台数を増加
+		mutex.Write(&waiting, &waitMutex, waits+1)
+		// 稼働中の台数を減少
+		mutex.Write(&working, &workMutex, w-1)
+		// ロードバランサの振分先からpower.Nameを削除
+		err := config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
+		power.Info = "waiting"
+		if config.UseWeb {
+			logger.Send(connection, err, "Shutting down: "+power.Name)
 		}
 	default:
 		fmt.Println("Error:", power)
