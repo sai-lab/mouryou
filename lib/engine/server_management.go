@@ -300,7 +300,7 @@ func bootWaiting(config *models.Config, serverState monitor.ServerState, load st
 */
 
 func shutDownVMs(config *models.Config, weight int, load string) {
-	var sS monitor.serverState
+	var sS monitor.ServerState
 	for _, serverState := range monitor.GetServerStates() {
 		// 稼働中のサーバ以外は無視
 		if serverState.Info != "booted up" {
