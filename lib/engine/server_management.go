@@ -334,8 +334,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		}
 	}
 	// サーバの重さが必要な重み以下なら停止処理を発行
-	if sS != nil {
-		sS.WaitTime = time.Now().Add(30 * time.Second)
+	if sS.Info != "" {
 		sS.Info = "RMWait"
 		go waitVM(config, sS, load)
 		if config.DevelopLogLevel >= 1 {
