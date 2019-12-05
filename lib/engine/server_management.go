@@ -315,8 +315,9 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 			continue
 		}
 
+		now := time.Now()
 		// 規定時間経過したサーバがあれば停止処理を発行
-		if serverState.Info == "waiting" && serverState.WaitTime <= time.Now() {
+		if serverState.Info == "waiting" && (serverState.WaitTime.Equal(now) || serverState.WaitTime.Before(now)) {
 			go shutDownVM(config, serverState, load)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-serverState.Weight)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-serverState.Weight)
@@ -339,7 +340,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		go waitVM(config, sS, load)
 		if config.DevelopLogLevel >= 1 {
 			place := logger.Place()
-			logger.Debug(place, serverState.Name+" going to wait")
+			logger.Debug(place, sS.Name+" going to wait")
 		}
 		return
 	}
