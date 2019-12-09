@@ -70,7 +70,7 @@ func ServerManagement(config *models.Config) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
-		wait = mutex.Read(&waiting, &waitMutex)
+		wait = mutex.Read(&waits, &waitsMutex)
 
 		tags := []string{"parameter:working_log", "operation:server_management"}
 		fields := []string{fmt.Sprintf("working:%d", w),
@@ -161,6 +161,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 
 		if serverState.Info == "waiting" {
 			// 待ち状態のサーバを復帰
+			fmt.Println("bootWait")
 			go bootWaiting(config, serverState, load)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverState.Weight)
 			return
@@ -187,6 +188,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 			}
 		}
 		// サーバの重さが必要な重み以上なら起動処理を任せてreturn
+		fmt.Println("boot cand")
 		go bootUpVM(config, serverStates[toBootUp], load)
 		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
 		return
@@ -199,6 +201,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 			toBootUp = n
 		}
 	}
+	fmt.Println("boot candidate")
 	go bootUpVM(config, serverStates[toBootUp], load)
 	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
 }
@@ -320,6 +323,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		now := time.Now()
 		// 規定時間経過したサーバがあれば停止処理を発行
 		if serverState.Info == "waiting" && (serverState.WaitTime.Equal(now) || serverState.WaitTime.Before(now)) {
+			fmt.Println("Wait shutting")
 			go shutDownVM(config, serverState, load)
 			mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-serverState.Weight)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-serverState.Weight)
@@ -339,6 +343,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 	// サーバの重さが必要な重み以下なら停止処理を発行
 	if sS.Info != "" {
 		sS.Info = "RMWait"
+		fmt.Println("RMWait wait")
 		go waitVM(config, sS, load)
 		if config.DevelopLogLevel >= 1 {
 			place := logger.Place()
@@ -354,6 +359,7 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 	power.Name = serverState.Name
 	power.Info = "shutting down"
 	power.Load = load
+	fmt.Println("shutting exec")
 	go DestinationSetting(config, power)
 
 	serverState.Info = "shutting down"
@@ -363,6 +369,7 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 
 	// 停止処理を発行，完了後の返却値受け取り
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
+	fmt.Println("shutted exec")
 
 	serverState.Info = power.Info
 	if monitor.StateCh != nil {
@@ -377,9 +384,11 @@ func waitVM(config *models.Config, serverState monitor.ServerState, load string)
 	power.Load = load
 
 	serverState.Info = "shutting down"
+	fmt.Println("shutting")
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
+	fmt.Println("shutted")
 
 	// 停止処理を発行，完了後の返却値受け取り
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
