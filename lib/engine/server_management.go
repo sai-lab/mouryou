@@ -230,6 +230,7 @@ func bootUpVM(config *models.Config, serverState monitor.ServerState, load strin
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Bootup(config.Sleep)
 	serverState.Info = power.Info
 	fmt.Println("Power Change")
+	go DestinationSetting(config, power)
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
@@ -263,6 +264,7 @@ func bootWaiting(config *models.Config, serverState monitor.ServerState, load st
 	// 起動処理を発行，完了後の返却値受け取り
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Bootup(config.Sleep)
 	serverState.Info = power.Info
+	go DestinationSetting(config, power)
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
@@ -370,7 +372,7 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 	// 停止処理を発行，完了後の返却値受け取り
 	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
 	fmt.Println("shutted exec")
-
+	go DestinationSetting(config, power)
 	serverState.Info = power.Info
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
@@ -380,21 +382,14 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 func waitVM(config *models.Config, serverState monitor.ServerState, load string) {
 	var power monitor.PowerStruct
 	power.Name = serverState.Name
-	power.Info = "shutting down"
+	power.Info = "RMWait"
 	power.Load = load
 
-	serverState.Info = "shutting down"
-	fmt.Println("shutting")
+	serverState.Info = "RMWait"
+	fmt.Println("rmwaiting")
+	go DestinationSetting(config, power)
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
-	fmt.Println("shutted")
-
-	// 停止処理を発行，完了後の返却値受け取り
-	power.Info = config.Cluster.VirtualMachines[serverState.Name].Shutdown(config.Sleep)
-
-	serverState.Info = power.Info
-	if monitor.StateCh != nil {
-		monitor.StateCh <- serverState
-	}
+	fmt.Println("waiting")
 }
