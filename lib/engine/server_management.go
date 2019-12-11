@@ -60,7 +60,7 @@ import (
 */
 
 func ServerManagement(config *models.Config) {
-	var b, s, w, wait int
+	var b, s, w, wa int
 	var order autoScaleOrder
 
 	vmNum := len(config.Cluster.VirtualMachines)
@@ -70,13 +70,13 @@ func ServerManagement(config *models.Config) {
 		w = mutex.Read(&working, &workMutex)
 		b = mutex.Read(&booting, &bootMutex)
 		s = mutex.Read(&shutting, &shutMutex)
-		wait = mutex.Read(&waits, &waitsMutex)
+		wa = mutex.Read(&waits, &waitsMutex)
 
 		tags := []string{"parameter:working_log", "operation:server_management"}
 		fields := []string{fmt.Sprintf("working:%d", w),
 			fmt.Sprintf("booting:%d", b),
 			fmt.Sprintf("shutting:%d", s),
-			fmt.Sprintf("waiting:%d", wait),
+			fmt.Sprintf("waiting:%d", wa),
 			fmt.Sprintf("load:%s", order.Load),
 			fmt.Sprintf("handle:%s", order.Handle),
 			fmt.Sprintf("weight:%d", order.Weight),
@@ -91,7 +91,7 @@ func ServerManagement(config *models.Config) {
 		switch order.Handle {
 		case "ScaleOut":
 			fmt.Println("ScaleOut")
-			if w+b+wait < vmNum && s == 0 {
+			if w+b+wa < vmNum && s == 0 {
 				fmt.Println("bootUp")
 				bootUpVMs(config, order.Weight, order.Load)
 			}
@@ -168,7 +168,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 		}
 
 		if serverState.Weight >= weight {
-			cand = append(cand)
+			cand = append(cand, i)
 			continue
 		}
 		// サーバの重さが必要な重み未満の場合candidateに追加
