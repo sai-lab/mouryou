@@ -181,8 +181,8 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 	}
 
 	if len(cand) > 0 {
-		toBootUp := candidate[0]
-		for _, n := range candidate {
+		toBootUp := cand[0]
+		for _, n := range cand {
 			if serverStates[n].Weight > serverStates[toBootUp].Weight {
 				toBootUp = n
 			}
