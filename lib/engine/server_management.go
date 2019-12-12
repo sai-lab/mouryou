@@ -380,7 +380,12 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 }
 
 func waitVM(config *models.Config, serverState monitor.ServerState, load string) {
+	var wa int
 	var power monitor.PowerStruct
+	wa = mutex.Read(&waits, &waitsMutex)
+	if wa => 1 {
+		return
+	}
 	power.Name = serverState.Name
 	power.Info = "RMWait"
 	power.Load = load
