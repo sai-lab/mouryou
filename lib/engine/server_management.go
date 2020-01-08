@@ -377,6 +377,11 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
+	power.Info = "idle"
+	serverState.Info = power.Info
+	if monitor.StateCh != nil {
+		monitor.StateCh <- serverState
+	}
 }
 
 func waitVM(config *models.Config, serverState monitor.ServerState, load string) {
