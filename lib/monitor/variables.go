@@ -16,8 +16,8 @@ type ServerState struct {
 	// booted up は稼働中を示します。
 	// shutting down は停止処理中を示します。
 	// shutted down は停止中を示します。
-	Info    string
-	Changed time.Time
+	Info     string
+	Changed  time.Time
 	WaitTime time.Time
 }
 
