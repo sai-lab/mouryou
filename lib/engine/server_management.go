@@ -398,6 +398,8 @@ func waitVM(config *models.Config, serverState monitor.ServerState, load string)
 	serverState.Info = "RMWait"
 	fmt.Println("rmwaiting")
 	go DestinationSetting(config, power)
+	power.Info = "waiting"
+	serverState.Info = power.Info
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
