@@ -344,6 +344,10 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 	}
 	// サーバの重さが必要な重み以下なら停止処理を発行
 	if sS.Info != "" {
+		wa := mutex.Read(&waits, &waitsMutex)
+		if wa >= 1 {
+			return
+		}
 		sS.Info = "RMWait"
 		fmt.Println("RMWait wait")
 		go waitVM(config, sS, load)
@@ -385,12 +389,7 @@ func shutDownVM(config *models.Config, serverState monitor.ServerState, load str
 }
 
 func waitVM(config *models.Config, serverState monitor.ServerState, load string) {
-	var wa int
 	var power monitor.PowerStruct
-	wa = mutex.Read(&waits, &waitsMutex)
-	if wa >= 1 {
-		return
-	}
 	power.Name = serverState.Name
 	power.Info = "RMWait"
 	power.Load = load
