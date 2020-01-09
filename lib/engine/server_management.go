@@ -399,6 +399,8 @@ func waitVM(config *models.Config, serverState monitor.ServerState, load string)
 	go DestinationSetting(config, power)
 	power.Info = "waiting"
 	serverState.Info = power.Info
+	now := time.Now()
+	serverState.WaitTime = now.Add(time.Duration(30) * time.Second)
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState
 	}
