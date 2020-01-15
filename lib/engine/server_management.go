@@ -323,6 +323,8 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		}
 
 		now := time.Now()
+		fmt.Println("now time: " + now)
+		fmt.Println("WaitTime: " + serverState.WaitTime)
 		// 規定時間経過したサーバがあれば停止処理を発行
 		if serverState.Info == "waiting" && (serverState.WaitTime.Equal(now) || serverState.WaitTime.Before(now)) {
 			fmt.Println("Wait shutting")
