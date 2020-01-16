@@ -71,7 +71,7 @@ func GetServerStates() []ServerState {
 }
 
 // UpdateServerStates は ServerState の情報を更新します．
-func UpdateServerStates(hostName string, weight int, info string, changed time.Time) error {
+func UpdateServerStates(hostName string, weight int, info string, changed time.Time, wait time.Time) error {
 
 	isUpdated := false
 	for i, state := range ServerStates {
@@ -86,6 +86,9 @@ func UpdateServerStates(hostName string, weight int, info string, changed time.T
 			}
 			if changed.IsZero() == false {
 				ServerStates[i].Changed = changed
+			}
+			if wait.IsZero() == false {
+				ServerStates[i].WaitTime = wait
 			}
 			isUpdated = true
 			break

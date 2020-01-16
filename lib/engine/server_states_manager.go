@@ -19,7 +19,7 @@ func ServerStatesManager() {
 		if err != nil {
 			logger.Error(logger.Place(), err)
 		}
-		err = monitor.UpdateServerStates(state.Name, state.Weight, state.Info, zeroTime)
+		err = monitor.UpdateServerStates(state.Name, state.Weight, state.Info, zeroTime, state.WaitTime)
 		mutex.Unlock()
 		if err != nil {
 			logger.Error(logger.Place(), err)

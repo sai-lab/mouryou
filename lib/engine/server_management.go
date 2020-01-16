@@ -310,7 +310,7 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 	var sS monitor.ServerState
 	for _, serverState := range monitor.GetServerStates() {
 		// 稼働中のサーバ以外は無視
-		if serverState.Info != "booted up" {
+		if serverState.Info != "booted up" && serverState.Info != "waiting" {
 			continue
 		}
 		// オリジンサーバは無視
@@ -356,7 +356,6 @@ func shutDownVMs(config *models.Config, weight int, load string) {
 		if wa >= 1 {
 			return
 		}
-		sS.Info = "RMWait"
 		fmt.Println("RMWait wait")
 		go waitVM(config, sS, load)
 		if config.DevelopLogLevel >= 1 {
