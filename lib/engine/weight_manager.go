@@ -116,7 +116,7 @@ func decreaseWeight(information monitor.Condition, config *models.Config) {
 		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-(serverState.Weight-lowWeight))
 		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight-(serverState.Weight-lowWeight))
 		// 共有変数の重みと変更時間を更新
-		monitor.UpdateServerStates(information.Name, lowWeight, "", time.Now())
+		monitor.UpdateServerStates(information.Name, lowWeight, "", time.Now(), serverState.WaitTime)
 		break
 	}
 }
@@ -142,7 +142,7 @@ func increaseWeight(information monitor.Condition, config *models.Config) {
 		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+(basicWeight-serverState.Weight))
 		mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+(basicWeight-serverState.Weight))
 		// 共有変数の重みと更新時間を変更する
-		monitor.UpdateServerStates(information.Name, basicWeight, "", time.Now())
+		monitor.UpdateServerStates(information.Name, basicWeight, "", time.Now(), serverState.WaitTime)
 		break
 	}
 }
