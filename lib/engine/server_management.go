@@ -247,23 +247,11 @@ func bootWaiting(config *models.Config, serverState monitor.ServerState, load st
 
 	// これから起動処理を発行することを通知
 	power.Name = serverState.Name
-	power.Info = "booting up"
+	power.Info = "booted up"
 	power.Load = load
-	serverState.Info = "booting up"
-
-	go DestinationSetting(config, power)
-
-	if monitor.StateCh != nil {
-		monitor.StateCh <- serverState
-	}
-	if config.DevelopLogLevel >= 1 {
-		place := logger.Place()
-		logger.Debug(place, serverState.Name+" is booting up")
-	}
+	serverState.Info = "booted up"
 
 	// 起動処理を発行，完了後の返却値受け取り
-	power.Info = config.Cluster.VirtualMachines[serverState.Name].Bootup(config.Sleep)
-	serverState.Info = power.Info
 	go DestinationSetting(config, power)
 	if monitor.StateCh != nil {
 		monitor.StateCh <- serverState

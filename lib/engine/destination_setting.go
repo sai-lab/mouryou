@@ -169,7 +169,11 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 		// 稼働中の台数を増加
 		mutex.Write(&working, &workMutex, w+1)
 		// 起動処理が終わったので，起動処理中の台数を減少
-		mutex.Write(&booting, &bootMutex, b-1)
+		if waitin > 0 {
+			mutex.Write(&waits, &waitsMutex, waitin-1)
+		} else {
+			mutex.Write(&booting, &bootMutex, b-1)
+		}
 		// 起動処理が完了した後，config.Wait秒間は停止処理を発火しないようにwaitingを設定
 		go timer.Set(&waiting, &waitMutex, config.Wait)
 	case "shutting down": // 停止処理を開始した
