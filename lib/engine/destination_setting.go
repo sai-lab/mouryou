@@ -176,7 +176,7 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 		// 停止処理中の台数を増加
 		mutex.Write(&shutting, &shutMutex, s+1)
 		// 稼働中の台数を減少
-		mutex.Write(&waiting, &waitsMutex, waitin-1)
+		mutex.Write(&waits, &waitsMutex, waitin-1)
 		// ロードバランサの振分先からpower.Nameを削除
 		err := config.Cluster.LoadBalancer.Inactive(config.Cluster.VirtualMachines[power.Name].Name)
 		if err != nil {
@@ -205,7 +205,6 @@ func DestinationSetting(config *models.Config, power monitor.PowerStruct) {
 			place := logger.Place()
 			logger.Error(place, err)
 		}
-		power.Info = "waiting"
 		if config.UseWeb {
 			logger.Send(connection, err, "Waiting: "+power.Name)
 		}
