@@ -146,6 +146,7 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (
 	if lb.ThroughputScaleInRatio < 0.0 {
 		lb.ThroughputScaleInRatio = 0.0
 	}
+	return lb.ThroughputScaleOutRatio, lb.ThroughputScaleInRatio
 }
 
 // ThHighInOperatingRatioAlgorithm は稼働率ベースのアルゴリズムで使われる高負荷判定(スケールアウト)の閾値です。
