@@ -154,7 +154,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 	serverStates := monitor.GetServerStates()
 
 	for i, serverState := range serverStates {
-		if serverState.Info != "shutted down" || serverState.Info != "waiting" {
+		if serverState.Info != "shutted down" && serverState.Info != "waiting" && serverState.Info != "idle" {
 			// 停止中のサーバ以外は無視
 			continue
 		}
