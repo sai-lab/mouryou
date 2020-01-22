@@ -139,8 +139,8 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting,
 }
 
 func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, float64) {
-	lb.ThroughputScaleOutRatio = float64((float64(working + booting) - lb.ThroughputScaleOutRate) / float64(working + booting))
-	lb.ThroughputScaleInRatio = float64(float64(float64(working + booting)-1-lb.ThroughputScaleInRate) / float64(working + booting))
+	lb.ThroughputScaleOutRatio = float64((float64(working+booting) - lb.ThroughputScaleOutRate) / float64(working+booting))
+	lb.ThroughputScaleInRatio = float64(float64(float64(working+booting)-1-lb.ThroughputScaleInRate) / float64(working+booting))
 	if lb.ThroughputScaleInRatio < 0.0 {
 		lb.ThroughputScaleInRatio = 0.0
 	}
