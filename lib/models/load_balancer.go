@@ -34,6 +34,7 @@ type LoadBalancer struct {
 	ThroughputScaleOutTime             int              `json:"throughput_scale_out_time"`
 	ThroughputScaleInTime              int              `json:"throughput_scale_in_time"`
 	UseThroughputDynamicThreshold      bool             `json:"use_throughput_dynamic_threshold"`
+	UseThroughputBooting               bool             `json:"use_throughput_booting"`
 	ThroughputScaleOutRate             float64          `json:"throughput_scale_out_rate"`
 	ThroughputScaleInRate              float64          `json:"throughput_scale_in_rate"`
 	ThroughputDynamicThreshold         map[string][]int `json:"throughput_dynamic_threshold"`
@@ -140,9 +141,18 @@ func (lb LoadBalancer) ChangeThresholdOutInThroughputAlgorithm(working, booting,
 
 // ChangeThresholdOutInThroughputAlgorithm は起動台数に応じて閾値を切り替えます。
 // 変更がない場合0.0を返します.
-func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, float64) {
+func (lb LoadBalancer) ChangeThresholdOutInThroughputBooting(working, booting, n int) (float64, float64) {
 	lb.ThroughputScaleOutRatio = float64((float64(working+booting) - lb.ThroughputScaleOutRate) / float64(working+booting))
 	lb.ThroughputScaleInRatio = float64(float64(float64(working+booting)-1-lb.ThroughputScaleInRate) / float64(working+booting))
+	if lb.ThroughputScaleInRatio < 0.0 {
+		lb.ThroughputScaleInRatio = 0.0
+	}
+	return lb.ThroughputScaleOutRatio, lb.ThroughputScaleInRatio
+}
+
+func (lb LoadBalancer) ChangeThresholdOutInThroughput(working, booting, n int) (float64, float64) {
+	lb.ThroughputScaleOutRatio = float64((float64(working) - lb.ThroughputScaleOutRate) / float64(working))
+	lb.ThroughputScaleInRatio = float64(float64(float64(working)-1-lb.ThroughputScaleInRate) / float64(working))
 	if lb.ThroughputScaleInRatio < 0.0 {
 		lb.ThroughputScaleInRatio = 0.0
 	}
