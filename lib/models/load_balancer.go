@@ -34,7 +34,7 @@ type LoadBalancer struct {
 	ThroughputScaleOutTime             int              `json:"throughput_scale_out_time"`
 	ThroughputScaleInTime              int              `json:"throughput_scale_in_time"`
 	UseThroughputDynamicThreshold      bool             `json:"use_throughput_dynamic_threshold"`
-	UseThroughputBooting                         bool             `json:"use_throughput_booting"`
+	UseThroughputBooting               bool             `json:"use_throughput_booting"`
 	ThroughputScaleOutRate             float64          `json:"throughput_scale_out_rate"`
 	ThroughputScaleInRate              float64          `json:"throughput_scale_in_rate"`
 	ThroughputDynamicThreshold         map[string][]int `json:"throughput_dynamic_threshold"`
