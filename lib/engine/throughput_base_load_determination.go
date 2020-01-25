@@ -57,10 +57,12 @@ func throughputBase(config *models.Config) {
 		if config.Cluster.LoadBalancer.UseThroughputDynamicThreshold {
 			serverNum := len(config.Cluster.VirtualMachines)
 			//changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
+			changedThreshold_out := 0.0
+			changedThreshold_in := 0.0
 			if config.Cluster.LoadBalancer.UseThroughputBooting {
-				changedThreshold_out, changedThreshold_in := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputBooting(working, booting, serverNum)
+				changedThreshold_out, changedThreshold_in = config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputBooting(working, booting, serverNum)
 			} else {
-				changedThreshold_out, changedThreshold_in := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughput(working, booting, serverNum)
+				changedThreshold_out, changedThreshold_in = config.Cluster.LoadBalancer.ChangeThresholdOutInThroughput(working, booting, serverNum)
 			}
 			loggingThreshold(config, changedThreshold_out, changedThreshold_in, working, booting, shutting)
 			config.Cluster.LoadBalancer.ThroughputScaleOutRatio = changedThreshold_out
