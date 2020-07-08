@@ -120,7 +120,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 		// 各サーバの付加情報毎に実行
 		go func(i int, v apache.ServerStatus, sockets []apache.SocketStatus) {
 			var sid apache.SocketStatus
-			sid = s[0]
+			sid = sockets[0]
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
