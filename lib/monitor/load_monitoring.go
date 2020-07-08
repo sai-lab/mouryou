@@ -115,16 +115,10 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 	arrs[totalWeight][1] = strconv.Itoa(tw)
 
 	for i, v := range states {
-		for h, s := range sockets {
-			if int64(v.Id) == int64(s.Id) {
-				sid := s
-				break
-			}
-		}
 		group.Add(1)
 		var data Condition
 		// 各サーバの付加情報毎に実行
-		go func(i int, v apache.ServerStatus, sid apache.SocketStatus) {
+		go func(i int, v apache.ServerStatus, sockets apache.SocketStatus) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
@@ -165,13 +159,19 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 				arrs[memoryStat][i+1] = id + fmt.Sprint(v.MemStat)
 				arrs[acquisitionTime][i+1] = id + v.Time
 				arrs[reqPerSec][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
+				for h, s := range sockets {
+					if int64(v.Id) == int64(s.Id) {
+						sid := s
+						break
+					}
+				}
 				arrs[socketNum][i+1] = id + fmt.Sprintf("%3.5d", sid.Socket)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					arrs[critical][i+1] = id + "Operating Ratio and CPU UsedPercent is MAX!"
 				}
 				ds = append(ds, data)
 			}
-		}(i, v, sid)
+		}(i, v, sockets)
 	}
 
 	group.Wait()
