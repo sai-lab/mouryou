@@ -161,7 +161,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 				arrs[memoryStat][i+1] = id + fmt.Sprint(v.MemStat)
 				arrs[acquisitionTime][i+1] = id + v.Time
 				arrs[reqPerSec][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
-				for h, s := range sockets {
+				for _, s := range sockets {
 					if int64(v.Id) == int64(s.Id) {
 						sid = s
 						break
