@@ -165,7 +165,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 				arrs[memoryStat][i+1] = id + fmt.Sprint(v.MemStat)
 				arrs[acquisitionTime][i+1] = id + v.Time
 				arrs[reqPerSec][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
-				arrs[socketNum][i+1] = id + fmt.Sprintf("%3.5d", s.Socket)
+				arrs[socketNum][i+1] = id + fmt.Sprintf("%3.5d", sid.Socket)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					arrs[critical][i+1] = id + "Operating Ratio and CPU UsedPercent is MAX!"
 				}
