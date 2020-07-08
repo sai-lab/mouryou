@@ -119,6 +119,8 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 		var data Condition
 		// 各サーバの付加情報毎に実行
 		go func(i int, v apache.ServerStatus, sockets []apache.SocketStatus) {
+			var sid apache.SocketStatus
+			sid = s[0]
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
@@ -161,7 +163,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 				arrs[reqPerSec][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
 				for h, s := range sockets {
 					if int64(v.Id) == int64(s.Id) {
-						sid := s
+						sid = s
 						break
 					}
 				}
