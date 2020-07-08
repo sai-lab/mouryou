@@ -118,7 +118,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 		group.Add(1)
 		var data Condition
 		// 各サーバの付加情報毎に実行
-		go func(i int, v apache.ServerStatus, sockets apache.SocketStatus) {
+		go func(i int, v apache.ServerStatus, sockets []apache.SocketStatus) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
