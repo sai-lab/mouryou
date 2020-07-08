@@ -43,6 +43,27 @@ func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
 	return status
 }
 
+// SocketState はapache.Socketboardからソケット状況を受け取り返却します。
+func (machine VirtualMachine) ServerStatus() apache.SocketStatus {
+	var socket apache.SocketStatus
+
+	board, err := apache.Socketboard(machine.Host)
+	if err != nil {
+		// errがあった場合、timeoutしていると判断します。
+		socket.HostName = machine.Name
+		socket.Other = "Connection is timeout."
+	} else {
+		err = json.Unmarshal(board, &socket)
+		if err != nil {
+			place := logger.Place()
+			logger.Error(place, err)
+		}
+	}
+	socket.Id = machine.ID
+
+	return socket
+}
+
 // Bootup はVMの起動処理を行う．
 // 現在は実際に起動停止は行わないため起動にかかる時間分sleepして擬似的な起動処理としている．
 func (machine VirtualMachine) Bootup(sleep time.Duration) string {

@@ -46,14 +46,15 @@ func LoadMonitoring(config *models.Config) {
 		}
 
 		statuses := config.Cluster.ServerStatuses(bootedServers, config)
+		sockets := config.Cluster.SocketStatuses(bootedServers, config)
 		for i := range statuses {
 			throughputs[i] = databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
 		}
-		ors, arrays, orsArr := Ratios(statuses, throughputs, tw)
+		ors, arrays, orsArr := Ratios(statuses, throughputs, tw, sockets)
 
 		logger.PWArrays(config.DevelopLogLevel, arrays)
 		if config.UseWeb {
-			logger.Send(connection, err, orsArr)
+			logger.Send(connection, err, convert.FloatsToStringsSimple(throughputs))
 		}
 
 		if config.UseOperatingRatio {
@@ -67,7 +68,7 @@ func LoadMonitoring(config *models.Config) {
 	}
 }
 
-func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12][]string, []string) {
+func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apache.SocketStatus) ([]float64, [12][]string, []string) {
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
@@ -81,10 +82,11 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 		critical          = 9
 		reqPerSec         = 10 // reqPerSecは起動してからの平均の1秒間のリクエスト数
 		totalWeight       = 11
+		socketNum         = 12
 		group             sync.WaitGroup
 		mutex             sync.Mutex
 		ds                []Condition  // dataはオートスケールに用いる
-		arrs              [12][]string // arrsはログ記録や重み調整に用いる
+		arrs              [13][]string // arrsはログ記録や重み調整に用いる
 	)
 
 	length := len(states)
@@ -93,6 +95,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 	for i := 0; i < 12; i++ {
 		arrs[i] = make([]string, length+1)
 	}
+	arrs[12] = make([]string, len(sockets))
 
 	// 各配列の先頭に何の配列か記載
 	arrs[operatingRatio][0] = "ors"
@@ -107,14 +110,20 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 	arrs[critical][0] = "critical"
 	arrs[reqPerSec][0] = "rpss"
 	arrs[totalWeight][0] = "we"
+	arrs[socketNum][0] = "soc"
 
 	arrs[totalWeight][1] = strconv.Itoa(tw)
 
 	for i, v := range states {
+		for h, s := range sockets {
+			if int64(v.Id) == int64(s.Id) {
+				break
+			}
+		}
 		group.Add(1)
 		var data Condition
 		// 各サーバの付加情報毎に実行
-		go func(i int, v apache.ServerStatus) {
+		go func(i int, v apache.ServerStatus, s apache.SocketStatus) {
 			defer group.Done()
 			mutex.Lock()
 			defer mutex.Unlock()
@@ -136,6 +145,7 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 				}
 				arrs[critical][i+1] = id + v.Other
 				arrs[reqPerSec][i+1] = id + "0"
+				arrs[socketNum][i+1] = id + "0"
 				data.Operating = 1
 				data.CPU = 0
 				data.Error = v.Other
@@ -154,12 +164,13 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int) ([]float64, [12
 				arrs[memoryStat][i+1] = id + fmt.Sprint(v.MemStat)
 				arrs[acquisitionTime][i+1] = id + v.Time
 				arrs[reqPerSec][i+1] = id + fmt.Sprintf("%6.2f", v.ReqPerSec)
+				arrs[socketNum][i+1] = id + fmr.Sprintf("%3.5d", s.Socket)
 				if ors[i] == 1 && v.CpuUsedPercent[0] >= 100 {
 					arrs[critical][i+1] = id + "Operating Ratio and CPU UsedPercent is MAX!"
 				}
 				ds = append(ds, data)
 			}
-		}(i, v)
+		}(i, v, s)
 	}
 
 	group.Wait()

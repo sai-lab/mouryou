@@ -72,3 +72,27 @@ func (cluster Cluster) ServerStatuses(bt []string, config *Config) []apache.Serv
 
 	return statuses
 }
+
+// SocketStatuses は稼働中のサーバ配列btを受け取り、btのソケット状況を返します。
+func (cluster Cluster) SocketStatuses(bt []string, config *Config) []apache.SocketStatus {
+	var group sync.WaitGroup
+	var mutex sync.Mutex
+	sockets := make([]apache.SocketStatus, len(bt))
+
+	for i, v := range bt {
+		group.Add(1)
+		go func(i int, v string, machines map[string]VirtualMachine) {
+			defer group.Done()
+			mutex.Lock()
+			defer mutex.Unlock()
+			for _, machine := range machines {
+				if machine.Name == v {
+					sockets[i] = machine.SocketStatus()
+				}
+			}
+		}(i, v, cluster.VirtualMachines)
+	}
+	group.Wait()
+
+	return sockets
+}
