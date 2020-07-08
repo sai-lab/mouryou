@@ -44,7 +44,7 @@ func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
 }
 
 // SocketState はapache.Socketboardからソケット状況を受け取り返却します。
-func (machine VirtualMachine) ServerStatus() apache.SocketStatus {
+func (machine VirtualMachine) SocketStatus() apache.SocketStatus {
 	var socket apache.SocketStatus
 
 	board, err := apache.Socketboard(machine.Host)
