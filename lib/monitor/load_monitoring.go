@@ -50,7 +50,7 @@ func LoadMonitoring(config *models.Config) {
 		for i := range statuses {
 			throughputs[i] = databases.WritePoints(config.InfluxDBConnection, config, statuses[i])
 		}
-		ors, arrays, orsArr := Ratios(statuses, throughputs, tw, sockets)
+		ors, arrays := Ratios(statuses, throughputs, tw, sockets)
 
 		logger.PWArrays(config.DevelopLogLevel, arrays)
 		if config.UseWeb {
@@ -68,7 +68,7 @@ func LoadMonitoring(config *models.Config) {
 	}
 }
 
-func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apache.SocketStatus) ([]float64, [13][]string, []string) {
+func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apache.SocketStatus) ([]float64, [13][]string) {
 	var (
 		operatingRatio    = 0
 		cpuUsedPercent    = 1
@@ -178,5 +178,5 @@ func Ratios(states []apache.ServerStatus, ths []float64, tw int, sockets []apach
 
 	group.Wait()
 	ConditionCh <- ds
-	return ors, arrs, convert.FloatsToStringsSimple(ors)
+	return ors, arrs
 }
