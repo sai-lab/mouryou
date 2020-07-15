@@ -83,7 +83,7 @@ func Place() string {
 }
 
 func PWArrays(developLogLevel int, arrs [13][]string) {
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 13; i++ {
 		if i == 3 {
 			continue
 		}
