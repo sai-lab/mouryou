@@ -74,7 +74,7 @@ func DestinationSetting(config *models.Config) {
 			// 起動処理が終わったので，起動処理中の台数を減少
 			mutex.Write(&booting, &bootMutex, b-1)
 			// 起動処理が完了した後，config.Wait秒間は停止処理を発火しないようにwaitingを設定
-			go timer.Set(&waiting, &waitMutex, config.Wait)
+			//go timer.Set(&waiting, &waitMutex, config.Wait)
 		case "shutting down": // 停止処理を開始した
 			// 停止処理中の台数を増加
 			mutex.Write(&shutting, &shutMutex, s+1)
@@ -87,7 +87,7 @@ func DestinationSetting(config *models.Config) {
 				logger.Error(place, err)
 			}
 			// 停止処理を開始した後，config.Wait秒間は停止処理を発行しないようにwaitingを設定
-			go timer.Set(&waiting, &waitMutex, config.Wait)
+			//go timer.Set(&waiting, &waitMutex, config.Wait)
 			if config.UseWeb {
 				logger.Send(connection, err, "Shutting down: "+power.Name)
 			}
