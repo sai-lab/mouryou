@@ -86,7 +86,7 @@ func DestinationSetting(config *models.Config) {
 				logger.Error(place, err)
 			}
 			// 停止処理を開始した後，config.Wait秒間は停止処理を発行しないようにwaitingを設定
-			//go timer.Set(&waiting, &waitMutex, config.Wait)
+			go timer.Set(&waiting, &waitMutex, config.Wait)
 			if config.UseWeb {
 				logger.Send(connection, err, "Shutting down: "+power.Name)
 			}
