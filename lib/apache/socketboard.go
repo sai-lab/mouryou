@@ -33,7 +33,7 @@ func Socketboard(host string) ([]byte, error) {
 
 }
 
-func SocketNum(board []byte) float64 {
+func SocketNum(board []byte) int {
 	var status SocketStatus
 
 	err := json.Unmarshal(board, &status)
