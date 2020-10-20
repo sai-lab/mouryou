@@ -47,13 +47,13 @@ func (machine VirtualMachine) ServerStatus() apache.ServerStatus {
 func (machine VirtualMachine) SocketStatus() apache.SocketStatus {
 	var socket apache.SocketStatus
 
-	board, err := apache.Socketboard(machine.Host)
+	boards, err := apache.Socketboard(machine.Host)
 	if err != nil {
 		// errがあった場合、timeoutしていると判断します。
 		socket.HostName = machine.Name
 		socket.Other = "Connection is timeout."
 	} else {
-		err = json.Unmarshal(board, &socket)
+		err = json.Unmarshal(boards, &socket)
 		if err != nil {
 			place := logger.Place()
 			logger.Error(place, err)
