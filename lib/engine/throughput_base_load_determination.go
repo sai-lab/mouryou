@@ -56,8 +56,17 @@ func throughputBase(config *models.Config) {
 		// 動的閾値を用いる場合
 		if config.Cluster.LoadBalancer.UseThroughputDynamicThreshold {
 			serverNum := len(config.Cluster.VirtualMachines)
-			changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
-			loggingThreshold(config, changedThreshold, operatingUnitRatio, working, booting, shutting)
+			//changedThreshold, operatingUnitRatio := config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputAlgorithm(working, booting, serverNum)
+			changedThreshold_out := 0.0
+			changedThreshold_in := 0.0
+			if config.Cluster.LoadBalancer.UseThroughputBooting {
+				changedThreshold_out, changedThreshold_in = config.Cluster.LoadBalancer.ChangeThresholdOutInThroughputBooting(working, booting, serverNum)
+			} else {
+				changedThreshold_out, changedThreshold_in = config.Cluster.LoadBalancer.ChangeThresholdOutInThroughput(working, booting, serverNum)
+			}
+			loggingThreshold(config, changedThreshold_out, changedThreshold_in, working, booting, shutting)
+			config.Cluster.LoadBalancer.ThroughputScaleOutRatio = changedThreshold_out
+			config.Cluster.LoadBalancer.ThroughputScaleInRatio = changedThreshold_in
 		}
 		switch config.Cluster.LoadBalancer.ThroughputAlgorithm {
 		case "MovingAverageV1.2":
@@ -83,7 +92,7 @@ func throughputBase(config *models.Config) {
 	}
 }
 
-func loggingThreshold(config *models.Config, thresholdOut float64, operatingUnitRatio, work, boot, shut int) {
+func loggingThreshold(config *models.Config, thresholdOut, changedThreshold_in float64, work, boot, shut int) {
 	tags := []string{
 		"base_load:tp",
 		"operation:throughput_base_load_determination",
@@ -91,7 +100,7 @@ func loggingThreshold(config *models.Config, thresholdOut float64, operatingUnit
 	}
 	fields := []string{
 		fmt.Sprintf("threshold_out:%f", thresholdOut),
-		fmt.Sprintf("operating_unit_ratio:%d", operatingUnitRatio),
+		fmt.Sprintf("threshold_in:%f", changedThreshold_in),
 		fmt.Sprintf("working:%d", work),
 		fmt.Sprintf("booting:%d", boot),
 		fmt.Sprintf("shutting:%d", shut),
@@ -125,6 +134,8 @@ func judgeByMovingAverageForCluster(config *models.Config, bootedServersName []s
 	tags := []string{"parameter:working_log", "operation:load_determination"}
 	fields := []string{
 		fmt.Sprintf("moving_average:%f", movingAverage),
+		fmt.Sprintf("throughput_out:%f", config.Cluster.LoadBalancer.ThroughputScaleOutRatio),
+		fmt.Sprintf("throughput_in:%f", config.Cluster.LoadBalancer.ThroughputScaleInRatio),
 	}
 	logger.Record(tags, fields)
 	databases.WriteValues(config.InfluxDBConnection, config, tags, fields)
