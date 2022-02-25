@@ -2,6 +2,7 @@ package apache
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -10,19 +11,21 @@ func Scoreboard(host string) ([]byte, error) {
 	var board []byte
 
 	url := "http://" + host + ":8080"
-
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		fmt.Println(err)
 		return board, err
 	}
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
+		fmt.Println(err)
 		return board, err
 	}
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		fmt.Println(err)
 		return board, err
 	}
 	defer response.Body.Close()
