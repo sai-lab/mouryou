@@ -65,6 +65,10 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 	serverStates := monitor.GetServerStates()
 
 	for i, serverState := range serverStates {
+		if config.Cluster.VirtualMachines[serverState.Name].Role == "pool" {
+			// poolサーバは無視
+			continue
+		}
 		if serverState.Info != "shutted down" {
 			// 停止中のサーバ以外は無視
 			continue
@@ -72,7 +76,7 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 
 		if serverState.Weight >= weight {
 			// サーバの重さが必要な重み以上なら起動処理を任せてreturn
-			go bootUpVM(config, serverState, load)
+			go bootUpVMpool(config, serverState, load)
 			mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverState.Weight)
 			return
 		}
@@ -92,8 +96,141 @@ func bootUpVMs(config *models.Config, weight int, load string) {
 			toBootUp = n
 		}
 	}
-	go bootUpVM(config, serverStates[toBootUp], load)
+	go bootUpVMpool(config, serverStates[toBootUp], load)
 	mutex.Write(&futureTotalWeight, &futureTotalWeightMutex, futureTotalWeight+serverStates[toBootUp].Weight)
+}
+
+func bootUpVMpool(config *models.Config, serverState monitor.ServerState, load string) {
+	var power monitor.PowerStruct
+	var pp monitor.PowerStruct
+	var pool monitor.ServerState
+
+	// これから起動処理を発行することを通知
+	power.Name = serverState.Name
+	power.Info = "booting up"
+	power.Load = load
+	serverState.Info = "booting up"
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- power
+	}
+	if monitor.StateCh != nil {
+		monitor.StateCh <- serverState
+	}
+	if config.DevelopLogLevel >= 1 {
+		place := logger.Place()
+		logger.Debug(place, serverState.Name+" is booting up")
+	}
+
+	pool.Name = ""
+	/*
+		for _, status := range monitor.GetStates() {
+			if status.Info == "shutted down" && status.Name != st.Name {
+				pool.Name = status.Name
+			}
+		}
+	*/
+	// プールサーバ
+	for _, status := range monitor.GetServerStates() {
+		if status.Info == "shutted down" && config.Cluster.VirtualMachines[status.Name].Role == "pool" {
+			pool.Name = status.Name
+		}
+	}
+	if pool.Name != "" {
+		pool.Weight = 5
+		pp.Name = pool.Name
+		pp.Info = "booting up"
+		pp.Load = load
+		pool.Info = "booting up"
+		if monitor.PowerCh != nil {
+			monitor.PowerCh <- pp
+		}
+		if monitor.StateCh != nil {
+			monitor.StateCh <- pool
+		}
+		if config.DevelopLogLevel >= 1 {
+			//logger.PrintPlace("BootUp " + pool.Name)
+			//fmt.Println("Pool   " + pool.Name + " is booting up")
+			place := logger.Place()
+			logger.Debug(place, pool.Name+" is booting up")
+		}
+		pp.Info = config.Cluster.VirtualMachines[pool.Name].Bootup(config.Start)
+		pool.Info = "booted up"
+		if monitor.PowerCh != nil {
+			monitor.PowerCh <- pp
+		}
+		if monitor.StateCh != nil {
+			monitor.StateCh <- pool
+		}
+		if config.DevelopLogLevel >= 1 {
+			//logger.PrintPlace("BootUp " + pool.Name)
+			//fmt.Println("Pool   " + pool.Name + " is booted up")
+			place := logger.Place()
+			logger.Debug(place, serverState.Name+" is booted up")
+		}
+	}
+
+	// 起動処理を発行，完了後の返却値受け取り
+	power.Info = config.Cluster.VirtualMachines[serverState.Name].Bootup(config.Sleep - config.Start)
+	serverState.Info = power.Info
+	if monitor.PowerCh != nil {
+		monitor.PowerCh <- power
+	}
+	if monitor.StateCh != nil {
+		monitor.StateCh <- serverState
+	}
+	if config.DevelopLogLevel >= 1 {
+		place := logger.Place()
+		logger.Debug(place, serverState.Name+" is boot up")
+	}
+
+	if pool.Name != "" {
+		//i := 10
+		pp.Info = config.Cluster.VirtualMachines[pool.Name].Shutdown(config.Sleep + config.Stop)
+		/*
+			fmt.Println("## PoolChangeWeight")
+			for i > 1 {
+				fmt.Println("### PoolChangeWeight")
+				PoolFireChangeWeight(c, pool.Name, i)
+				fmt.Println(i)
+				time.Sleep(3 * time.Second)
+				i--
+			}
+		*/
+		pp.Info = "shutting down"
+		pool.Info = pp.Info
+		if monitor.PowerCh != nil {
+			monitor.PowerCh <- pp
+		}
+		if monitor.StateCh != nil {
+			monitor.StateCh <- pool
+		}
+		if config.DevelopLogLevel >= 1 {
+			//fmt.Println("Pool   " + pool.Name + " is shutting down")
+			place := logger.Place()
+			logger.Debug(place, pool.Name+" is shutting up")
+		}
+
+		pp.Info = "shutted down"
+		pool.Info = pp.Info
+		if monitor.PowerCh != nil {
+			monitor.PowerCh <- pp
+		}
+		if monitor.StateCh != nil {
+			monitor.StateCh <- pool
+		}
+		if config.DevelopLogLevel >= 1 {
+			//fmt.Println("Pool   " + pool.Name + " is shutted down")
+			place := logger.Place()
+			logger.Debug(place, pool.Name+" is shutted up")
+		}
+
+		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight-pool.Weight)
+		if config.DevelopLogLevel >= 1 {
+			fmt.Println(pool.Name + " going to shutdown")
+		}
+	} else {
+		mutex.Write(&totalWeight, &totalWeightMutex, totalWeight+serverState.Weight)
+	}
 }
 
 // bootUpVM は引数に 設定値用構造体 config, 起動するサーバの情報 serverState, 判断基準にした負荷量 load をとります．

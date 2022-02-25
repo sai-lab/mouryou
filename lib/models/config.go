@@ -21,8 +21,10 @@ type Config struct {
 	// DevelopLogLevel>=3: 各サーバの負荷状況を全て出力
 	// DevelopLogLevel>=4: 詳細に
 	DevelopLogLevel       int             `json:"develop_log_level"`
-	Timeout               time.Duration   `json:"timeout"`                 // 負荷取得がタイムアウトしたと判断するまでの時間
-	Sleep                 time.Duration   `json:"sleep"`                   // サーバの起動処理発行後、稼働し始めるまでの時間
+	Timeout               time.Duration   `json:"timeout"` // 負荷取得がタイムアウトしたと判断するまでの時間
+	Sleep                 time.Duration   `json:"sleep"`   // サーバの起動処理発行後、稼働し始めるまでの時間
+	Start                 time.Duration   `json:"start"`
+	Stop                  time.Duration   `json:"stop"`
 	Wait                  time.Duration   `json:"wait"`                    // 起動処理発行後、停止処理を実行しない時間
 	RestorationTime       time.Duration   `json:"restoration_time"`        // タイムアウトなどして重さを下げた後、復元するまでの時間
 	IsWeightChange        bool            `json:"is_weight_change"`        // 重さを変更するか

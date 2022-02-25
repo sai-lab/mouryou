@@ -20,6 +20,7 @@ type VirtualMachine struct {
 	Weight               int               `json:"weight"`                 // 現在の重さ
 	Hypervisor           *HypervisorStruct `json:"-"`                      // ハイパーバイザ
 	Vendor               *VendorStruct     `json:"-"`                      // ベンダー
+	Role                 string            `json:"role"`
 }
 
 // ServerState はapache.Scoreboardから負荷状況を受け取り返却します。

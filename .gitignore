@@ -4,7 +4,6 @@
 .DS_Store
 /_vendor
 /.vendor
-/bin/mouryou
 /log/
 /vendor
 mouryou
